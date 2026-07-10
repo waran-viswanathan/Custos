@@ -1,0 +1,18 @@
+{
+  "name": "custos",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Custos — the trust layer for AI agent payments. Verify, bound, score.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ],
+  "scripts": {
+    "demo": "node demo/run.js",
+    "test": "node --test packages/*/test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

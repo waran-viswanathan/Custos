@@ -1,0 +1,13 @@
+{
+  "name": "@custos/kya-sdk",
+  "version": "0.1.0",
+  "description": "Reference implementation of the KYA credential spec: DIDs, credentials, presentations, policy commitments",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@noble/hashes": "^1.4.0"
+  }
+}

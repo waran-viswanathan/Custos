@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kya.dev/schemas/kya-policy.schema.json",
+  "title": "KYA Spend Policy Document",
+  "description": "Policy document whose hash is carried as policyCommitment in a KYA credential (spec v0.1.0-draft)",
+  "type": "object",
+  "required": ["version", "asset", "perTxnCap", "dailyCap", "killSwitch", "enforcement"],
+  "properties": {
+    "version": { "const": "0.1" },
+    "asset": { "type": "string", "description": "Settlement asset, CAIP-19 id (e.g. Base USDC)" },
+    "perTxnCap": { "type": "string", "pattern": "^[0-9]+$", "description": "Max per transaction, in asset base units" },
+    "dailyCap": { "type": "string", "pattern": "^[0-9]+$" },
+    "monthlyCap": { "type": "string", "pattern": "^[0-9]+$" },
+    "allowedCounterparties": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "CAIP-10 addresses or did:web origins; empty/absent = no counterparty restriction"
+    },
+    "allowedCategories": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+(:[a-z0-9-]+)?$" }
+    },
+    "velocityLimit": {
+      "type": "object",
+      "required": ["maxTxns", "windowSeconds"],
+      "properties": {
+        "maxTxns": { "type": "integer", "minimum": 1 },
+        "windowSeconds": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "approvalThreshold": {
+      "type": "string",
+      "pattern": "^[0-9]+$",
+      "description": "Amount above which a human co-signature is required, in asset base units"
+    },
+    "killSwitch": { "type": "string", "description": "DID authorized to revoke instantly" },
+    "enforcement": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["erc4337-module", "facilitator", "custodial"] },
+        "address": { "type": "string", "description": "Module address (CAIP-10) when erc4337-module" },
+        "endpoint": { "type": "string", "format": "uri", "description": "Facilitator endpoint when facilitator" }
+      }
+    }
+  }
+}

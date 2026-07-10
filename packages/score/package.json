@@ -1,0 +1,10 @@
+{
+  "name": "@custos/score",
+  "version": "0.1.0",
+  "description": "Custos Score v0 — rules + velocity risk scoring for agent transactions",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  }
+}

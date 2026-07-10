@@ -1,0 +1,14 @@
+{
+  "name": "@custos/middleware-express",
+  "version": "0.1.0",
+  "description": "Express middleware that gates x402-style paid endpoints on a Custos KYA check",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "@custos/kya-sdk": "*",
+    "@custos/score": "*"
+  }
+}
