@@ -6,21 +6,27 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 CLEANUP_PIDS=()
+# NOTE: tsx spawns child node processes whose argv doesn't contain "tsx src/…",
+# so kill patterns must match the script path, not the tsx invocation — a
+# surviving zombie worker once stole queue jobs and registered agents on a
+# stale deployment. Queue names are also deployment-versioned now (queue.ts).
+kill_custos_services() {
+  lsof -ti:4000 2>/dev/null | xargs kill 2>/dev/null || true
+  pkill -f 'custos.*src/worker\.ts' 2>/dev/null || true
+  pkill -f 'custos.*src/index\.ts' 2>/dev/null || true
+  pkill -f 'custos.*tsx/dist/cli\.mjs watch' 2>/dev/null || true
+}
+
 cleanup() {
   for pid in "${CLEANUP_PIDS[@]:-}"; do kill "$pid" 2>/dev/null || true; done
-  # the pnpm wrappers spawn tsx children that outlive a plain kill
-  lsof -ti:4000 2>/dev/null | xargs kill 2>/dev/null || true
-  pkill -f "tsx src/worker.ts" 2>/dev/null || true
+  kill_custos_services
 }
 trap cleanup EXIT
 
 # --- clear stale services (a redeploy changes contract addresses, so any
 # --- previously running API/worker would be pointing at dead contracts) ---
-if lsof -ti:4000 >/dev/null 2>&1; then
-  echo "▶ stopping previous Custos API on :4000"
-  lsof -ti:4000 | xargs kill 2>/dev/null || true
-fi
-pkill -f "tsx src/worker.ts" 2>/dev/null || true
+echo "▶ clearing any previous Custos API/worker"
+kill_custos_services
 sleep 1
 
 # --- anvil ---

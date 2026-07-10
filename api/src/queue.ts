@@ -1,17 +1,26 @@
 import { Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
 import { env } from './env.js';
+import { loadDeployments } from './deployments.js';
 import { runVerificationPipeline, type PipelineDeps } from './pipeline.js';
 
-export const QUEUE_NAME = 'verification';
-export const DLQ_NAME = 'verification-dlq';
+/**
+ * Queue names are versioned by deployment: a stale worker from before a
+ * redeploy listens on a queue nobody feeds, instead of stealing jobs and
+ * registering agents on dead contracts (a real race we hit).
+ */
+export function queueName(): string {
+  const d = loadDeployments();
+  // BullMQ forbids ':' in queue names (Redis key separator)
+  return `verification-${d.chainId}-${d.registry.toLowerCase()}`;
+}
 
 export function createRedis(): Redis {
   return new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
 }
 
 export function createVerificationQueue(connection: Redis): Queue {
-  return new Queue(QUEUE_NAME, {
+  return new Queue(queueName(), {
     connection,
     defaultJobOptions: {
       attempts: 3,
@@ -23,10 +32,11 @@ export function createVerificationQueue(connection: Redis): Queue {
 }
 
 export function startVerificationWorker(connection: Redis, deps: PipelineDeps): Worker {
-  const dlq = new Queue(DLQ_NAME, { connection });
+  const name = queueName();
+  const dlq = new Queue(`${name}-dlq`, { connection });
 
   const worker = new Worker(
-    QUEUE_NAME,
+    name,
     async (job) => {
       await runVerificationPipeline(job.data.agentId as string, deps);
     },

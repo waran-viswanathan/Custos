@@ -37,7 +37,6 @@ export function jurisdictionToBytes2(code: string): Hex {
 }
 
 export function createChainService(): ChainService {
-  const d = loadDeployments();
   // NOTE(production): the attester key lives in KMS/HSM, not env — see SECURITY.md
   const account = privateKeyToAccount(env.ATTESTER_PRIVATE_KEY as Hex);
   const chain = defineChain({
@@ -51,6 +50,7 @@ export function createChainService(): ChainService {
 
   return {
     async attestAndRegister({ wallet, jurisdiction, accredited, erc8004TokenId }) {
+      const d = loadDeployments(); // per-call: survives redeploys under a live worker
       const data = encodeAbiParameters(
         [{ type: 'bool' }, { type: 'bytes2' }, { type: 'bool' }, { type: 'uint256' }],
         [true, jurisdictionToBytes2(jurisdiction), accredited, erc8004TokenId],
@@ -82,10 +82,23 @@ export function createChainService(): ChainService {
       const registerTx = await walletClient.writeContract(regSim.request);
       await publicClient.waitForTransactionReceipt({ hash: registerTx });
 
+      // invariant: never report success unless the registry the rest of the
+      // system uses actually says so (guards against any address drift)
+      const verified = await publicClient.readContract({
+        address: d.registry,
+        abi: custosRegistryAbi,
+        functionName: 'isVerified',
+        args: [wallet],
+      });
+      if (!verified) {
+        throw new Error(`post-registration invariant failed: ${d.registry} does not report ${wallet} verified`);
+      }
+
       return { attestationUID, attestTx, registerTx };
     },
 
     async revokeAgent({ wallet, attestationUID, reason }) {
+      const d = loadDeployments(); // per-call: survives redeploys under a live worker
       const regSim = await publicClient.simulateContract({
         address: d.registry,
         abi: custosRegistryAbi,
