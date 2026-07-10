@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EntityType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum AgentStatus {
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  REVOKED
+}
+
+enum CheckType {
+  KYB
+  SANCTIONS
+  ACCREDITATION
+}
+
+enum CheckStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+model Agent {
+  id              String      @id @default(cuid())
+  wallet          String      @unique // EIP-55 checksummed
+  erc8004TokenId  String? // uint256 as decimal string
+  ownerName       String
+  ownerEmail      String
+  ownerEntityType EntityType
+  jurisdiction    String // ISO 3166-1 alpha-2
+  status          AgentStatus @default(PENDING)
+  statusReason    String?
+  attestationUID  String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  checks      VerificationCheck[]
+  auditEvents AuditEvent[]
+}
+
+model VerificationCheck {
+  id          String      @id @default(cuid())
+  agentId     String
+  agent       Agent       @relation(fields: [agentId], references: [id])
+  type        CheckType
+  provider    String
+  status      CheckStatus @default(PENDING)
+  rawResult   Json? // provider payload — PII stays here, never on-chain, never in public API responses
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id])
+  type        String
+  payload     Json
+  chainTxHash String?
+  createdAt   DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([type, createdAt])
+}

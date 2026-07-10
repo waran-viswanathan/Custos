@@ -19,7 +19,28 @@ Goal: verify the load-bearing market claims before writing code, and build the c
   - Standards venue: pivot from "publish own spec as Schelling point" to contributing inside FIDO working groups + ERC-8004
   - Follow-up research: competitor depth (is merchant-side Score uncontested?), FIDO WG membership path, FinCEN AML rulemaking tracking
 
-## Phase 2 — Prototype (IN PROGRESS, started 2026-07-10)
+## PIVOT NOTE (2026-07-10, post-Gate-1)
+
+Founder redirected the MVP at the RWA compliance buyer: **Custos is now a
+compliance credential layer for AI agents transacting in tokenized RWAs**
+(KYB + sanctions → EAS attestation on Base → issuer gate contract enforcing
+per-token policy at transfer time). This merges the agent-trust thesis with
+the where-the-money-is-today RWA market surfaced in validation. The x402/KYA
+prototype moved to `legacy/`. New MVP built and E2E-verified — see Phase 2b.
+
+## Phase 2b — RWA Compliance MVP (BUILT 2026-07-10)
+
+- [x] Contracts: CustosRegistry (EAS-backed, revocable), CustosGate (per-token policy), MockTBill — 14 Foundry tests green
+- [x] API: Fastify + Prisma + BullMQ verification pipeline (KYB → sanctions → attest → register), chain indexer, admin revoke — 19 vitest tests green
+- [x] SDK: @custos/sdk (register / waitForVerification / isPermitted, typed ABIs)
+- [x] Dashboard: Next.js (agents, policy editor, audit trail, stats; SIWE-lite + dev bypass)
+- [x] Demo: full lifecycle green — unverified blocked → verified transfer → kill-switch revoked → blocked
+- [x] CI workflow, README, SECURITY.md
+- [ ] Deploy to Base Sepolia (real EAS predeploys — script ready, needs funded key)
+- [ ] Real provider integrations (Persona KYB, OFAC screening)
+- [ ] GATE 2: show to design partners (RWA issuers + agent platform operators)
+
+## Phase 2 — x402/KYA Prototype (SUPERSEDED, code in legacy/)
 
 Goal: demoable wedge — agent registry + credential schema + policy module skeleton + x402 merchant middleware demo on Base testnet.
 

@@ -1,0 +1,31 @@
+{
+  "name": "@custos/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "worker": "tsx src/worker.ts",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "prisma:push": "prisma db push",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@custos/sdk": "workspace:*",
+    "@prisma/client": "^5.22.0",
+    "bullmq": "^5.34.0",
+    "dotenv": "^16.4.0",
+    "fastify": "^5.2.0",
+    "ioredis": "5.10.1",
+    "viem": "^2.21.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

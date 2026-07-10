@@ -1,51 +1,85 @@
 # Custos
 
-**The trust layer for AI agent payments: verify who runs an agent, bound what it can spend, score every transaction it makes.**
+Custos is a compliance credential layer for AI agents transacting in tokenized real-world assets. It verifies the entity behind an agent (KYB + sanctions screening), issues a revocable on-chain attestation via EAS on Base, and gives RWA token issuers a gate contract that blocks non-compliant agents at transfer time. Agents get a portable, revocable credential; issuers get cryptographically enforced transfer policies and a complete audit trail.
 
-Agent payment rails (x402, AP2, card-network agent tokens) move funds without accountability. A payment proves control of money; it proves nothing about who operates the paying agent, what it's authorized to do, or what recourse exists when it misbehaves. Custos closes that gap.
+## Architecture
 
-## What's here
+```
+  Agent operator                    Custos API + worker                     Base / anvil
+ ┌──────────────┐   POST /v1/agents ┌──────────────────┐                 ┌──────────────────┐
+ │  AI agent    │ ────────────────▶ │ KYB check        │    attest       │  EAS             │
+ │  (wallet)    │                   │ Sanctions check  │ ──────────────▶ │  (attestation)   │
+ └──────┬───────┘                   │ (BullMQ pipeline)│    register     ├──────────────────┤
+        │                           └────────┬─────────┘ ──────────────▶ │  CustosRegistry  │
+        │ transfer                           │                           ├──────────────────┤
+        ▼                                    │ indexer                   │  CustosGate ◀────┼── issuer sets
+ ┌──────────────┐    checkAndLog    ┌────────▼─────────┐                 │  (per-token      │   policy
+ │  RWA token   │ ────────────────▶ │ Postgres audit   │ ◀────events──── │   policy checks) │
+ │  (MockTBill) │ ◀─── allow/revert │ trail + dashboard│                 └──────────────────┘
+ └──────────────┘                   └──────────────────┘
+```
 
-| Path | What it is |
-|---|---|
-| [`spec/kya-spec.md`](spec/kya-spec.md) | **Know-Your-Agent credential specification** (v0.1.0-draft, open, CC-BY) — a portable, rail-agnostic way to express *"this agent, operated by this entity, may spend up to X, on Y, until Z."* Comments welcome. |
-| [`packages/kya-sdk`](packages/kya-sdk) | Reference implementation: `did:key` (Ed25519), credentials, payment-bound presentations, policy commitments. Zero runtime deps beyond `@noble/hashes`. |
-| [`packages/registry`](packages/registry) | Credential registry with revocation (in-memory reference; EAS-on-Base anchoring next). |
-| [`packages/score`](packages/score) | Risk scoring v0: assurance-tier, velocity, amount-vs-policy, sanctions components → allow / review / block. |
-| [`packages/middleware-express`](packages/middleware-express) | The merchant's ten lines: Express middleware gating an x402-style paid endpoint on a Custos check. |
-| [`demo/`](demo) | End-to-end demo: 8 scenarios — verified purchase succeeds; forged, tier-inflated, replayed, stolen, revoked, and abusive attempts fail. |
+No PII ever goes on-chain: the attestation carries only `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`.
 
 ## Quickstart
 
 ```bash
-npm install
-npm run demo   # 8-scenario end-to-end run
-npm test       # unit tests
+# prerequisites: node 20+, pnpm 9, foundry, docker (or local postgres+redis)
+pnpm install
+docker compose up -d        # postgres + redis (+ anvil if you don't run it locally)
+pnpm demo                   # anvil → deploy → API + worker → full agent lifecycle demo
 ```
 
-## The merchant integration
+The demo registers "Atlas", an AI treasury agent: blocked while unverified → KYB'd, screened, attested → receives tokenized T-bills → revoked via kill switch → blocked again.
 
-```js
-import { custosGate } from '@custos/middleware-express';
+Other commands: `pnpm test` (forge + vitest), `pnpm dev` (API + worker + dashboard at localhost:3000).
 
-app.get('/api/data',
-  custosGate({ trustList, registry, scorer,
-    price: '10000', asset: 'usdc-base', payTo: '0xMERCHANT', minTier: 1 }),
-  (req, res) => res.json({ data: '...', risk: req.custos.risk.risk }));
+### Running without Docker
+
+Start Postgres 16 (`createdb custos`, role `custos`/`custos`) and Redis on their default ports, then `pnpm demo`.
+
+## Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `RPC_URL` | `http://127.0.0.1:8545` | Chain RPC endpoint |
+| `CHAIN_ID` | `31337` | 31337 local anvil, 84532 Base Sepolia |
+| `ATTESTER_PRIVATE_KEY` | anvil key #0 | Signs attestations + registry txs (KMS in production) |
+| `DEPLOYMENTS_FILE` | `./contracts/deployments/local.json` | Written by the deploy script |
+| `API_PORT` | `4000` | Verification API port |
+| `DATABASE_URL` | `postgresql://custos:custos@localhost:5432/custos` | Postgres |
+| `REDIS_URL` | `redis://localhost:6379` | BullMQ queue |
+| `ADMIN_BEARER_TOKEN` | `dev-admin-token-change-me` | Admin auth for list/revoke/audit endpoints |
+| `SANCTIONS_BLOCKED_JURISDICTIONS` | `KP,IR,CU,SY` | Mock sanctions blocklist |
+| `PERSONA_API_KEY` / `OFAC_API_KEY` | _empty_ | Enable real provider skeletons |
+| `DASHBOARD_DEV_BYPASS_AUTH` | `true` (dev) | Skip SIWE for local development |
+| `SESSION_SECRET` | dev value | Dashboard session cookie HMAC key |
+
+## Integration for issuers
+
+Gate any ERC-20 in ~5 lines — call the Custos gate in your transfer hook:
+
+```solidity
+function _update(address from, address to, uint256 value) internal override {
+    if (from != address(0) && to != address(0)) {
+        require(gate.checkAndLog(to, address(this), value), "CUSTOS_BLOCKED");
+    }
+    super._update(from, to, value);
+}
 ```
 
-No credential → `402` with requirements. Forged / replayed / stolen / revoked credential → `403` with reasons. Verified agent under its spend policy → served, with the verification result on `req.custos`.
+Then configure your policy (jurisdictions, accreditation, transfer caps, kill switch) in the dashboard at `/policies` — enforcement is on-chain, per transfer, with reasons on the audit trail.
 
-## Design principles
+## Repo layout
 
-- **Identity is necessary, not sufficient.** A prompt-injected agent presents an *authentic* credential. Hard spend bounds (policy commitments enforced at the account layer) plus behavioral scoring turn "compromised agent" from unbounded loss into bounded loss.
-- **Assurance tiers are derived, not asserted.** Verifiers recompute the tier from evidence; claiming tier 2 with tier-1 evidence is a rejection, not a warning.
-- **Presentations bind to payments.** A credential presentation carries `H(payment)` as its nonce and the merchant as its audience — replay against another payment or merchant fails cryptographically.
-- **Revocation is a first-class operation.** Compromised agent keys are an expected event; kill-switch revocation must propagate in ≤60s.
-- **Non-custodial by construction.** Custos never holds funds or customer keys.
+| Path | Contents |
+|---|---|
+| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, deploy script, 14 tests |
+| `api/` | Fastify verification API, BullMQ pipeline (KYB → sanctions → attest), chain indexer, Prisma models |
+| `sdk/` | `@custos/sdk` — register, poll status, on-chain permission checks, typed ABIs |
+| `dashboard/` | Next.js issuer dashboard: agents, policies, audit trail, stats |
+| `demo-agent/` | The full-lifecycle demo script |
+| `docs/`, `gtm/`, `research/` | Business plan, validation research, go-to-market kit |
+| `legacy/` | Earlier x402/KYA prototype (superseded by this MVP) |
 
-## Status
-
-Early prototype (pre-launch). The spec is open for comment; the on-chain registry (EAS on Base) and the ERC-4337 policy module are next. Roadmap in [`docs/STATUS.md`](docs/STATUS.md).
-
-Contact: Lalithesh Narayanan — lalitheshnarayanan@gmail.com
+Security model and known MVP limitations: [SECURITY.md](SECURITY.md).

@@ -1,18 +1,19 @@
 {
   "name": "custos",
   "private": true,
-  "version": "0.1.0",
-  "description": "Custos — the trust layer for AI agent payments. Verify, bound, score.",
-  "type": "module",
-  "workspaces": [
-    "packages/*",
-    "demo"
-  ],
+  "version": "0.2.0",
+  "description": "Custos — compliance credential layer for AI agents transacting in tokenized RWAs",
   "scripts": {
-    "demo": "node demo/run.js",
-    "test": "node --test packages/*/test/*.test.js"
+    "dev": "concurrently -n api,worker,dash \"pnpm --filter @custos/api dev\" \"pnpm --filter @custos/api worker\" \"pnpm --filter @custos/dashboard dev\"",
+    "build": "pnpm -r build",
+    "test": "forge test --root contracts && pnpm -r --if-present test",
+    "demo": "./scripts/demo.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
   },
   "engines": {
-    "node": ">=22"
-  }
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.9"
 }

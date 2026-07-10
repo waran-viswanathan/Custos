@@ -1,5 +1,14 @@
 node_modules/
 dist/
+.next/
 .env
 .DS_Store
 *.log
+*.tsbuildinfo
+next-env.d.ts
+
+# foundry artifacts
+contracts/broadcast/
+contracts/cache/
+contracts/out/
+contracts/deployments/local.json
