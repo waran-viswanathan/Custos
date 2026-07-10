@@ -1,29 +1,29 @@
 # Custos — one-pager
 
-**Custos is the trust layer for AI agent payments: verify who runs an agent, bound what it can spend, score every transaction it makes.**
+**Custos is the compliance layer that lets tokenized-asset issuers safely serve AI agents: verify the entity behind an agent, attest it on-chain, and enforce your transfer policy cryptographically — with a kill switch.**
 
 ## The problem, in one sentence each
 
-- **If you operate agents:** you can't give your agent a corporate card. Delegating a wallet to an LLM-driven agent is uncapped liability — one prompt injection or model error and the budget is gone, and today's spend controls are per-wallet, per-chain, and unaudited.
-- **If you sell to agents:** an inbound x402 payment carries money but no accountability — no identity, no fraud signal, no recourse. Anything refundable, rate-limited, or abusable can't safely be sold to agents.
-- **The result:** 165M+ agent transactions averaging ~$0.30 each. The rails work; the trust to run real money over them doesn't exist. That gap is the market.
+- **If you issue tokenized RWAs:** AI agents are starting to hold and move treasuries, but your compliance stack verifies humans and companies — an agent wallet has no KYC file, no jurisdiction, no accountability, so today your only options are "block all agents" (losing the fastest-growing holder class) or "hope for the best."
+- **If you operate agents that touch real assets:** you can't prove to any issuer or counterparty that your agent is legitimate, whose authority it acts under, or that it can be shut off — so doors stay closed.
+- **The regulatory direction is one-way:** stablecoin and RWA rules (GENIUS Act rulemaking, MiCA) are converging on entity-level accountability for automated actors. Issuers who can't answer "who is behind this wallet?" will be the ones holding the risk.
 
-## What we're building
+## What we built (working today — live demo, not slides)
 
-1. **Verify** — Know-Your-Agent credentials: cryptographic binding of agent → operator (KYB'd entity) → runtime attestation → authorized scopes. Open spec, ERC-8004-compatible, works in x402 headers and AP2 mandates.
-2. **Policy** — spend rules enforced cryptographically, not by prompt: per-transaction/daily caps, merchant allowlists, velocity limits, human-approval thresholds, kill switch. Deployed as an audited ERC-4337 smart-account module. Non-custodial — we never touch funds.
-3. **Score** — one API call per inbound agent transaction returns identity confidence, operator reputation, behavioral anomaly, sanctions flags. <100 ms. Priced like Stripe Radar.
+1. **Verify** — the agent's operator goes through KYB + sanctions screening; passing yields a revocable on-chain attestation (EAS on Base) carrying only `verified / jurisdiction / accredited` — **no PII ever on-chain**.
+2. **Gate** — a contract your token calls at transfer time: allowed jurisdictions, accreditation requirements, per-transfer caps, active/inactive — enforced on-chain, per transfer, with machine-readable denial reasons. Integration is ~5 lines in your transfer hook.
+3. **Kill switch** — one API call revokes the agent everywhere, effective on the next transfer. Every decision (API-side and chain-side) lands on one audit trail your compliance team can export.
 
-A hijacked agent is still *authentically credentialed* — identity alone isn't enough. That's why Policy and Score ship together: hard caps convert "agent fully compromised" from unbounded loss into bounded, insurable loss.
+The 60-second demo: an AI treasury agent tries to receive tokenized T-bills → **blocked**. Its operator passes KYB + sanctions → attested → same transfer **succeeds**. Compliance revokes → **blocked again**. Full lifecycle, live on chain.
 
-## Why us / why now
+## Why us
 
-Rails are free and commoditized — x402 charges zero protocol fees. In every payments platform shift, the durable margin went to the neutral risk layer (Stripe Radar, Sift, Forter, Plaid). Coinbase, Google, Stripe, and Mastercard each own a rail and can't be the cross-rail trust arbiter. A neutral player can. The KYA spec will be open; the outcome-labeled risk data will compound privately.
+Issuer compliance stacks (transfer-agent allowlists, KYC providers) verify *people and companies*, not autonomous software acting on their behalf. Custos is the missing binding: **agent → operator → authority → revocation**, portable across issuers, ERC-8004-compatible, and non-custodial — we never touch funds or hold keys. One verification, accepted by every integrated issuer: the network effect compliance teams actually want.
 
 ## What we're asking design partners for
 
-- 45 minutes on how you handle (or avoid) agent traffic and agent spend today
-- If it resonates: a non-binding LOI and early access to the private beta on Base
-- In return: free integration support, lifetime founding-partner pricing, and input into the KYA spec before it hardens
+- 45 minutes on how you handle (or block) automated/agent-held positions today
+- If it resonates: run the gate on a test token with us on Base Sepolia — integration measured in minutes, we do the work
+- In return: founding-partner pricing locked for 24 months, and your policy requirements shape the product before it hardens
 
-**Contact:** Lalithesh — lalitheshnarayanan@gmail.com
+**Contact:** Lalithesh Narayanan — lalitheshnarayanan@gmail.com

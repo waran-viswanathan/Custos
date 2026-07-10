@@ -1,42 +1,46 @@
 # Cold outreach templates
 
-Starting cold means the sequencing is: **be useful in public first, then outreach converts.** Before sending volume, have (a) the KYA spec draft public on GitHub, (b) 10+ genuinely helpful answers in the x402/AP2/agent-dev Discords, (c) 2–3 technical posts. Cold email from "founder with a repo and a spec" converts several times better than "founder with an idea." These templates assume that groundwork exists or is in flight.
+Sequencing for a cold-start founder: **working demo first, public testnet second, emails third.** Every email below leans on "this is live, here's the explorer link / 60-second demo video" — several times the reply rate of "founder with an idea." Prereqs before sending volume: (a) contracts on Base Sepolia with a public demo, (b) a 60–90s screen recording of the lifecycle demo, (c) the repo README presentable.
 
-Rules: ≤120 words, one specific observation about *them*, one clear ask (the 45-min interview, never a sale), no attachments, plain text.
+Rules: ≤120 words, one specific observation about *them*, one clear ask (45-min interview, never a sale), no attachments, plain text.
 
-## 1. Agent operator (builds agents that spend)
+## 1. RWA issuer / tokenization platform
 
-Subject: **how [Company] bounds agent spend**
+Subject: **agent-held [their asset] — who's accountable?**
 
-Hi [Name] — I saw [specific: your agent product / your post about giving agents wallets / your MCP server that calls paid APIs].
+Hi [Name] — [specific: saw your tokenized treasury product / your transfer-restriction docs / your compliance post].
 
-I'm researching a specific failure mode: an LLM-driven agent with wallet access is uncapped liability — injection or model error can drain it, and today's controls are prompts and per-wallet limits nobody audits.
+Question I'm researching: when the holder of a tokenized asset is an AI agent rather than a person, whose KYC file backs the wallet? Every issuer stack I've looked at verifies entities — none bind an *agent* to the entity operating it, with revocation.
 
-I'm building cryptographic spend-bounding for agent accounts (caps, allowlists, kill switch, enforced at the signature layer — open-source core: [repo link]). Before I harden the spec I'm interviewing 20 teams that run spending agents.
+I've built exactly that binding: KYB + sanctions → revocable on-chain attestation → a gate contract your token calls at transfer time (live demo: agent blocked → verified → transfers → revoked → blocked, 60 seconds: [link]).
 
-Could I get 45 minutes on how you handle this today? Happy to share the aggregate findings back.
-
-— Lalithesh
-
-## 2. API seller / x402 merchant
-
-Subject: **agent traffic you can't trust**
-
-Hi [Name] — noticed [Company] accepts x402 payments for [product].
-
-Question I'm digging into: when a payment arrives from an agent, you get funds but no accountability — no operator identity, no fraud history, no recourse if it abuses rate limits or refunds. Several sellers have told me they throttle agent traffic they'd rather serve.
-
-I'm building a per-request risk check for exactly this (think Stripe Radar for agent payments) and interviewing sellers before locking the design. 45 minutes on how you handle automated traffic today?
+Could I get 45 minutes on how you handle automated holders today? Findings shared back.
 
 — Lalithesh
 
-## 3. Ecosystem insider (facilitator / wallet provider / standards person)
+## 2. Agent operator (AI treasury / agent fund / DAO tooling)
 
-Subject: **KYA extension for x402 — feedback?**
+Subject: **which doors stay closed to your agents**
 
-Hi [Name] — I've been following your work on [specific]. I'm drafting an open Know-Your-Agent credential spec (agent → operator → attestation → scopes) designed to ride in x402 headers and AP2 mandates: [spec link].
+Hi [Name] — [specific: your agent treasury product / your post on agents managing funds].
 
-You've seen more real agent-payment flows than almost anyone. Would you tear it apart for 30 minutes? I want it wrong-now rather than wrong-in-production.
+I keep hearing the same thing from teams whose agents touch real assets: issuers and counterparties can't verify who's behind an agent wallet, so they default to "no." Meanwhile one prompt-injection incident (Grok/Bankrbot, May) made everyone's compliance team twitchier.
+
+I've built a verified-agent credential: your entity passes KYB once, your agent gets a revocable on-chain attestation that compliance-gated assets check at transfer time — with a kill switch you control. Working demo: [link].
+
+45 minutes on which counterparty doors matter most to you? I'm picking 10 design partners now.
+
+— Lalithesh
+
+## 3. Compliance / legal at a crypto-native institution
+
+Subject: **KYA — the agent gap in transfer restrictions**
+
+Hi [Name] — your [talk/post] on [specific] made me think you're the right person to pressure-test something.
+
+Thesis: transfer restrictions verify entities; nothing today binds an autonomous agent to a verified entity with enforceable revocation. As agent-held positions grow, that gap becomes an examiner question with no good answer.
+
+I've built a candidate answer (KYB-backed revocable attestations + transfer-time enforcement, no PII on-chain) and want it torn apart by someone who reviews these programs for a living. 30 minutes?
 
 — Lalithesh
 
@@ -44,12 +48,13 @@ You've seen more real agent-payment flows than almost anyone. Would you tear it 
 
 Subject: re: [same]
 
-Hi [Name] — floating this once. One data point from interviews so far: [genuine finding, e.g. "every operator I've talked to caps agents by prompt, and every one has had an agent ignore the prompt"]. If that matches your experience I'd love 30 minutes; if not, no worries and I'll leave you alone.
+Hi [Name] — floating this once. One finding so far: [genuine, e.g. "3 of 4 issuers I've interviewed say they can't distinguish an agent wallet from a human one, and two admitted they'd rather not look"]. If that matches what you see, 30 minutes would be valuable; if not, I'll leave you alone.
 
-## Target list construction (do this before sending anything)
+## Target list construction
 
-- x402 ecosystem directory + facilitator showcase pages → sellers actually live on x402
-- MCP server registries (paid tools) → operators whose agents spend
-- AgentKit / LangChain / CrewAI showcase + GitHub topic searches → agent builders
-- "State of agent payments" report authors, Discord power-answerers → insiders
-- Track everything in `research/outreach-tracker.md`: name, company, segment, hook, sent date, reply, interview date, LOI status. Target: 60 sends → ~15 interviews → 5 LOIs.
+- Tokenized-treasury issuers and their platform providers (the teams behind on-chain T-bill/money-market products; start with smaller/newer issuers — the giants move last)
+- Tokenization infrastructure and transfer-agent platforms (they must offer agent handling to *their* issuer clients — white-label angle)
+- RWA marketplaces and lending protocols accepting RWA collateral
+- Agent-treasury and AI-fund teams (agent frameworks with wallet integrations, DAO treasury tooling)
+- Compliance leaders who speak/write publicly on digital-asset programs
+- Track in `research/outreach-tracker.md`: name, company, segment, hook, sent date, reply, interview, LOI. Target: 60 sends → ~15 interviews → 5 LOIs.

@@ -36,8 +36,11 @@ prototype moved to `legacy/`. New MVP built and E2E-verified — see Phase 2b.
 - [x] Dashboard: Next.js (agents, policy editor, audit trail, stats; SIWE-lite + dev bypass)
 - [x] Demo: full lifecycle green — unverified blocked → verified transfer → kill-switch revoked → blocked
 - [x] CI workflow, README, SECURITY.md
-- [ ] Deploy to Base Sepolia (real EAS predeploys — script ready, needs funded key)
+- [ ] Deploy to Base Sepolia — `scripts/deploy-sepolia.sh` ready; deployer `0x89BFcF7200f561f5b9738870Ae776A928564dD7C` generated, NEEDS FAUCET FUNDING (founder action)
+- [ ] Record 60–90s demo video (prereq for outreach — every email links it)
 - [ ] Real provider integrations (Persona KYB, OFAC screening)
+- [x] GTM kit rewritten for RWA-compliance positioning (2026-07-10): one-pager, issuer/operator interview scripts, outreach emails, cofounder brief
+- [ ] Build wave-1 target list (~60 names: issuers, tokenization platforms, agent-treasury teams)
 - [ ] GATE 2: show to design partners (RWA issuers + agent platform operators)
 
 ## Phase 2 — x402/KYA Prototype (SUPERSEDED, code in legacy/)
