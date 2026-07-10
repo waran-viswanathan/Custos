@@ -7,13 +7,17 @@ Sequence chosen 2026-07-10: **Validation → Prototype → Deck**, with a gate c
 
 Goal: verify the load-bearing market claims before writing code, and build the cold-start outreach kit.
 
-- [ ] Deep research: x402 real volume & genuine-commerce share, AP2 status, Mastercard Verifiable Intent, ERC-8004 status, competitor scan → `research/market-validation.md`
+- [x] Deep research: x402 real volume & genuine-commerce share, AP2 status, Mastercard Verifiable Intent, ERC-8004 status, competitor scan → `research/market-validation.md` (2026-07-10; 19 verified findings, 6 refuted claims)
 - [x] One-pager → `gtm/one-pager.md`
 - [x] Design-partner interview script → `gtm/design-partner-interview-script.md`
 - [x] Design-partner LOI template → `gtm/design-partner-loi-template.md`
 - [x] Cold outreach email templates → `gtm/outreach-emails.md`
 - [x] Cofounder pitch / recruiting brief → `gtm/cofounder-brief.md`
-- [ ] GATE 1: research supports the thesis? Any claims in the plan need correcting? → founder review
+- [ ] GATE 1 (AWAITING FOUNDER REVIEW): window is real but earlier + more contested than planned. Key decisions needed:
+  - Adopt the 7 corrections in `research/market-validation.md` §5 across all materials
+  - Positioning vs Skyfire (owns "KYA" branding, Coinbase Ventures/a16z-backed) and Catena Labs ($48M, OCC trust-charter path) — differentiation: open spec, non-custodial enforcement, cross-rail neutrality, outcome-data scoring
+  - Standards venue: pivot from "publish own spec as Schelling point" to contributing inside FIDO working groups + ERC-8004
+  - Follow-up research: competitor depth (is merchant-side Score uncontested?), FIDO WG membership path, FinCEN AML rulemaking tracking
 
 ## Phase 2 — Prototype (IN PROGRESS, started 2026-07-10)
 
