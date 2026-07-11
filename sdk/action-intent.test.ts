@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { actionIntentTypedData, CustosActions, type ActionIntent } from './src/index.js';
+import { actionIntentTypedData, CustosActions, mandateScopeKey, type ActionIntent } from './src/index.js';
 
 const AGENT = '0x1111111111111111111111111111111111111111';
 const VENUE = '0x2222222222222222222222222222222222222222';
@@ -37,5 +37,14 @@ describe('actionIntentTypedData', () => {
       'agent', 'venue', 'executor', 'action', 'asset', 'amount',
       'recipient', 'nonce', 'deadline', 'contextHash',
     ]);
+  });
+});
+
+describe('mandateScopeKey', () => {
+  it('binds the agent, venue, action, and policy asset', () => {
+    const scope = mandateScopeKey({ agent: AGENT, venue: VENUE, action: CustosActions.SWAP, asset: ASSET });
+    expect(scope).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(mandateScopeKey({ agent: AGENT, venue: VENUE, action: CustosActions.SWAP, asset: RECIPIENT }))
+      .not.toBe(scope);
   });
 });
