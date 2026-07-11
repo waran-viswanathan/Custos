@@ -34,6 +34,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @custos/api prisma:generate
       - run: pnpm --filter @custos/api exec prisma validate
+        env:
+          DATABASE_URL: postgresql://custos:custos@localhost:5432/custos
       - run: pnpm --filter @custos/sdk gen:abis
       - uses: actions/upload-artifact@v4
         with:
