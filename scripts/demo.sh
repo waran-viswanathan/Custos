@@ -68,15 +68,28 @@ pnpm --filter @custos/api exec prisma db push --skip-generate >/dev/null
 # --- api + worker (logs to files so shutdown noise stays out of the demo) ---
 echo "▶ starting API + verification worker (logs: /tmp/custos-api.log, /tmp/custos-worker.log)"
 pnpm --filter @custos/api start > /tmp/custos-api.log 2>&1 &
-CLEANUP_PIDS+=($!)
+API_PID=$!
+CLEANUP_PIDS+=($API_PID)
 pnpm --filter @custos/api worker > /tmp/custos-worker.log 2>&1 &
-CLEANUP_PIDS+=($!)
+WORKER_PID=$!
+CLEANUP_PIDS+=($WORKER_PID)
 
 echo "▶ waiting for API health"
+API_READY=false
 for i in $(seq 1 30); do
-  if curl -s -o /dev/null http://localhost:4000/healthz; then break; fi
+  if curl --fail --silent --output /dev/null http://127.0.0.1:4000/healthz; then
+    API_READY=true
+    break
+  fi
+  if ! kill -0 "$API_PID" 2>/dev/null; then break; fi
   sleep 1
 done
+if [ "$API_READY" != true ]; then
+  echo "✗ API failed to become healthy"
+  tail -100 /tmp/custos-api.log || true
+  tail -100 /tmp/custos-worker.log || true
+  exit 1
+fi
 
 # --- the story ---
 pnpm --filter @custos/demo-agent demo
