@@ -78,6 +78,7 @@ contract MarketManagerTest is Test {
         vm.prank(issuer);
         poolId = manager.createPool(address(tbill), address(usd), address(tbill), 30);
 
+        vm.prank(issuer);
         tbill.mint(issuer, 2_000_000e6);
         usd.mint(issuer, 2_000_000e6);
         usd.mint(agent, 100_000e6);
