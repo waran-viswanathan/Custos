@@ -11,7 +11,12 @@ const DEV_BACKFILL = 5_000n;
 export function startIndexer(db: PrismaClient): () => void {
   const chain = defineChain({ id: env.CHAIN_ID, name: `custos-${env.CHAIN_ID}`, nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: { default: { http: [env.RPC_URL] } } });
   const client = createPublicClient({ chain, transport: http(env.RPC_URL) });
-  const events = [getAbiItem({ abi: custosGateAbi, name: 'TransferChecked' }), getAbiItem({ abi: custosRegistryAbi, name: 'AgentRegistered' }), getAbiItem({ abi: custosRegistryAbi, name: 'AgentRevoked' })];
+  const events = [
+    getAbiItem({ abi: custosGateAbi, name: 'TransferChecked' }),
+    getAbiItem({ abi: custosGateAbi, name: 'ActionChecked' }),
+    getAbiItem({ abi: custosRegistryAbi, name: 'AgentRegistered' }),
+    getAbiItem({ abi: custosRegistryAbi, name: 'AgentRevoked' }),
+  ];
   let stopped = false;
 
   const agentIdByWallet = async (wallet: string): Promise<string | null> => {
@@ -26,6 +31,14 @@ export function startIndexer(db: PrismaClient): () => void {
       case 'TransferChecked':
         type = 'CHAIN_TRANSFER_CHECKED'; wallet = a['agent'] as string | undefined;
         payload = { agent: a['agent'], token: a['token'], caller: a['caller'], amount: (a['amount'] as bigint | undefined)?.toString(), allowed: a['allowed'] ?? false, authoritative: a['authoritative'] ?? false, reason: a['reason'] ?? '' };
+        break;
+      case 'ActionChecked':
+        type = 'CHAIN_ACTION_CHECKED'; wallet = a['agent'] as string | undefined;
+        payload = {
+          agent: a['agent'], venue: a['venue'], action: a['action'], operator: a['operator'], asset: a['asset'],
+          amount: (a['amount'] as bigint | undefined)?.toString(), allowed: a['allowed'] ?? false,
+          authoritative: a['authoritative'] ?? false, contextHash: a['contextHash'], reason: a['reason'] ?? '',
+        };
         break;
       case 'AgentRegistered':
         type = 'CHAIN_AGENT_REGISTERED'; wallet = a['agentWallet'] as string | undefined;
