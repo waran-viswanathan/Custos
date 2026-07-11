@@ -1,3 +1,4 @@
+Formatted /Users/lalithesh/Documents/Codex/2026-07-10/let/work/production-hardening/contracts/test/AgentMandate.t.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -77,9 +78,10 @@ contract AgentMandateTest is Test {
     function _setPolicy() internal {
         bytes2[] memory jurisdictions = new bytes2[](1);
         jurisdictions[0] = "US";
+        bytes32 action = gate.SWAP_ACTION();
         vm.prank(issuer);
         gate.setActionPolicy(
-            address(authorizer), gate.SWAP_ACTION(), asset, CustosGate.ActionPolicy(false, jurisdictions, 1_000, true)
+            address(authorizer), action, asset, CustosGate.ActionPolicy(false, jurisdictions, 1_000, true)
         );
     }
 
@@ -87,11 +89,9 @@ contract AgentMandateTest is Test {
         internal
         returns (bytes32)
     {
+        bytes32 action = gate.SWAP_ACTION();
         vm.prank(principal);
-        return
-            mandates.grantMandate(
-                agent, venue, gate.SWAP_ACTION(), asset, maxPerAction, maxTotal, validAfter, validUntil
-            );
+        return mandates.grantMandate(agent, venue, action, asset, maxPerAction, maxTotal, validAfter, validUntil);
     }
 
     function _intent(uint256 amount) internal view returns (CustosActionAuthorizer.ActionIntent memory) {
@@ -136,9 +136,10 @@ contract AgentMandateTest is Test {
     function test_IssuerPolicyDenialDoesNotConsumeMandateBudget() public {
         bytes2[] memory jurisdictions = new bytes2[](1);
         jurisdictions[0] = "US";
+        bytes32 action = gate.SWAP_ACTION();
         vm.prank(issuer);
         gate.setActionPolicy(
-            address(authorizer), gate.SWAP_ACTION(), asset, CustosGate.ActionPolicy(false, jurisdictions, 100, true)
+            address(authorizer), action, asset, CustosGate.ActionPolicy(false, jurisdictions, 100, true)
         );
 
         assertFalse(_authorize(200));
@@ -173,17 +174,11 @@ contract AgentMandateTest is Test {
     }
 
     function test_OnlyOneLivePrincipalMandateMayOccupyScope() public {
+        bytes32 action = gate.SWAP_ACTION();
         vm.prank(principal);
         vm.expectRevert(CustosAgentMandate.ActiveMandateExists.selector);
         mandates.grantMandate(
-            agent,
-            venue,
-            gate.SWAP_ACTION(),
-            asset,
-            100,
-            1_000,
-            uint64(block.timestamp),
-            uint64(block.timestamp + 1 days)
+            agent, venue, action, asset, 100, 1_000, uint64(block.timestamp), uint64(block.timestamp + 1 days)
         );
     }
 }
