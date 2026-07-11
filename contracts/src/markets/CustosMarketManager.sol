@@ -30,6 +30,14 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         uint256 totalShares;
     }
 
+    struct SwapParams {
+        bytes32 poolId;
+        address tokenIn;
+        uint256 amountIn;
+        uint256 minOut;
+        address recipient;
+    }
+
     CustosGate public immutable gate;
     CustosActionAuthorizer public authorizer;
     mapping(bytes32 => Pool) private _pools;
@@ -199,41 +207,37 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
     }
 
     function swapExactInput(
-        bytes32 poolId,
-        address tokenIn,
-        uint256 amountIn,
-        uint256 minOut,
-        address recipient,
+        SwapParams calldata params,
         CustosActionAuthorizer.ActionIntent calldata intent,
         bytes calldata signature
     ) external nonReentrant returns (uint256 amountOut) {
-        Pool storage pool = _activePool(poolId);
-        if (amountIn == 0 || recipient == address(0)) revert InvalidAmount();
-        _requireUint128(amountIn);
-        bool zeroForOne = tokenIn == pool.token0;
-        if (!zeroForOne && tokenIn != pool.token1) revert InvalidAddress();
+        Pool storage pool = _activePool(params.poolId);
+        if (params.amountIn == 0 || params.recipient == address(0)) revert InvalidAmount();
+        _requireUint128(params.amountIn);
+        bool zeroForOne = params.tokenIn == pool.token0;
+        if (!zeroForOne && params.tokenIn != pool.token1) revert InvalidAddress();
 
         (uint256 reserveIn, uint256 reserveOut) =
             zeroForOne ? (pool.reserve0, pool.reserve1) : (pool.reserve1, pool.reserve0);
-        amountOut = _quote(reserveIn, reserveOut, amountIn, pool.feeBps);
-        if (amountOut < minOut) revert SlippageExceeded();
+        amountOut = _quote(reserveIn, reserveOut, params.amountIn, pool.feeBps);
+        if (amountOut < params.minOut) revert SlippageExceeded();
 
-        uint256 policyAmount = tokenIn == pool.policyAsset ? amountIn : amountOut;
-        bytes32 expectedContext = swapContext(poolId, tokenIn, amountIn, minOut);
-        _validateIntent(intent, gate.SWAP_ACTION(), pool.policyAsset, policyAmount, recipient, expectedContext);
+        uint256 policyAmount = params.tokenIn == pool.policyAsset ? params.amountIn : amountOut;
+        bytes32 expectedContext = swapContext(params.poolId, params.tokenIn, params.amountIn, params.minOut);
+        _validateIntent(intent, gate.SWAP_ACTION(), pool.policyAsset, policyAmount, params.recipient, expectedContext);
         if (!authorizer.authorize(intent, signature)) revert ComplianceDenied();
 
-        _collectExact(tokenIn, msg.sender, amountIn);
+        _collectExact(params.tokenIn, msg.sender, params.amountIn);
         if (zeroForOne) {
-            pool.reserve0 = _addReserve(pool.reserve0, amountIn);
+            pool.reserve0 = _addReserve(pool.reserve0, params.amountIn);
             pool.reserve1 -= uint128(amountOut);
-            IERC20(pool.token1).safeTransfer(recipient, amountOut);
+            IERC20(pool.token1).safeTransfer(params.recipient, amountOut);
         } else {
-            pool.reserve1 = _addReserve(pool.reserve1, amountIn);
+            pool.reserve1 = _addReserve(pool.reserve1, params.amountIn);
             pool.reserve0 -= uint128(amountOut);
-            IERC20(pool.token0).safeTransfer(recipient, amountOut);
+            IERC20(pool.token0).safeTransfer(params.recipient, amountOut);
         }
-        emit Swapped(poolId, intent.agent, recipient, tokenIn, amountIn, amountOut);
+        emit Swapped(params.poolId, msg.sender, params.recipient, params.tokenIn, params.amountIn, amountOut);
     }
 
     function quoteExactInput(bytes32 poolId, address tokenIn, uint256 amountIn)
