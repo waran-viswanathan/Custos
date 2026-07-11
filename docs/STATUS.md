@@ -36,7 +36,7 @@ prototype moved to `legacy/`. New MVP built and E2E-verified — see Phase 2b.
 - [x] Dashboard: Next.js (agents, policy editor, audit trail, stats; SIWE-lite + dev bypass)
 - [x] Demo: full lifecycle green — unverified blocked → verified transfer → kill-switch revoked → blocked
 - [x] CI workflow, README, SECURITY.md
-- [ ] Deploy to Base Sepolia — `scripts/deploy-sepolia.sh` ready; deployer `0x89BFcF7200f561f5b9738870Ae776A928564dD7C` generated, NEEDS FAUCET FUNDING (founder action)
+- [x] Deployed to Base Sepolia (2026-07-10) with real EAS predeploys — registry 0x307D6709EFF49720f63C7ecD90cDc77Bbf818747, gate 0x837e675C7f560cB5b071E7909791C209Fa7B716D, cTBILL 0xaC19AD88879ED4CD3090D634210b221e95062CE7; full lifecycle E2E green on public testnet. Known limitation: chain-event indexer needs a filter-supporting RPC (Alchemy/Infura) on Sepolia — public RPC drops filters
 - [ ] Record 60–90s demo video (prereq for outreach — every email links it)
 - [ ] Real provider integrations (Persona KYB, OFAC screening)
 - [x] GTM kit rewritten for RWA-compliance positioning (2026-07-10): one-pager, issuer/operator interview scripts, outreach emails, cofounder brief

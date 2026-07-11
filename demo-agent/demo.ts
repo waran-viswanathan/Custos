@@ -65,7 +65,10 @@ async function transferTBill(to: Address, amount: bigint): Promise<{ ok: boolean
       account: issuer.account,
     });
     const hash = await issuer.writeContract(sim.request);
-    await publicClient.waitForTransactionReceipt({ hash });
+    // a tx can simulate clean on a lagging RPC replica yet revert at execution
+    // (e.g. revocation landed in between) — the receipt status is the truth
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== 'success') return { ok: false, reason: 'REVERTED_AT_EXECUTION' };
     return { ok: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -146,9 +149,14 @@ async function main() {
   step(5, 'Issuer retries the same transfer');
   const attempt2 = await transferTBill(atlas.address, parseUnits('1000', 6));
   if (!attempt2.ok) throw new Error(`expected success, got ${attempt2.reason}`);
-  const balance = await publicClient.readContract({
-    address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [atlas.address],
-  });
+  // retry the read: load-balanced public RPCs can serve a pre-transfer state
+  let balance = 0n;
+  for (let i = 0; i < 10 && balance === 0n; i++) {
+    balance = await publicClient.readContract({
+      address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [atlas.address],
+    });
+    if (balance === 0n) await new Promise((r) => setTimeout(r, 2000));
+  }
   ok(`transfer succeeded — Atlas holds ${cTBILL(balance)}`);
 
   step(6, 'Compliance desk revokes Atlas (kill switch) via the Custos API');

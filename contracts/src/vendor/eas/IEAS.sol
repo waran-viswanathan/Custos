@@ -44,6 +44,8 @@ struct RevocationRequest {
 }
 
 interface IEAS {
+    event Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaUID);
+
     function attest(AttestationRequest calldata request) external payable returns (bytes32);
 
     function revoke(RevocationRequest calldata request) external payable;

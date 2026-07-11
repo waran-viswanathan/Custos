@@ -11,6 +11,9 @@ import {
 /// tests. Signature-compatible with the real predeploys so the rest of the
 /// system is identical on Base Sepolia.
 contract MockEAS {
+    // matches the real EAS event so UID extraction from receipts is one code path
+    event Attested(address indexed recipient, address indexed attester, bytes32 uid, bytes32 indexed schemaUID);
+
     mapping(bytes32 => string) public schemas;
     mapping(bytes32 => Attestation) private _attestations;
     uint256 private _nonce;
@@ -35,6 +38,7 @@ contract MockEAS {
             revocable: request.data.revocable,
             data: request.data.data
         });
+        emit Attested(request.data.recipient, msg.sender, uid, request.schema);
     }
 
     function revoke(RevocationRequest calldata request) external payable {

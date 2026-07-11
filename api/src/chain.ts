@@ -4,6 +4,7 @@ import {
   defineChain,
   encodeAbiParameters,
   http,
+  parseEventLogs,
   toHex,
   zeroHash,
   type Address,
@@ -30,6 +31,8 @@ export interface ChainService {
     reason: string;
   }): Promise<{ registryTx: Hex; easTx: Hex }>;
 }
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function jurisdictionToBytes2(code: string): Hex {
   if (!/^[A-Za-z]{2}$/.test(code)) throw new Error(`invalid jurisdiction code: ${code}`);
@@ -68,17 +71,50 @@ export function createChainService(): ChainService {
         ],
         account,
       });
-      const attestationUID = attestSim.result as Hex;
       const attestTx = await walletClient.writeContract(attestSim.request);
-      await publicClient.waitForTransactionReceipt({ hash: attestTx });
+      const attestReceipt = await publicClient.waitForTransactionReceipt({ hash: attestTx });
 
-      const regSim = await publicClient.simulateContract({
-        address: d.registry,
-        abi: custosRegistryAbi,
-        functionName: 'registerAgent',
-        args: [wallet, erc8004TokenId, attestationUID],
-        account,
-      });
+      // The UID MUST come from the receipt's Attested event, not the simulation
+      // result: real EAS derives the UID from the attestation struct including
+      // block timestamp, so a simulated UID goes stale if the tx lands in a
+      // later block (bit us on Base Sepolia; the mock's UID hid it locally).
+      const attested = parseEventLogs({ abi: mockEasAbi, eventName: 'Attested', logs: attestReceipt.logs }).find(
+        (l) => l.args.recipient?.toLowerCase() === wallet.toLowerCase(),
+      );
+      if (!attested) throw new Error(`no Attested event for ${wallet} in tx ${attestTx}`);
+      const attestationUID = attested.args.uid as Hex;
+
+      // Public RPCs are load-balanced and replicas can lag the attest block by
+      // seconds; registerAgent's simulation reads eas.getAttestation and hit
+      // UnknownAttestation() on Base Sepolia. Wait until the attestation is
+      // readable, then retry the simulation through residual lag.
+      for (let i = 0; i < 15; i++) {
+        const att = await publicClient.readContract({
+          address: d.eas,
+          abi: mockEasAbi,
+          functionName: 'getAttestation',
+          args: [attestationUID],
+        });
+        if (att.uid === attestationUID) break;
+        await sleep(2_000);
+      }
+
+      let regSim;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          regSim = await publicClient.simulateContract({
+            address: d.registry,
+            abi: custosRegistryAbi,
+            functionName: 'registerAgent',
+            args: [wallet, erc8004TokenId, attestationUID],
+            account,
+          });
+          break;
+        } catch (err) {
+          if (attempt >= 6) throw err;
+          await sleep(2_000 * attempt);
+        }
+      }
       const registerTx = await walletClient.writeContract(regSim.request);
       await publicClient.waitForTransactionReceipt({ hash: registerTx });
 
