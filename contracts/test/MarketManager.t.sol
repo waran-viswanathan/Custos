@@ -192,6 +192,16 @@ contract MarketManagerTest is Test {
         });
     }
 
+    function _swapParams(address tokenIn, uint256 amountIn, uint256 minOut, address recipient)
+        internal
+        view
+        returns (CustosMarketManager.SwapParams memory)
+    {
+        return CustosMarketManager.SwapParams({
+            poolId: poolId, tokenIn: tokenIn, amountIn: amountIn, minOut: minOut, recipient: recipient
+        });
+    }
+
     function _seedPool() internal {
         (uint256 amount0, uint256 amount1) = _orderedAmounts(INITIAL, INITIAL);
         CustosActionAuthorizer.ActionIntent memory intent = _liquidityIntent(issuer, amount0, amount1, 0, INITIAL);
@@ -207,7 +217,7 @@ contract MarketManagerTest is Test {
             _swapIntent(wallet, address(usd), amountIn, amountOut, amountOut, wallet);
         bytes memory signature = _sign(key, intent);
         vm.prank(wallet);
-        amountOut = manager.swapExactInput(poolId, address(usd), amountIn, amountOut, wallet, intent, signature);
+        amountOut = manager.swapExactInput(_swapParams(address(usd), amountIn, amountOut, wallet), intent, signature);
     }
 
     function _selector(bytes memory result) internal pure returns (bytes4 value) {
@@ -246,7 +256,7 @@ contract MarketManagerTest is Test {
             .call(
                 abi.encodeCall(
                     CustosMarketManager.swapExactInput,
-                    (poolId, address(usd), amountIn, amountOut, unverified, intent, signature)
+                    (_swapParams(address(usd), amountIn, amountOut, unverified), intent, signature)
                 )
             );
         assertFalse(success);
@@ -268,7 +278,8 @@ contract MarketManagerTest is Test {
         (bool success, bytes memory result) = address(manager)
             .call(
                 abi.encodeCall(
-                    CustosMarketManager.swapExactInput, (poolId, address(usd), amountIn, 0, agent, intent, signature)
+                    CustosMarketManager.swapExactInput,
+                    (_swapParams(address(usd), amountIn, 0, agent), intent, signature)
                 )
             );
         assertFalse(success);
@@ -287,7 +298,7 @@ contract MarketManagerTest is Test {
             .call(
                 abi.encodeCall(
                     CustosMarketManager.swapExactInput,
-                    (poolId, address(usd), amountIn + 1, 0, agent, intent, signature)
+                    (_swapParams(address(usd), amountIn + 1, 0, agent), intent, signature)
                 )
             );
         assertFalse(success);
@@ -348,7 +359,7 @@ contract MarketManagerTest is Test {
             .call(
                 abi.encodeCall(
                     CustosMarketManager.swapExactInput,
-                    (poolId, address(usd), amountIn, 0, agent, emptyIntent, bytes(""))
+                    (_swapParams(address(usd), amountIn, 0, agent), emptyIntent, bytes(""))
                 )
             );
         assertFalse(swapSuccess);
