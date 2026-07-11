@@ -20,6 +20,20 @@ afterEach(() => {
 });
 
 describe('Custos.register', () => {
+  it('requests a wallet-bound registration challenge', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({
+      wallet: WALLET,
+      nonce: '00000000-0000-4000-8000-000000000001',
+      domain: 'api.custos.example',
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await makeClient().challenge(WALLET);
+    expect(result.domain).toBe('api.custos.example');
+    expect(fetchMock.mock.calls[0]![0]).toBe('http://api.test/v1/agents/challenge');
+  });
+
   it('POSTs a checksummed wallet and flattened owner fields', async () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 'a-1', status: 'PENDING' }, 202));
     vi.stubGlobal('fetch', fetchMock);
@@ -29,6 +43,9 @@ describe('Custos.register', () => {
       owner: { name: 'Atlas Capital LLC', email: 'ops@atlas.example', entityType: 'COMPANY' },
       jurisdiction: 'US',
       erc8004TokenId: 7n,
+      nonce: '00000000-0000-4000-8000-000000000001',
+      domain: 'api.custos.example',
+      signature: ('0x' + '11'.repeat(65)) as `0x${string}`,
     });
 
     expect(result.status).toBe('PENDING');
@@ -38,6 +55,8 @@ describe('Custos.register', () => {
     expect(body.wallet).toBe(WALLET); // checksummed
     expect(body.ownerName).toBe('Atlas Capital LLC');
     expect(body.erc8004TokenId).toBe('7');
+    expect(body.nonce).toBe('00000000-0000-4000-8000-000000000001');
+    expect(body.signature).toHaveLength(132);
   });
 
   it('throws CustosApiError with status and body on API failure', async () => {

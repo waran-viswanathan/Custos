@@ -21,7 +21,7 @@ opened). Non-custodial by construction. No token.
 ## The product
 
 1. **Verify** — the agent's operator (legal entity) passes KYB + sanctions
-   screening via the Custos API.
+   screening via the Custos API after the agent wallet signs the full operator binding.
 2. **Attest** — the agent receives a revocable EAS attestation on Base carrying
    only `verified / jurisdiction / accredited`. No PII on-chain, ever.
 3. **Enforce** — issuers set per-token policy (jurisdictions, accreditation,
@@ -29,8 +29,8 @@ opened). Non-custodial by construction. No token.
    Solidity). Non-compliant transfers revert with machine-readable reasons.
    One API call revokes an agent everywhere. One combined audit trail.
 
-Demo (60s, all real transactions): unverified agent blocked → operator KYB'd →
-attested → transfer succeeds → kill switch → blocked again.
+Demo (60s, all real local transactions): unverified agent blocked → operator
+KYB'd → attested → transfer succeeds → kill switch → blocked again.
 
 ## Work completed (2026-07-10)
 
@@ -42,26 +42,27 @@ attested → transfer succeeds → kill switch → blocked again.
   branding; standards consolidating at FIDO/ERC-8004) → pivot to the RWA
   compliance buyer (research/market-validation.md)
 
-**Product — 37 tests green**
-- Contracts (Foundry, 14 tests): CustosRegistry, CustosGate, gated demo
-  T-bill, deploy script for local + Base Sepolia
-- API (Fastify/Prisma/BullMQ, 19 tests): verification pipeline with retries +
-  DLQ, revocation, stats, rate limiting, filterless chain indexer
-- SDK (4 tests): register / waitForVerification / isPermitted
+**Product**
+- Contracts (Foundry): CustosRegistry, CustosGate, gated demo T-bill, deploy
+  script for local + Base Sepolia
+- API (Fastify/Prisma/BullMQ): verification pipeline with retries + DLQ,
+  revocation, erasure, stats, rate limiting, and confirmation-aware indexing
+- SDK: signed registration, status polling, permission checks, generated typed ABIs
 - Dashboard (Next.js): agents, policy editor, audit trail, stats, SIWE-lite
-- `pnpm demo` (local) and `pnpm dev:sepolia` (public testnet stack)
+- `pnpm demo` exercises the complete local lifecycle in CI
 
-**Live deployment**
-- Base Sepolia with the real EAS; full lifecycle verified on-chain
-  - Registry 0x307D6709EFF49720f63C7ecD90cDc77Bbf818747
-  - Gate     0x837e675C7f560cB5b071E7909791C209Fa7B716D
-  - cTBILL   0xaC19AD88879ED4CD3090D634210b221e95062CE7
-- Five real-network bug classes found and structurally fixed (simulated-UID
-  staleness, RPC replica lag, execution-time reverts, dropped event filters,
-  zombie-worker queue races)
+**Deployment status**
+- The earlier Base Sepolia v1 lifecycle was verified on-chain, but its contracts
+  are interface-incompatible with the hardened v2 code.
+- Those v1 addresses are retained only in
+  `contracts/deployments/84532.legacy.json`; they must not be used as a current
+  Custos deployment.
+- A fresh v2 Base Sepolia deployment and end-to-end verification are required
+  before `pnpm dev:sepolia`, public docs, or the website claim a live testnet.
 
 **Infrastructure**
-- Private GitHub repo (lalithesh-star/Custos), CI green on every push
+- Private GitHub repo (lalithesh-star/Custos), with contract build, tests, ABI
+  freshness, application builds, dependency audit, and demo smoke coverage in CI
 - SECURITY.md: threat model + honest MVP limitations
 
 **Go-to-market**
@@ -69,15 +70,15 @@ attested → transfer succeeds → kill switch → blocked again.
   scripts, cold email templates, LOI, cofounder brief (gtm/)
 - Wave-1 target list: ~60 verified companies in 5 segments with hooks and
   contacts; 12-name Tier 1 (research/target-list.md)
-- Marketing site (site/index.html): inscription-and-ledger identity, typed
-  terminal of the real demo, on-chain proof ledger
+- Marketing site (site/index.html): inscription-and-ledger identity and typed
+  terminal of the local demo; public v2 proof links remain gated on redeployment
 
 ## Immediate next steps
 
-1. Founder records the 60–90s demo video (shot list available)
-2. Draft + send the 12 Tier-1 outreach emails
-3. Domain + free hosting (Cloudflare Pages / Vercel) for the site
-4. One manual SIWE pass on the dashboard
+1. Complete and verify the v2 Base Sepolia redeployment
+2. Founder records the 60–90s demo video (shot list available)
+3. Draft + send the 12 Tier-1 outreach emails
+4. Domain + free hosting (Cloudflare Pages / Vercel) for the site
 5. Real KYB provider (Persona) when the first pilot demands it
 
 ## Honest open risks

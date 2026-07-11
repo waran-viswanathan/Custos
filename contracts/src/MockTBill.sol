@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { CustosGate } from "./CustosGate.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {CustosGate} from "./CustosGate.sol";
 
 /// @title MockTBill — demo tokenized T-bill gated by Custos.
 /// @notice Every transfer (not mint/burn) requires the RECIPIENT to pass the
@@ -35,3 +35,4 @@ contract MockTBill is ERC20, Ownable {
         super._update(from, to, value);
     }
 }
+

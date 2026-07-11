@@ -1,6 +1,8 @@
 {
-  "attester": "0x89BFcF7200f561f5b9738870Ae776A928564dD7C",
+  "version": 1,
+  "status": "legacy-incompatible-with-v2",
   "chainId": 84532,
+  "attester": "0x89BFcF7200f561f5b9738870Ae776A928564dD7C",
   "eas": "0x4200000000000000000000000000000000000021",
   "gate": "0x837e675C7f560cB5b071E7909791C209Fa7B716D",
   "issuer": "0x89BFcF7200f561f5b9738870Ae776A928564dD7C",

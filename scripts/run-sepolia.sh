@@ -21,6 +21,9 @@ lsof -ti:3000 2>/dev/null | xargs kill 2>/dev/null || true
 pkill -f 'custos.*src/worker\.ts' 2>/dev/null || true
 sleep 1
 
+echo "▶ building SDK from current contract ABIs"
+pnpm --filter @custos/sdk build
+
 echo "▶ syncing database schema"
 pnpm --filter @custos/api exec prisma db push --skip-generate >/dev/null
 

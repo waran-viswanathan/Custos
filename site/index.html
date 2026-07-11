@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Custos — compliance infrastructure for AI agents in tokenized assets</title>
-<meta name="description" content="Custos verifies the entity behind an AI agent, attests it on-chain, and enforces issuer transfer policy at transfer time. Live on Base Sepolia.">
+<meta name="description" content="Custos verifies the entity behind an AI agent, attests it on-chain, and enforces issuer transfer policy at transfer time. V2 testnet redeployment pending.">
 <style>
   :root {
     --ground: #141210;
@@ -206,7 +206,7 @@
       <a href="#protocol">Protocol</a>
       <a href="#proof">Proof</a>
       <a href="#partners">Design partners</a>
-      <span class="live"><span class="dot"></span>LIVE ON BASE SEPOLIA</span>
+      <span class="live"><span class="dot"></span>V2 REDEPLOY PENDING</span>
     </div>
   </nav>
 
@@ -220,13 +220,13 @@
     </p>
     <div class="cta-row">
       <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">BECOME A DESIGN PARTNER</a>
-      <a class="btn ghost" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">VIEW LIVE CONTRACTS ↗</a>
+      <a class="btn ghost" href="#proof">VIEW DEPLOYMENT STATUS</a>
     </div>
   </header>
 
   <div class="terminal-frame reveal">
-    <div class="terminal" id="terminal" aria-label="Recording of the Custos credential lifecycle running on Base Sepolia">
-      <div class="t-head"><span>custos — agent lifecycle</span><span>base sepolia · 84532</span></div>
+    <div class="terminal" id="terminal" aria-label="Recording of the Custos v2 credential lifecycle running locally">
+      <div class="t-head"><span>custos — agent lifecycle</span><span>v2 · local verification</span></div>
       <div id="t-body"></div>
     </div>
   </div>
@@ -323,16 +323,15 @@
 
   <section id="proof" class="reveal">
     <p class="inscription section-label">PROOF, NOT PROMISES</p>
-    <h2>Live on a public network. Inspect everything.</h2>
-    <p class="prose">The full credential lifecycle — an unverified agent blocked, verified, transacting,
-    revoked, and blocked again — runs against the real Ethereum Attestation Service on Base Sepolia.</p>
+    <h2>V2 testnet redeployment pending.</h2>
+    <p class="prose">The hardened v2 lifecycle — signed registration, verification, transfer enforcement,
+    revocation, and erasure — is compiled and exercised locally in CI. The earlier public v1 deployment
+    is archived because its interfaces are incompatible with v2; it is not presented as current.</p>
     <div class="ledger">
       <table>
-        <tr><td>Registry</td><td><a href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">0x307D6709EFF49720f63C7ecD90cDc77Bbf818747 ↗</a></td></tr>
-        <tr><td>Policy gate</td><td><a href="https://sepolia.basescan.org/address/0x837e675C7f560cB5b071E7909791C209Fa7B716D" target="_blank" rel="noreferrer">0x837e675C7f560cB5b071E7909791C209Fa7B716D ↗</a></td></tr>
-        <tr><td>Demo T-bill</td><td><a href="https://sepolia.basescan.org/address/0xaC19AD88879ED4CD3090D634210b221e95062CE7" target="_blank" rel="noreferrer">0xaC19AD88879ED4CD3090D634210b221e95062CE7 ↗</a></td></tr>
-        <tr><td>Attestation</td><td><a href="https://base-sepolia.easscan.org/attestation/view/0xb2e63832251366e58199270f08fb386b1a51ee4cb0a0b5544ac4f4c77f3509bb" target="_blank" rel="noreferrer">live example on EAS ↗</a></td></tr>
-        <tr><td>Test suite</td><td class="num">37 passing — 14 contract invariants, 19 pipeline, 4 SDK</td></tr>
+        <tr><td>V2 contracts</td><td>Fresh Base Sepolia deployment required</td></tr>
+        <tr><td>V1 contracts</td><td>Archived — incompatible with v2</td></tr>
+        <tr><td>Release gate</td><td>Compile, tests, ABI freshness, and full demo smoke</td></tr>
       </table>
     </div>
   </section>
@@ -356,9 +355,9 @@
 </div>
 
 <script>
-  // hero terminal: types the real Base Sepolia lifecycle demo
+  // hero terminal: types the v2 lifecycle exercised by the local demo
   const LINES = [
-    ["c-dim",   "$ pnpm demo --network base-sepolia"],
+    ["c-dim",   "$ pnpm demo"],
     ["",        ""],
     ["c-bronze","[1] Issuer sets policy for cTBILL — US/GB only, 5,000 max per transfer"],
     ["c-allow", "  ✓ policy active on-chain"],

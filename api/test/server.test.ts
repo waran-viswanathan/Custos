@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { buildServer, type ServerDeps } from '../src/server.js';
+import { registrationMessage } from '../src/registration.js';
+import { privateKeyToAccount } from 'viem/accounts';
 
 function makeServerDeps() {
   const agents = new Map<string, any>();
   const audits: any[] = [];
   const enqueued: string[] = [];
+  const challenges = new Map<string, { wallet: string; nonce: string; expiresAt: Date }>();
   let seq = 0;
 
   const deps: ServerDeps = {
@@ -26,11 +29,31 @@ function makeServerDeps() {
           Object.assign(row, args.data);
           return row;
         },
+        async delete(args: any) {
+          const row = agents.get(args.where.id);
+          if (!row) throw new Error('not found');
+          agents.delete(args.where.id);
+          return row;
+        },
         async findMany() {
           return [...agents.values()];
         },
         async count() {
           return agents.size;
+        },
+      },
+      registrationChallenge: {
+        async upsert(args: any) {
+          const row = { wallet: args.where.wallet, ...args.create, ...args.update };
+          challenges.set(args.where.wallet, row);
+          return row;
+        },
+        async findUnique(args: any) { return challenges.get(args.where.wallet) ?? null; },
+        async deleteMany(args: any) {
+          const row = challenges.get(args.where.wallet);
+          if (!row || row.nonce !== args.where.nonce) return { count: 0 };
+          challenges.delete(args.where.wallet);
+          return { count: 1 };
         },
       },
       verificationCheck: { async count() { return 0; } },
@@ -59,6 +82,27 @@ const validBody = {
 };
 
 describe('API endpoints', () => {
+  it('cryptographically binds the submitted operator details to the agent wallet', async () => {
+    const { deps, audits } = makeServerDeps();
+    const app = buildServer(deps);
+    const account = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
+    const challengeRes = await app.inject({ method: 'POST', url: '/v1/agents/challenge', payload: { wallet: account.address } });
+    expect(challengeRes.statusCode).toBe(200);
+    const challenge = challengeRes.json();
+    const details = {
+      wallet: account.address,
+      ownerName: validBody.ownerName,
+      ownerEmail: validBody.ownerEmail,
+      ownerEntityType: 'COMPANY' as const,
+      jurisdiction: validBody.jurisdiction,
+      erc8004TokenId: null,
+    };
+    const signature = await account.signMessage({ message: registrationMessage(details, challenge.nonce, challenge.domain) });
+    const result = await app.inject({ method: 'POST', url: '/v1/agents', payload: { ...validBody, wallet: account.address, nonce: challenge.nonce, signature } });
+    expect(result.statusCode).toBe(202);
+    expect((audits[0].payload as any).walletProofVerified).toBe(true);
+  });
+
   it('POST /v1/agents accepts a valid submission and enqueues verification', async () => {
     const { deps, enqueued } = makeServerDeps();
     const app = buildServer(deps);
@@ -71,11 +115,7 @@ describe('API endpoints', () => {
   it('normalizes jurisdiction to uppercase and checksums the wallet', async () => {
     const { deps, agents } = makeServerDeps();
     const app = buildServer(deps);
-    await app.inject({
-      method: 'POST',
-      url: '/v1/agents',
-      payload: { ...validBody, wallet: validBody.wallet.toLowerCase() },
-    });
+    await app.inject({ method: 'POST', url: '/v1/agents', payload: { ...validBody, wallet: validBody.wallet.toLowerCase() } });
     const stored = [...agents.values()][0];
     expect(stored.jurisdiction).toBe('US');
     expect(stored.wallet).toBe('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
@@ -104,9 +144,7 @@ describe('API endpoints', () => {
   it('GET /v1/agents/:wallet 404s for unknown agents and never leaks rawResult', async () => {
     const { deps, agents } = makeServerDeps();
     const app = buildServer(deps);
-    expect(
-      (await app.inject({ method: 'GET', url: `/v1/agents/${validBody.wallet}` })).statusCode,
-    ).toBe(404);
+    expect((await app.inject({ method: 'GET', url: `/v1/agents/${validBody.wallet}` })).statusCode).toBe(404);
 
     await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody });
     const row = [...agents.values()][0];
@@ -119,21 +157,9 @@ describe('API endpoints', () => {
   it('admin endpoints require the bearer token', async () => {
     const app = buildServer(makeServerDeps().deps);
     expect((await app.inject({ method: 'GET', url: '/v1/agents' })).statusCode).toBe(401);
-    expect(
-      (
-        await app.inject({
-          method: 'POST',
-          url: `/v1/agents/${validBody.wallet}/revoke`,
-          payload: { reason: 'x' },
-        })
-      ).statusCode,
-    ).toBe(401);
+    expect((await app.inject({ method: 'POST', url: `/v1/agents/${validBody.wallet}/revoke`, payload: { reason: 'x' } })).statusCode).toBe(401);
 
-    const ok = await app.inject({
-      method: 'GET',
-      url: '/v1/agents',
-      headers: { authorization: 'Bearer dev-admin-token-change-me' },
-    });
+    const ok = await app.inject({ method: 'GET', url: '/v1/agents', headers: { authorization: 'Bearer dev-admin-token-change-me' } });
     expect(ok.statusCode).toBe(200);
   });
 
@@ -145,13 +171,24 @@ describe('API endpoints', () => {
     row.status = 'VERIFIED';
     row.attestationUID = '0x' + 'aa'.repeat(32);
 
-    const res = await app.inject({
-      method: 'POST',
-      url: `/v1/agents/${validBody.wallet}/revoke`,
-      headers: { authorization: 'Bearer dev-admin-token-change-me' },
-      payload: { reason: 'compliance violation' },
-    });
+    const res = await app.inject({ method: 'POST', url: `/v1/agents/${validBody.wallet}/revoke`, headers: { authorization: 'Bearer dev-admin-token-change-me' }, payload: { reason: 'compliance violation' } });
     expect(res.statusCode).toBe(200);
     expect(row.status).toBe('REVOKED');
+  });
+
+  it('erases the agent while retaining a de-identified audit record', async () => {
+    const { deps, agents, audits } = makeServerDeps();
+    const app = buildServer(deps);
+    await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody });
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: `/v1/agents/${validBody.wallet}`,
+      headers: { authorization: 'Bearer dev-admin-token-change-me' },
+    });
+
+    expect(res.statusCode).toBe(204);
+    expect(agents.size).toBe(0);
+    expect(audits.at(-1)).toMatchObject({ agentId: null, type: 'SUBJECT_ERASED' });
   });
 });

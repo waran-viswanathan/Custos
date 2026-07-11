@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Script } from "forge-std/Script.sol";
-import { CustosRegistry } from "../src/CustosRegistry.sol";
-import { CustosGate } from "../src/CustosGate.sol";
-import { MockTBill } from "../src/MockTBill.sol";
-import { MockEAS } from "../src/MockEAS.sol";
-import { IEAS, ISchemaRegistry } from "../src/vendor/eas/IEAS.sol";
+import {Script} from "forge-std/Script.sol";
+import {CustosRegistry} from "../src/CustosRegistry.sol";
+import {CustosGate} from "../src/CustosGate.sol";
+import {MockTBill} from "../src/MockTBill.sol";
+import {MockEAS} from "../src/MockEAS.sol";
+import {IEAS, ISchemaRegistry} from "../src/vendor/eas/IEAS.sol";
 
 /// Deploys the Custos stack. On Base Sepolia (84532) it wires the real EAS
 /// predeploys; on any other chain (local anvil) it deploys MockEAS. Writes a
@@ -17,10 +17,10 @@ contract Deploy is Script {
     function run() external {
         // anvil default key #0 as fallback for local dev
         uint256 pk = vm.envOr(
-            "DEPLOYER_PRIVATE_KEY",
-            uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+            "DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
         address deployer = vm.addr(pk);
+        address adminAddr = vm.envOr("ADMIN_ADDRESS", deployer);
         address attesterAddr = vm.envOr("ATTESTER_ADDRESS", deployer);
         address issuerAddr = vm.envOr("ISSUER_ADDRESS", deployer);
 
@@ -54,15 +54,28 @@ contract Deploy is Script {
         registry.grantRole(registry.ATTESTER_ROLE(), attesterAddr);
         gate.grantRole(gate.ISSUER_ROLE(), issuerAddr);
 
+        // The deployer must be the temporary administrator while assigning
+        // roles. Hand governance to the configured administrator last and
+        // remove the deployer's authority when the addresses differ.
+        if (adminAddr != deployer) {
+            registry.grantRole(registry.DEFAULT_ADMIN_ROLE(), adminAddr);
+            gate.grantRole(gate.DEFAULT_ADMIN_ROLE(), adminAddr);
+            registry.revokeRole(registry.DEFAULT_ADMIN_ROLE(), deployer);
+            gate.revokeRole(gate.DEFAULT_ADMIN_ROLE(), deployer);
+        }
+
         vm.stopBroadcast();
 
         string memory obj = "deployments";
+        vm.serializeUint(obj, "version", 2);
         vm.serializeUint(obj, "chainId", block.chainid);
+        vm.serializeUint(obj, "deploymentBlock", block.number);
         vm.serializeAddress(obj, "eas", easAddr);
         vm.serializeBytes32(obj, "schemaUID", schemaUID);
         vm.serializeAddress(obj, "registry", address(registry));
         vm.serializeAddress(obj, "gate", address(gate));
         vm.serializeAddress(obj, "tbill", address(tbill));
+        vm.serializeAddress(obj, "admin", adminAddr);
         vm.serializeAddress(obj, "attester", attesterAddr);
         string memory json = vm.serializeAddress(obj, "issuer", issuerAddr);
 

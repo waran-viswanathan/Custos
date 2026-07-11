@@ -2,13 +2,17 @@ node_modules/
 dist/
 .next/
 .env
+.env.*
+!.env.example
 .DS_Store
 *.log
+*.rdb
 *.tsbuildinfo
 next-env.d.ts
+coverage/
 
-# foundry artifacts
 contracts/broadcast/
 contracts/cache/
 contracts/out/
+sdk/src/abis.ts
 contracts/deployments/local.json

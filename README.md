@@ -30,7 +30,7 @@ docker compose up -d        # postgres + redis (+ anvil if you don't run it loca
 pnpm demo                   # anvil → deploy → API + worker → full agent lifecycle demo
 ```
 
-The demo registers "Atlas", an AI treasury agent: blocked while unverified → KYB'd, screened, attested → receives tokenized T-bills → revoked via kill switch → blocked again.
+The demo obtains a nonce and signs the complete operator binding with Atlas's agent wallet before registration. It then shows Atlas blocked while unverified → KYB'd, screened, attested → receives tokenized T-bills → revoked via kill switch → blocked again.
 
 Other commands: `pnpm test` (forge + vitest), `pnpm dev` (API + worker + dashboard at localhost:3000).
 
@@ -50,6 +50,11 @@ Start Postgres 16 (`createdb custos`, role `custos`/`custos`) and Redis on their
 | `DATABASE_URL` | `postgresql://custos:custos@localhost:5432/custos` | Postgres |
 | `REDIS_URL` | `redis://localhost:6379` | BullMQ queue |
 | `ADMIN_BEARER_TOKEN` | `dev-admin-token-change-me` | Admin auth for list/revoke/audit endpoints |
+| `CUSTOS_REGISTRATION_DOMAIN` | `localhost` | Domain bound into wallet registration proofs |
+| `ALLOW_UNSIGNED_REGISTRATION` | `true` (dev only) | Production rejects this setting |
+| `ALLOW_MOCK_PROVIDERS` | `true` (dev only) | Production rejects this setting |
+| `INDEXER_START_BLOCK` | _required in production_ | Canonical audit backfill start |
+| `INDEXER_CONFIRMATIONS` | `1` local | Confirmation buffer before audit ingestion |
 | `SANCTIONS_BLOCKED_JURISDICTIONS` | `KP,IR,CU,SY` | Mock sanctions blocklist |
 | `PERSONA_API_KEY` / `OFAC_API_KEY` | _empty_ | Enable real provider skeletons |
 | `DASHBOARD_DEV_BYPASS_AUTH` | `true` (dev) | Skip SIWE for local development |
@@ -82,4 +87,4 @@ Then configure your policy (jurisdictions, accreditation, transfer caps, kill sw
 | `docs/`, `gtm/`, `research/` | Business plan, validation research, go-to-market kit |
 | `legacy/` | Earlier x402/KYA prototype (superseded by this MVP) |
 
-Security model and known MVP limitations: [SECURITY.md](SECURITY.md).
+Security model and known MVP limitations: [SECURITY.md](SECURITY.md). Production release requirements: [docs/PRODUCTION.md](docs/PRODUCTION.md).
