@@ -31,7 +31,8 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
   const [requireAccredited, setRequireAccredited] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<string[]>([]);
   const [customJur, setCustomJur] = useState('');
-  const [maxAmount, setMaxAmount] = useState('');\n  const [tokenDecimals, setTokenDecimals] = useState(18);
+  const [maxAmount, setMaxAmount] = useState('');
+  const [tokenDecimals, setTokenDecimals] = useState(18);
   const [active, setActive] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,7 +48,11 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
     if (!isAddress(token)) return;
     try {
       const client = createPublicClient({ chain, transport: http(rpcUrl) });
-      const [p, decimals] = await Promise.all([\n        client.readContract({ address: gate, abi: custosGateAbi, functionName: 'getPolicy', args: [token as Address] }),\n        client.readContract({ address: token as Address, abi: erc20Abi, functionName: 'decimals' }),\n      ]);\n      setTokenDecimals(decimals);
+      const [p, decimals] = await Promise.all([
+        client.readContract({ address: gate, abi: custosGateAbi, functionName: 'getPolicy', args: [token as Address] }),
+        client.readContract({ address: token as Address, abi: erc20Abi, functionName: 'decimals' }),
+      ]);
+      setTokenDecimals(decimals);
       setRequireAccredited(p.requireAccredited);
       setJurisdictions(p.allowedJurisdictions.map((j: Hex) => fromHex(j, 'string').replace(/\0/g, '')));
       setMaxAmount(p.maxTransferAmount === 0n ? '' : formatUnits(p.maxTransferAmount, decimals));
@@ -90,7 +95,10 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
         ],
         account,
       });
-      const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });\n      const receipt = await publicClient.waitForTransactionReceipt({ hash });\n      if (receipt.status !== 'success') throw new Error(`policy transaction reverted: ${hash}`);\n      setStatus(`Policy confirmed on-chain: ${hash}`);
+      const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status !== 'success') throw new Error(`policy transaction reverted: ${hash}`);
+      setStatus(`Policy confirmed on-chain: ${hash}`);
     } catch (err) {
       setStatus(`Failed: ${err instanceof Error ? err.message : err}`);
     } finally {
