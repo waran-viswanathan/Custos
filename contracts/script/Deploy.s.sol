@@ -63,7 +63,7 @@ contract Deploy is Script {
         vm.serializeAddress(obj, "registry", address(registry));
         vm.serializeAddress(obj, "gate", address(gate));
         vm.serializeAddress(obj, "tbill", address(tbill));
-        vm.serializeAddress(obj, "attester", attesterAddr);
+        vm.serializeAddress(obj, "admin", adminAddr);\n        vm.serializeAddress(obj, "attester", attesterAddr);
         string memory json = vm.serializeAddress(obj, "issuer", issuerAddr);
 
         string memory path = block.chainid == 31337
