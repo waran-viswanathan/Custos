@@ -40,7 +40,7 @@ fi
 # --- postgres + redis ---
 if command -v docker >/dev/null 2>&1; then
   echo "▶ starting postgres + redis via docker compose"
-  docker compose up -d postgres redis
+  docker compose up -d --wait postgres redis
 else
   echo "▶ docker not found — checking for local postgres (:5432) and redis (:6379)"
   if ! nc -z localhost 5432 2>/dev/null; then
