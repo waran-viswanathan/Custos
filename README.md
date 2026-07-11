@@ -1,23 +1,30 @@
 # Custos
 
-Custos is a compliance credential layer for AI agents transacting in tokenized real-world assets. It verifies the entity behind an agent (KYB + sanctions screening), issues a revocable on-chain attestation via EAS on Base, and gives RWA token issuers a gate contract that blocks non-compliant agents at transfer time. Agents get a portable, revocable credential; issuers get cryptographically enforced transfer policies and a complete audit trail.
+Custos is compliance and delegated-authority infrastructure for AI agents transacting in tokenized real-world assets. It verifies the entity behind an agent (KYB + sanctions screening), issues a revocable on-chain attestation via EAS on Base, records what the operator has authorized, authenticates the wallet's exact action, and enforces issuer policy before execution. Agents get portable credentials and narrowly scoped mandates; issuers get cryptographically enforced policies, revocation, and a complete audit trail.
 
 ## Architecture
 
+```text
+operator ──signed registration──▶ API/worker ──KYB + sanctions──▶ EAS + CustosRegistry
+   │                                                                        │
+   └──principal mandate──▶ CustosAgentMandate ◀──credential status──────────┘
+                                  ▲
+                                  │ scope, caps, expiry, revocation
+agent wallet ──EIP-712/ERC-1271 intent──▶ CustosActionAuthorizer
+                                              │
+                                              ▼
+issuer policy ───────────────────────────▶ CustosGate ──allow/revert──▶ token or venue
+                                              │                              │
+                                              └────────events────────────────┘
+                                                            │
+                                                            ▼
+                                               indexer + Postgres audit trail
 ```
-  Agent operator                    Custos API + worker                     Base / anvil
- ┌──────────────┐   POST /v1/agents ┌──────────────────┐                 ┌──────────────────┐
- │  AI agent    │ ────────────────▶ │ KYB check        │    attest       │  EAS             │
- │  (wallet)    │                   │ Sanctions check  │ ──────────────▶ │  (attestation)   │
- └──────┬───────┘                   │ (BullMQ pipeline)│    register     ├──────────────────┤
-        │                           └────────┬─────────┘ ──────────────▶ │  CustosRegistry  │
-        │ transfer                           │                           ├──────────────────┤
-        ▼                                    │ indexer                   │  CustosGate ◀────┼── issuer sets
- ┌──────────────┐    checkAndLog    ┌────────▼─────────┐                 │  (per-token      │   policy
- │  RWA token   │ ────────────────▶ │ Postgres audit   │ ◀────events──── │   policy checks) │
- │  (MockTBill) │ ◀─── allow/revert │ trail + dashboard│                 └──────────────────┘
- └──────────────┘                   └──────────────────┘
-```
+
+Each layer answers a separate question: who the agent is, what authority its
+principal delegated, whether the wallet approved this exact action, and whether
+the issuer permits it. Credential revocation, mandate revocation, signature
+failure, or missing policy blocks new risk at transaction time.
 
 No PII ever goes on-chain: the attestation carries only `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`.
 
@@ -79,7 +86,20 @@ Then configure your policy (jurisdictions, accreditation, transfer caps, kill sw
 
 Custos can evaluate swaps, liquidity entry, pool initialization, vault operations, and custom agent actions without trusting a router-supplied wallet address. The wallet signs a single-use EIP-712 intent binding the venue, approved executor, action, asset, amount, recipient, context, nonce, and deadline. `CustosActionAuthorizer` verifies that intent before `CustosGate` applies the exact authorizer/action/asset policy.
 
-`CustosAgentMandate` adds the principal-to-agent authority layer: an operator can restrict an agent to an exact venue, action, and asset with transaction and cumulative caps, validity dates, revocation, and emergency freeze. Custos remains the operator-verification, credential, mandate, policy, revocation, and audit infrastructure.\n\nThe repository also contains an **experimental, testnet-only** Custos singleton market manager used to prove the complete flow and benchmark it against external venues. It is not audited or approved for production assets, and Custos is not presented as a generalized DEX. See [the market foundation](docs/MARKETS_FOUNDATION.md), [pilot runbook](docs/PILOT_RUNBOOK.md), and [market POC boundary](docs/MARKET_MANAGER_POC.md).
+`CustosAgentMandate` adds the principal-to-agent authority layer: an operator can restrict an agent to an exact venue, action, and asset with transaction and cumulative caps, validity dates, revocation, and emergency freeze. Custos remains the operator-verification, credential, mandate, policy, revocation, and audit infrastructure.
+
+The repository also contains an **experimental, testnet-only** Custos singleton market manager used to prove the complete flow and benchmark it against external venues. It is not audited or approved for production assets, and Custos is not presented as a generalized DEX. See [the market foundation](docs/MARKETS_FOUNDATION.md), [pilot runbook](docs/PILOT_RUNBOOK.md), and [market POC boundary](docs/MARKET_MANAGER_POC.md).
+
+## Current proof status
+
+- Local and CI evidence: 43 contract tests, 21 API tests, and 7 SDK tests, plus
+  the complete lifecycle smoke test.
+- Public-chain evidence: the earlier Base Sepolia deployment is retained as
+  historical v1 proof only and is interface-incompatible with the current code.
+- Next release gate: deploy the current architecture with separated roles,
+  verify source and bytecode, replay the pilot, publish the manifest, and record
+  the demonstration. Until then, Custos is pre-customer, unaudited, and not
+  production-ready.
 
 ## Repo layout
 
