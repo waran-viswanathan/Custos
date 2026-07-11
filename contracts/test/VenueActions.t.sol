@@ -1,3 +1,4 @@
+Formatted /Users/lalithesh/Documents/Codex/2026-07-10/let/work/production-hardening/contracts/test/VenueActions.t.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -107,6 +108,16 @@ contract VenueActionsTest is Test {
         _setAction(address(ambient), action, quote, accredited, cap, true);
     }
 
+    function _assertRevertedWith(bool success, bytes memory result, bytes4 expected) internal pure {
+        assertFalse(success);
+        assertGe(result.length, 4);
+        bytes4 actual;
+        assembly {
+            actual := mload(add(result, 0x20))
+        }
+        assertEq(actual, expected);
+    }
+
     function _ambientSwap(uint128 qty) internal returns (uint16) {
         vm.prank(ambientDex);
         return ambient.checkApprovedForCrocSwap(agent, router, base, quote, true, true, qty, 500);
@@ -206,19 +217,35 @@ contract VenueActionsTest is Test {
     }
 
     function test_OnlyConfiguredVenueCanUseAdapter() public {
-        vm.expectRevert(CustosVenueAdapter.UnauthorizedVenue.selector);
         vm.prank(stranger);
-        genericAdapter.authorize(agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0));
+        (bool adapterSuccess, bytes memory adapterResult) = address(genericAdapter)
+            .call(
+                abi.encodeCall(
+                    CustosVenueAdapter.authorize, (agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0))
+                )
+            );
+        _assertRevertedWith(adapterSuccess, adapterResult, CustosVenueAdapter.UnauthorizedVenue.selector);
 
-        vm.expectRevert(AmbientCustosOracle.UnauthorizedAmbientCaller.selector);
         vm.prank(stranger);
-        ambient.checkApprovedForCrocSwap(agent, router, base, quote, true, true, 1, 500);
+        (bool ambientSuccess, bytes memory ambientResult) = address(ambient)
+            .call(
+                abi.encodeCall(
+                    AmbientCustosOracle.checkApprovedForCrocSwap,
+                    (agent, router, base, quote, true, true, uint128(1), uint16(500))
+                )
+            );
+        _assertRevertedWith(ambientSuccess, ambientResult, AmbientCustosOracle.UnauthorizedAmbientCaller.selector);
     }
 
     function test_UnregisteredAdapterCannotEmitAuthoritativeActions() public {
         CustosVenueAdapter unregistered = new CustosVenueAdapter(gate, address(this));
-        vm.expectRevert(CustosGate.UnauthorizedVenueCaller.selector);
-        unregistered.authorize(agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0));
+        (bool success, bytes memory result) = address(unregistered)
+            .call(
+                abi.encodeCall(
+                    CustosVenueAdapter.authorize, (agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0))
+                )
+            );
+        _assertRevertedWith(success, result, CustosGate.UnauthorizedVenueCaller.selector);
     }
 
     function test_CompositeAmbientActionChecksSwapAndLiquidityEntry() public {
@@ -247,14 +274,20 @@ contract VenueActionsTest is Test {
     }
 
     function test_CannotConfigurePolicyThatCouldBlockLiquidityExit() public {
-        vm.expectRevert(CustosGate.InvalidAction.selector);
         vm.prank(issuer);
-        gate.setActionPolicy(
-            address(ambient),
-            gate.LIQUIDITY_EXIT_ACTION(),
-            base,
-            CustosGate.ActionPolicy(false, _jurisdictions("US"), 0, true)
-        );
+        (bool success, bytes memory result) = address(gate)
+            .call(
+                abi.encodeCall(
+                    CustosGate.setActionPolicy,
+                    (
+                        address(ambient),
+                        gate.LIQUIDITY_EXIT_ACTION(),
+                        base,
+                        CustosGate.ActionPolicy(false, _jurisdictions("US"), 0, true)
+                    )
+                )
+            );
+        _assertRevertedWith(success, result, CustosGate.InvalidAction.selector);
     }
 
     function test_AmbientCompatibilitySelectors() public view {
