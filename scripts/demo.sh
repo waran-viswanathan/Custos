@@ -63,7 +63,7 @@ pnpm --filter @custos/sdk build
 
 # --- database schema ---
 echo "▶ syncing database schema"
-pnpm --filter @custos/api exec prisma db push --skip-generate >/dev/null
+pnpm --filter @custos/api exec prisma db push >/dev/null
 
 # --- api + worker (logs to files so shutdown noise stays out of the demo) ---
 echo "▶ starting API + verification worker (logs: /tmp/custos-api.log, /tmp/custos-worker.log)"
