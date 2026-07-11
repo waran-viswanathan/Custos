@@ -5,8 +5,7 @@ export {
   custosGateAbi,
   mockTBillAbi,
   mockEasAbi,
-  custosVenueAdapterAbi,
-  ambientCustosOracleAbi,
+  custosActionAuthorizerAbi,
 } from './abis.js';
 
 export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address }
@@ -29,6 +28,43 @@ export const CustosActions = {
   POOL_INITIALIZE: keccak256(stringToHex('POOL_INITIALIZE')),
   EXTERNAL: keccak256(stringToHex('EXTERNAL_ACTION')),
 } as const;
+
+export interface ActionIntent {
+  agent: Address;
+  venue: Address;
+  executor: Address;
+  action: Hex;
+  asset: Address;
+  amount: bigint;
+  recipient: Address;
+  nonce: bigint;
+  deadline: bigint;
+  contextHash: Hex;
+}
+
+export const custosActionIntentTypes = {
+  ActionIntent: [
+    { name: 'agent', type: 'address' },
+    { name: 'venue', type: 'address' },
+    { name: 'executor', type: 'address' },
+    { name: 'action', type: 'bytes32' },
+    { name: 'asset', type: 'address' },
+    { name: 'amount', type: 'uint256' },
+    { name: 'recipient', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+    { name: 'contextHash', type: 'bytes32' },
+  ],
+} as const;
+
+export function actionIntentTypedData(chainId: number, authorizer: Address, message: ActionIntent) {
+  return {
+    domain: { name: 'Custos Action', version: '1', chainId, verifyingContract: getAddress(authorizer) },
+    types: custosActionIntentTypes,
+    primaryType: 'ActionIntent' as const,
+    message,
+  };
+}
 
 export function registrationMessage(input: RegistrationDetails, challenge: Pick<RegistrationChallenge, 'nonce' | 'domain'>): string {
   return [
