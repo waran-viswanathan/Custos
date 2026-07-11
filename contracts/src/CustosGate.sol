@@ -34,6 +34,7 @@ contract CustosGate is AccessControl {
     CustosRegistry public immutable registry;
     mapping(address => Policy) private _policies;
     mapping(bytes32 => ActionPolicy) private _actionPolicies;
+    mapping(address => mapping(address => bool)) public approvedSettlements;
 
     event PolicySet(
         address indexed token,
@@ -72,6 +73,7 @@ contract CustosGate is AccessControl {
         bytes32 contextHash,
         string reason
     );
+    event SettlementSet(address indexed token, address indexed settlement, bool approved);
 
     error InvalidToken();
     error InvalidJurisdiction();
@@ -109,6 +111,15 @@ contract CustosGate is AccessControl {
         return _policies[token];
     }
 
+    /// @notice Allow a reviewed protocol contract to custody `token` while
+    /// end recipients and protocol actions remain independently gated.
+    function setSettlement(address token, address settlement, bool approved) external onlyRole(ISSUER_ROLE) {
+        if (token == address(0)) revert InvalidToken();
+        if (settlement == address(0) || settlement.code.length == 0) revert InvalidVenue();
+        approvedSettlements[token][settlement] = approved;
+        emit SettlementSet(token, settlement, approved);
+    }
+
     function getActionPolicy(address venue, bytes32 action, address asset) external view returns (ActionPolicy memory) {
         return _actionPolicies[actionPolicyKey(venue, action, asset)];
     }
@@ -119,6 +130,8 @@ contract CustosGate is AccessControl {
 
     function isPermitted(address agent, address token, uint256 amount) public view returns (bool, string memory) {
         Policy storage p = _policies[token];
+        if (!p.active) return (false, "POLICY_NOT_ACTIVE");
+        if (approvedSettlements[token][agent]) return (true, "");
         return _evaluate(agent, p.active, p.requireAccredited, p.allowedJurisdictions, p.maxTransferAmount, amount);
     }
 
