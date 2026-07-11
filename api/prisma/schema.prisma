@@ -69,8 +69,15 @@ model AuditEvent {
   type        String
   payload     Json
   chainTxHash String?
+  chainLogKey String?  @unique // txHash-logIndex — dedupes indexer re-scans
   createdAt   DateTime @default(now())
 
   @@index([agentId, createdAt])
   @@index([type, createdAt])
+}
+
+model IndexerCursor {
+  id        String   @id // indexer-<chainId>-<gate address>
+  lastBlock BigInt
+  updatedAt DateTime @updatedAt
 }

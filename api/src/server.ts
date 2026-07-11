@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import { getAddress, isAddress } from 'viem';
 import { z } from 'zod';
 import { env } from './env.js';
@@ -65,9 +66,13 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   const app = Fastify({ logger: false });
   const { db } = deps;
 
-  app.get('/healthz', async () => ({ ok: true }));
+  // Public endpoints are open by design (agents self-register) — rate limits
+  // are the abuse backstop. Per-IP: global 120/min, submissions 10/min.
+  void app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
 
-  app.post('/v1/agents', async (req, reply) => {
+  app.get('/healthz', { config: { rateLimit: false } }, async () => ({ ok: true }));
+
+  app.post('/v1/agents', { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (req, reply) => {
     const parsed = RegisterBody.safeParse(req.body);
     if (!parsed.success) return reply.code(400).send({ error: 'validation', issues: parsed.error.issues });
     const body = parsed.data;

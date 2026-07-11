@@ -7,7 +7,8 @@
     "dev": "concurrently -n api,worker,dash \"pnpm --filter @custos/api dev\" \"pnpm --filter @custos/api worker\" \"pnpm --filter @custos/dashboard dev\"",
     "build": "pnpm -r build",
     "test": "forge test --root contracts && pnpm -r --if-present test",
-    "demo": "./scripts/demo.sh"
+    "demo": "./scripts/demo.sh",
+    "dev:sepolia": "./scripts/run-sepolia.sh"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
