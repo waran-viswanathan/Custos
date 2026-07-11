@@ -29,6 +29,9 @@ cannot be provisioned in source control.
 - Grant `EXECUTOR_ROLE` only to audited hooks or routers. Confirm every action
   path authenticates the wallet's EIP-712 or ERC-1271 intent rather than
   trusting an address supplied by a router.
+- Configure the authorizer's mandate registry, grant `CONSUMER_ROLE` only to
+  reviewed authorizers, and verify each production agent has a principal-issued
+  venue/action/asset mandate with conservative caps and expiry.
 - Approve settlement contracts per restricted token only after bytecode review.
   Confirm the settlement cannot create ungoverned pools or bypass action policy,
   and that inactive token policy still blocks inbound custody.
