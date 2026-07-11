@@ -5,6 +5,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {CustosGate} from "./CustosGate.sol";
+import {CustosAgentMandate} from "./CustosAgentMandate.sol";
 
 /// @title CustosActionAuthorizer
 /// @notice Authenticates the wallet behind a routed market action before the
@@ -31,6 +32,7 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
 
     CustosGate public immutable gate;
     address public immutable venue;
+    CustosAgentMandate public mandates;
     mapping(address => uint256) public nonces;
 
     event IntentAuthorized(
@@ -43,6 +45,7 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
         address recipient
     );
     event NonceInvalidated(address indexed agent, uint256 previousNonce, uint256 newNonce);
+    event MandatesConfigured(address indexed mandates);
 
     error InvalidAddress();
     error InvalidIntent();
@@ -50,12 +53,24 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
     error IntentExpired();
     error InvalidNonce();
     error InvalidSignature();
+    error MandatesAlreadyConfigured();
 
     constructor(CustosGate _gate, address _venue, address admin) EIP712("Custos Action", "1") {
         if (address(_gate) == address(0) || _venue == address(0) || admin == address(0)) revert InvalidAddress();
         gate = _gate;
         venue = _venue;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    /// @notice Optional one-time mandate enforcement. Existing deployments can
+    /// remain intent-only; new regulated deployments should configure this.
+    function configureMandates(CustosAgentMandate _mandates) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(mandates) != address(0)) revert MandatesAlreadyConfigured();
+        if (address(_mandates) == address(0) || address(_mandates.registry()) != address(gate.registry())) {
+            revert InvalidAddress();
+        }
+        mandates = _mandates;
+        emit MandatesConfigured(address(_mandates));
     }
 
     /// @notice Consume a wallet-signed action intent and perform the on-chain
@@ -78,10 +93,19 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
             digest, intent.agent, intent.executor, intent.action, intent.asset, intent.amount, intent.recipient
         );
 
+        bool mandateRequired = address(mandates) != address(0);
+        if (
+            mandateRequired
+                && !mandates.isPermitted(intent.agent, intent.venue, intent.action, intent.asset, intent.amount)
+        ) return false;
+
         bytes32 enforcementContext = keccak256(abi.encode(intent.venue, intent.recipient, intent.contextHash));
-        return gate.checkActionAndLog(
+        bool allowed = gate.checkActionAndLog(
             intent.agent, intent.action, intent.executor, intent.asset, intent.amount, enforcementContext
         );
+        if (!allowed) return false;
+        return
+            !mandateRequired || mandates.consume(intent.agent, intent.venue, intent.action, intent.asset, intent.amount);
     }
 
     function hashIntent(ActionIntent calldata intent) public view returns (bytes32) {

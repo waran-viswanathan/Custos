@@ -1,6 +1,6 @@
 import { createPublicClient, defineChain, getAbiItem, getAddress, http, type Log } from 'viem';
 import type { Prisma, PrismaClient } from '@prisma/client';
-import { custosGateAbi, custosRegistryAbi } from '@custos/sdk';
+import { custosAgentMandateAbi, custosGateAbi, custosRegistryAbi } from '@custos/sdk';
 import { env } from './env.js';
 import { loadDeployments } from './deployments.js';
 
@@ -16,6 +16,10 @@ export function startIndexer(db: PrismaClient): () => void {
     getAbiItem({ abi: custosGateAbi, name: 'ActionChecked' }),
     getAbiItem({ abi: custosRegistryAbi, name: 'AgentRegistered' }),
     getAbiItem({ abi: custosRegistryAbi, name: 'AgentRevoked' }),
+    getAbiItem({ abi: custosAgentMandateAbi, name: 'MandateGranted' }),
+    getAbiItem({ abi: custosAgentMandateAbi, name: 'MandateConsumed' }),
+    getAbiItem({ abi: custosAgentMandateAbi, name: 'MandateRevoked' }),
+    getAbiItem({ abi: custosAgentMandateAbi, name: 'AgentEmergencyFreezeSet' }),
   ];
   let stopped = false;
 
@@ -46,6 +50,30 @@ export function startIndexer(db: PrismaClient): () => void {
       case 'AgentRevoked':
         type = 'CHAIN_AGENT_REVOKED'; wallet = a['agentWallet'] as string | undefined;
         payload = { agentWallet: a['agentWallet'], reason: a['reason'] }; break;
+      case 'MandateGranted':
+        type = 'CHAIN_MANDATE_GRANTED'; wallet = a['agent'] as string | undefined;
+        payload = {
+          mandateId: a['mandateId'], principal: a['principal'], agent: a['agent'], venue: a['venue'],
+          action: a['action'], asset: a['asset'], maxPerAction: (a['maxPerAction'] as bigint | undefined)?.toString(),
+          maxTotal: (a['maxTotal'] as bigint | undefined)?.toString(),
+          validAfter: (a['validAfter'] as bigint | undefined)?.toString(), validUntil: (a['validUntil'] as bigint | undefined)?.toString(),
+        };
+        break;
+      case 'MandateConsumed':
+        type = 'CHAIN_MANDATE_CONSUMED'; wallet = a['agent'] as string | undefined;
+        payload = {
+          mandateId: a['mandateId'], principal: a['principal'], agent: a['agent'],
+          amount: (a['amount'] as bigint | undefined)?.toString(), totalSpent: (a['totalSpent'] as bigint | undefined)?.toString(),
+        };
+        break;
+      case 'MandateRevoked':
+        type = 'CHAIN_MANDATE_REVOKED'; wallet = a['agent'] as string | undefined;
+        payload = { mandateId: a['mandateId'], agent: a['agent'], revokedBy: a['revokedBy'] };
+        break;
+      case 'AgentEmergencyFreezeSet':
+        type = 'CHAIN_AGENT_EMERGENCY_FREEZE_SET'; wallet = a['agent'] as string | undefined;
+        payload = { agent: a['agent'], frozen: a['frozen'] ?? false };
+        break;
       default: return;
     }
     try {
@@ -57,7 +85,8 @@ export function startIndexer(db: PrismaClient): () => void {
 
   const loop = async () => {
     const d = loadDeployments();
-    const cursorId = `indexer-${env.CHAIN_ID}-${d.gate.toLowerCase()}`;
+    const cursorId = `indexer-${env.CHAIN_ID}-${d.gate.toLowerCase()}-${d.mandates?.toLowerCase() ?? 'no-mandates'}`;
+    const addresses = d.mandates ? [d.gate, d.registry, d.mandates] : [d.gate, d.registry];
     while (!stopped) {
       try {
         const head = await client.getBlockNumber();
@@ -71,7 +100,7 @@ export function startIndexer(db: PrismaClient): () => void {
         const from = BigInt(cursor.lastBlock) + 1n;
         if (from > safeHead) { await sleep(2_000); continue; }
         const to = from + CHUNK > safeHead ? safeHead : from + CHUNK;
-        const logs = await client.getLogs({ address: [d.gate, d.registry], events, fromBlock: from, toBlock: to });
+        const logs = await client.getLogs({ address: addresses, events, fromBlock: from, toBlock: to });
         for (const log of logs) await persist(log as Parameters<typeof persist>[0]);
         await db.indexerCursor.update({ where: { id: cursorId }, data: { lastBlock: to } });
         if (to >= safeHead) await sleep(2_000);

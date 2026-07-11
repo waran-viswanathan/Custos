@@ -49,6 +49,20 @@ Each intent is single-use. The wallet may advance its nonce to cancel every
 older outstanding intent. Deploy one authorizer per venue integration so policy
 and audit records remain scoped to an exact enforcement boundary.
 
+New regulated deployments should also configure `CustosAgentMandate`. A
+verified principal grants one agent authority for an exact venue/action/asset
+scope with per-action and cumulative caps and a validity window. Principal
+revocation, credential revocation, expiry, or an administrator emergency freeze
+denies the next action. Mandate consumption and intent nonce changes roll back
+with a reverted economic transaction.
+
+A restricted token may explicitly approve a reviewed singleton settlement
+contract. Settlement approval only bypasses recipient identity when the token
+enters that contract; swaps and liquidity entry remain independently gated by
+the signed action intent, and outbound restricted transfers still check their
+final recipient. Settlement approval is issuer-only, inactive token policy still
+blocks it, and production must verify the approved contract bytecode.
+
 Liquidity exits must not trap economic value, but a revoked wallet must not
 automatically receive a restricted asset. A production pool or vault integration
 must route restricted proceeds to issuer-controlled redemption escrow while

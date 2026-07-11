@@ -13,7 +13,10 @@ const names = {
   CustosGate: 'custosGateAbi',
   MockTBill: 'mockTBillAbi',
   MockEAS: 'mockEasAbi',
+  MockUSD: 'mockUsdAbi',
   CustosActionAuthorizer: 'custosActionAuthorizerAbi',
+  CustosAgentMandate: 'custosAgentMandateAbi',
+  CustosMarketManager: 'custosMarketManagerAbi',
 };
 
 let out =
