@@ -22,7 +22,7 @@ describe('verification pipeline', () => {
       ['SANCTIONS', 'PASSED'],
     ]);
     // accreditation from KYB result flows into the attestation
-    expect(calls[0]).toMatchObject({ method: 'attestAndRegister', accredited: true, erc8004TokenId: 7n });
+    expect(calls[0]).toMatchObject({ method: 'attest', accredited: true, erc8004TokenId: 7n });\n    expect(calls[1]).toMatchObject({ method: 'registerAgent', erc8004TokenId: 7n });
     expect(audits.map((a) => a['type'])).toContain('AGENT_REGISTERED_ONCHAIN');
   });
 
