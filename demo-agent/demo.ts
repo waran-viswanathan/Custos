@@ -103,7 +103,7 @@ async function main() {
   await publicClient.waitForTransactionReceipt({ hash: await issuer.writeContract(setPolicySim.request) });
 
   const supply = await publicClient.readContract({
-    address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [issuerAddr],
+    address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [issuerAddr], authorizationList: undefined,
   });
   if (supply === 0n) {
     const mintSim = await publicClient.simulateContract({
@@ -155,7 +155,7 @@ async function main() {
   let balance = 0n;
   for (let i = 0; i < 10 && balance === 0n; i++) {
     balance = await publicClient.readContract({
-      address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [atlas.address],
+      address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [atlas.address], authorizationList: undefined,
     });
     if (balance === 0n) await new Promise((r) => setTimeout(r, 2000));
   }
