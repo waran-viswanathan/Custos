@@ -51,7 +51,9 @@ describe('Custos.register', () => {
     const body = JSON.parse((init as RequestInit).body as string);
     expect(body.wallet).toBe(WALLET); // checksummed
     expect(body.ownerName).toBe('Atlas Capital LLC');
-    expect(body.erc8004TokenId).toBe('7');\n    expect(body.nonce).toBe('00000000-0000-4000-8000-000000000001');\n    expect(body.signature).toHaveLength(132);
+    expect(body.erc8004TokenId).toBe('7');
+    expect(body.nonce).toBe('00000000-0000-4000-8000-000000000001');
+    expect(body.signature).toHaveLength(132);
   });
 
   it('throws CustosApiError with status and body on API failure', async () => {
