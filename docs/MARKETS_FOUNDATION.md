@@ -47,6 +47,9 @@ approved router or hook
 CustosActionAuthorizer -- authenticates signer, nonce, deadline, executor
               |
               v
+CustosAgentMandate -- principal authority, scope, caps, expiry, freeze
+              |
+              v
 CustosGate -- credential + jurisdiction + accreditation + amount policy
               |
               v
@@ -79,8 +82,8 @@ escrow until the holder is re-verified or redeemed off-chain.
 
 ## Delivery phases
 
-1. **Foundation:** per-action policies, authenticated intents, SDK typed data,
-   action audit events, threat model, and tests.
+1. **Foundation:** per-action policies, authenticated intents, scoped operator
+   mandates, SDK typed data, action audit events, threat model, and tests.
 2. **Swap proof:** benchmark a minimal native singleton against a minimal v4
    `beforeSwap` hook using the same restricted pair, compliance flow, and tests.
 3. **Liquidity:** gated position ownership, accredited-provider policy, and
