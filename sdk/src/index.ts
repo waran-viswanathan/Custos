@@ -6,6 +6,7 @@ export {
   mockTBillAbi,
   mockEasAbi,
   custosActionAuthorizerAbi,
+  custosMarketManagerAbi,
 } from './abis.js';
 
 export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address }
