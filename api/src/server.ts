@@ -84,7 +84,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     const wallet = getAddress(body.wallet);
     let message = 'UNSIGNED_DEVELOPMENT_REGISTRATION';
     let proofSignature = 'UNSIGNED_DEVELOPMENT_REGISTRATION';
-    const requireProof = env.NODE_ENV === 'production' || !env.ALLOW_UNSIGNED_REGISTRATION;
+    const requireProof = Boolean(body.nonce || body.signature) || env.NODE_ENV === 'production' || !env.ALLOW_UNSIGNED_REGISTRATION;
     if (requireProof) {
       if (!body.nonce || !body.signature || !db.registrationChallenge) return reply.code(401).send({ error: 'wallet signature and challenge required' });
       const challenge = await db.registrationChallenge.findUnique({ where: { wallet } });
