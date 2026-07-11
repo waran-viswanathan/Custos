@@ -34,10 +34,15 @@ verification checks; audit history is retained without the PII-bearing relation.
 
 ## Release procedure
 
-1. CI must pass contracts, SDK, API, demo type-checking, dashboard build, and
+1. CI must pass the complete Foundry build and tests, generated-ABI freshness,
+   SDK and API tests, application builds, the local lifecycle smoke test, and
    the production dependency audit.
-2. Apply database migrations, deploy services, and verify health checks.
-3. Verify configured contract bytecode and role assignments independently.
-4. Run a signed-registration lifecycle on the target environment.
-5. Confirm the indexer starts at the deployment block and only authoritative
+2. Deploy fresh contracts for every incompatible interface version. Never
+   promote a `*.legacy.json` manifest as an active deployment.
+3. Apply database migrations, deploy services, and verify health checks.
+4. Verify configured contract bytecode and role assignments independently,
+   including that the deployer no longer has admin rights when a separate
+   `ADMIN_ADDRESS` is configured.
+5. Run a signed-registration lifecycle on the target environment.
+6. Confirm the indexer starts at the deployment block and only authoritative
    transfer checks affect compliance statistics.
