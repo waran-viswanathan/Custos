@@ -5,7 +5,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {CustosRegistry} from "./CustosRegistry.sol";
 
 /// @title CustosGate — compliance enforcement for transfers and venue actions.
-/// @notice Token hooks and approved venue adapters use authoritative paths;
+/// @notice Token hooks and approved action authorizers use authoritative paths;
 /// issuer preflights are explicitly non-authoritative in the audit trail.
 contract CustosGate is AccessControl {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
@@ -153,8 +153,8 @@ contract CustosGate is AccessControl {
         return allowed;
     }
 
-    /// @notice Authoritative venue enforcement. The caller must be an approved
-    /// adapter and policies are scoped to that exact adapter address.
+    /// @notice Authoritative action enforcement. The caller must be an approved
+    /// authorizer and policies are scoped to that exact authorizer address.
     function checkActionAndLog(
         address agent,
         bytes32 action,
