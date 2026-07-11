@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { buildServer, type ServerDeps } from '../src/server.js';\nimport { registrationMessage } from '../src/registration.js';\nimport { privateKeyToAccount } from 'viem/accounts';
+import { buildServer, type ServerDeps } from '../src/server.js';
+import { registrationMessage } from '../src/registration.js';
+import { privateKeyToAccount } from 'viem/accounts';
 
 function makeServerDeps() {
   const agents = new Map<string, any>();
