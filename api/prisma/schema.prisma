@@ -7,57 +7,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum EntityType {
-  INDIVIDUAL
-  COMPANY
-}
-
-enum AgentStatus {
-  PENDING
-  IN_REVIEW
-  VERIFIED
-  REJECTED
-  REVOKED
-}
-
-enum CheckType {
-  KYB
-  SANCTIONS
-  ACCREDITATION
-}
-
-enum CheckStatus {
-  PENDING
-  PASSED
-  FAILED
-}
+enum EntityType { INDIVIDUAL COMPANY }
+enum AgentStatus { PENDING IN_REVIEW VERIFIED REJECTED REVOKED }
+enum CheckType { KYB SANCTIONS ACCREDITATION }
+enum CheckStatus { PENDING PASSED FAILED }
 
 model Agent {
-  id              String      @id @default(cuid())
-  wallet          String      @unique // EIP-55 checksummed
-  erc8004TokenId  String? // uint256 as decimal string
-  ownerName       String
-  ownerEmail      String
-  ownerEntityType EntityType
-  jurisdiction    String // ISO 3166-1 alpha-2
-  status          AgentStatus @default(PENDING)
-  statusReason    String?
-  attestationUID  String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id                    String      @id @default(cuid())
+  wallet                String      @unique
+  erc8004TokenId        String?
+  ownerName             String
+  ownerEmail            String
+  ownerEntityType       EntityType
+  jurisdiction          String
+  accredited            Boolean     @default(false)
+  status                AgentStatus @default(PENDING)
+  statusReason          String?
+  verificationStage     String      @default("SUBMITTED")
+  attestationUID        String?
+  attestTxHash          String?
+  registerTxHash        String?
+  operatorProofMessage  String
+  operatorProofSignature String
+  operatorProofVerifiedAt DateTime
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 
   checks      VerificationCheck[]
   auditEvents AuditEvent[]
 }
 
+model RegistrationChallenge {
+  wallet    String   @id
+  nonce     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model VerificationCheck {
   id          String      @id @default(cuid())
   agentId     String
-  agent       Agent       @relation(fields: [agentId], references: [id])
+  agent       Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
   type        CheckType
   provider    String
   status      CheckStatus @default(PENDING)
-  rawResult   Json? // provider payload — PII stays here, never on-chain, never in public API responses
+  rawResult   Json?
   completedAt DateTime?
   createdAt   DateTime    @default(now())
 }
@@ -65,11 +61,11 @@ model VerificationCheck {
 model AuditEvent {
   id          String   @id @default(cuid())
   agentId     String?
-  agent       Agent?   @relation(fields: [agentId], references: [id])
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
   type        String
   payload     Json
   chainTxHash String?
-  chainLogKey String?  @unique // txHash-logIndex — dedupes indexer re-scans
+  chainLogKey String?  @unique
   createdAt   DateTime @default(now())
 
   @@index([agentId, createdAt])
@@ -77,7 +73,7 @@ model AuditEvent {
 }
 
 model IndexerCursor {
-  id        String   @id // indexer-<chainId>-<gate address>
+  id        String   @id
   lastBlock BigInt
   updatedAt DateTime @updatedAt
 }
