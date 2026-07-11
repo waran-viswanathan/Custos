@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { CustosRegistry } from "./CustosRegistry.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {CustosRegistry} from "./CustosRegistry.sol";
 
 /// @title CustosGate — per-token transfer policy enforcement.
 /// @notice Token hooks use checkAndLog; issuer preflights use preflightAndLog.
@@ -66,11 +66,7 @@ contract CustosGate is AccessControl {
         return _policies[token];
     }
 
-    function isPermitted(address agent, address token, uint256 amount)
-        public
-        view
-        returns (bool, string memory)
-    {
+    function isPermitted(address agent, address token, uint256 amount) public view returns (bool, string memory) {
         Policy storage p = _policies[token];
         if (!p.active) return (false, "POLICY_NOT_ACTIVE");
         if (!registry.isVerified(agent)) return (false, "AGENT_NOT_VERIFIED");
