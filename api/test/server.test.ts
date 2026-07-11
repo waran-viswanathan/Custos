@@ -189,6 +189,6 @@ describe('API endpoints', () => {
 
     expect(res.statusCode).toBe(204);
     expect(agents.size).toBe(0);
-    expect(audits.at(-1)).toMatchObject({ agentId: null, action: 'SUBJECT_ERASED' });
+    expect(audits.at(-1)).toMatchObject({ agentId: null, type: 'SUBJECT_ERASED' });
   });
 });
