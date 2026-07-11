@@ -15,6 +15,7 @@ The proof supports:
 - issuer-administered pool creation and pause controls
 - constant-product, exact-input swaps with fixed LP fees
 - EIP-712/ERC-1271 wallet intents through `CustosActionAuthorizer`
+- verified-principal mandates with venue/action/asset scope, caps, and expiry
 - per-action jurisdiction, accreditation, and amount policy
 - exact-transfer reserve accounting; fee-on-transfer and rebasing tokens fail
 - internal, non-transferable LP balances
