@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Test } from "forge-std/Test.sol";
-import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { CustosRegistry } from "../src/CustosRegistry.sol";
-import { CustosGate } from "../src/CustosGate.sol";
-import { MockTBill } from "../src/MockTBill.sol";
-import { MockEAS } from "../src/MockEAS.sol";
+import {Test} from "forge-std/Test.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
+import {CustosRegistry} from "../src/CustosRegistry.sol";
+import {CustosGate} from "../src/CustosGate.sol";
+import {MockTBill} from "../src/MockTBill.sol";
+import {MockEAS} from "../src/MockEAS.sol";
 import {
     IEAS,
     AttestationRequest,
@@ -52,9 +52,7 @@ contract CustosTest is Test {
 
     // ---------- helpers ----------
 
-    function _setPolicy(bool requireAccredited, bytes2[] memory jurisdictions, uint256 cap, bool active)
-        internal
-    {
+    function _setPolicy(bool requireAccredited, bytes2[] memory jurisdictions, uint256 cap, bool active) internal {
         vm.prank(issuer);
         gate.setPolicy(
             address(tbill),
@@ -136,7 +134,7 @@ contract CustosTest is Test {
 
         // revoke only on EAS (attester key), without touching the registry flag
         vm.prank(attester);
-        eas.revoke(RevocationRequest({ schema: schemaUID, data: RevocationRequestData({ uid: uid, value: 0 }) }));
+        eas.revoke(RevocationRequest({schema: schemaUID, data: RevocationRequestData({uid: uid, value: 0})}));
 
         assertFalse(registry.isVerified(agent));
         vm.prank(issuer);
@@ -237,3 +235,4 @@ contract CustosTest is Test {
         gate.checkAndLog(agent, address(tbill), 1_000e6);
     }
 }
+
