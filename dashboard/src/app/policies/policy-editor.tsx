@@ -6,6 +6,7 @@ import {
   createWalletClient,
   custom,
   defineChain,
+  erc20Abi,
   formatUnits,
   fromHex,
   http,
