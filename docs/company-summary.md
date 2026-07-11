@@ -1,88 +1,97 @@
-# Custos — Company Summary
+# Custos — company summary
 
-*As of 2026-07-10. Shareable with cofounder candidates and advisors.*
+*As of 2026-07-11. Shareable with accelerator reviewers, advisors, and potential
+cofounders.*
 
 ## The company
 
-Custos is a compliance infrastructure startup for the moment AI agents become
-holders of real financial assets. Tokenized RWAs (treasuries, funds, equities)
-are a real, regulated, growing market; AI agents are becoming a real holder
-class; the compliance layer between them does not exist — issuer stacks verify
-people and companies, not autonomous software. Custos is the missing binding:
-agent → KYB-verified operator → revocable on-chain attestation → transfer-time
-policy enforcement. *Custos* is Latin for guardian: the answer to "who watches
-the watchmen?" when the watchmen are software.
+Custos is compliance and delegated-authority infrastructure for AI agents that
+hold or transact tokenized assets. Existing compliance systems identify people,
+companies, and investor wallets; they do not prove who operates an autonomous
+wallet, what that software is authorized to do, or whether its authority can be
+stopped before the next transaction.
 
-Business model (planned): per-agent verification fees, per-check eligibility
-API pricing, issuer policy SaaS. Buyers: RWA issuers/tokenization platforms
-(compliance budgets + regulatory pressure today) and agent operators (doors
-opened). Non-custodial by construction. No token.
+Custos binds an agent wallet to a KYB-verified operator, issues a revocable
+onchain credential, records the operator’s scoped mandate, authenticates the
+wallet’s exact action, and enforces issuer policy at transaction time. *Custos*
+is Latin for guardian: the answer to “who watches the watchmen?” when the
+watchmen are software.
+
+Planned business model: annual issuer or venue platform contracts, usage pricing
+for active verified agents and authoritative policy decisions, and paid
+provider/reporting/deployment integrations. Trading fees are optional and are
+not required for the infrastructure business. No token is planned.
 
 ## The product
 
-1. **Verify** — the agent's operator (legal entity) passes KYB + sanctions
-   screening via the Custos API after the agent wallet signs the full operator binding.
-2. **Attest** — the agent receives a revocable EAS attestation on Base carrying
-   only `verified / jurisdiction / accredited`. No PII on-chain, ever.
-3. **Enforce** — issuers set per-token policy (jurisdictions, accreditation,
-   caps) in a gate contract their token calls in its transfer hook (~5 lines of
-   Solidity). Non-compliant transfers revert with machine-readable reasons.
-   One API call revokes an agent everywhere. One combined audit trail.
+1. **Verify and attest:** a legal-entity operator passes KYB and sanctions
+   screening after the agent wallet proves control. A revocable EAS credential
+   carries minimum eligibility attributes; no PII goes onchain.
+2. **Mandate:** the verified principal delegates a precise venue, action, asset,
+   transaction cap, cumulative cap, validity window, and recipient boundary.
+3. **Authorize:** the agent signs the exact action using EIP-712; ERC-1271 lets
+   smart-account agents participate. Nonces and deadlines prevent replay.
+4. **Enforce:** issuer policy checks credentials, jurisdiction, accreditation,
+   amount, venue, action, and asset before execution. Missing or invalid state
+   fails closed; revocation blocks the next action.
+5. **Audit:** authoritative onchain decisions and offchain verification events
+   form one exportable audit record.
 
-Demo (60s, all real local transactions): unverified agent blocked → operator
-KYB'd → attested → transfer succeeds → kill switch → blocked again.
+The repository includes an experimental singleton market manager to prove swap,
+liquidity-entry, pool-initialization, and controlled-exit flows. It is unaudited,
+testnet-only, and deliberately not positioned as a production DEX.
 
-## Work completed (2026-07-10)
+## Demonstrable evidence
 
-**Strategy & validation**
-- Business plan iterated against simulated partner-level critique; kill
-  criteria pre-committed; honest odds stated (docs/business-plan.md)
-- 106-agent adversarial market validation that corrected the original
-  x402-payments thesis (market ~10× smaller than claimed; Skyfire owns "KYA"
-  branding; standards consolidating at FIDO/ERC-8004) → pivot to the RWA
-  compliance buyer (research/market-validation.md)
+- 43 contract tests, 21 API tests, and 7 SDK tests: **71 automated tests**.
+- CI also builds the applications, checks generated ABIs, audits production
+  dependencies, and runs the signed credential lifecycle smoke test.
+- The earlier Base Sepolia v1 deployment proves the original credential
+  lifecycle but is interface-incompatible with the current contract stack.
+- The current five-layer architecture is reproducible locally. A fresh public
+  testnet deployment, verification, pilot replay, and recording are the next
+  evidence milestone.
 
-**Product**
-- Contracts (Foundry): CustosRegistry, CustosGate, gated demo T-bill, deploy
-  script for local + Base Sepolia
-- API (Fastify/Prisma/BullMQ): verification pipeline with retries + DLQ,
-  revocation, erasure, stats, rate limiting, and confirmation-aware indexing
-- SDK: signed registration, status polling, permission checks, generated typed ABIs
-- Dashboard (Next.js): agents, policy editor, audit trail, stats, SIWE-lite
-- `pnpm demo` exercises the complete local lifecycle in CI
+Custos is pre-customer, unaudited, and not production-ready. Those are release
+facts, not hidden footnotes.
 
-**Deployment status**
-- The earlier Base Sepolia v1 lifecycle was verified on-chain, but its contracts
-  are interface-incompatible with the hardened v2 code.
-- Those v1 addresses are retained only in
-  `contracts/deployments/84532.legacy.json`; they must not be used as a current
-  Custos deployment.
-- A fresh v2 Base Sepolia deployment and end-to-end verification are required
-  before `pnpm dev:sepolia`, public docs, or the website claim a live testnet.
+## Why the wedge is credible
 
-**Infrastructure**
-- Private GitHub repo (lalithesh-star/Custos), with contract build, tests, ABI
-  freshness, application builds, dependency audit, and demo smoke coverage in CI
-- SECURITY.md: threat model + honest MVP limitations
+The issuer needs to know both **who may hold the asset** and **what an automated
+wallet may do with it**. Custos joins those two controls without putting personal
+information onchain or taking custody of customer keys. The contracts compose
+credential status, operator authority, wallet intent, issuer policy, revocation,
+and audit evidence instead of relying on a router-supplied wallet address.
 
-**Go-to-market**
-- Outreach kit for the RWA positioning: one-pager, issuer/operator interview
-  scripts, cold email templates, LOI, cofounder brief (gtm/)
-- Wave-1 target list: ~60 verified companies in 5 segments with hooks and
-  contacts; 12-name Tier 1 (research/target-list.md)
-- Marketing site (site/index.html): inscription-and-ledger identity and typed
-  terminal of the local demo; public v2 proof links remain gated on redeployment
+The initial target is one verified company delegating narrowly capped authority
+to one AI agent for one restricted asset on one approved venue. The product can
+integrate with issuer tokens, regulated venues, and customer-operated settlement
+contracts; operating a generalized exchange is not required.
 
-## Immediate next steps
+## Go-to-market
 
-1. Complete and verify the v2 Base Sepolia redeployment
-2. Founder records the 60–90s demo video (shot list available)
-3. Draft + send the 12 Tier-1 outreach emails
-4. Domain + free hosting (Cloudflare Pages / Vercel) for the site
-5. Real KYB provider (Persona) when the first pilot demands it
+The current plan is accelerator-first. Before acceptance, the company will
+finish the public testnet proof, demonstration, application, deck, and technical
+data room. After acceptance, the accelerator network becomes the introduction
+path to issuers, tokenization platforms, institutional wallets, verification
+providers, specialist counsel, and the first paid pilot.
 
-## Honest open risks
+Existing target and outreach research remains useful preparation, but Custos
+does not claim customers, signed design partners, or commercial traction today.
 
-Market timing on agent-held RWA positions; incumbent bundling
-(Fireblocks/Securitize-class); solo-founder execution capacity. Mitigations:
-speed, non-custodial neutrality, proof over promises, cofounder search active.
+## Immediate milestones
+
+1. Align every public surface with the current code and honest deployment state.
+2. Deploy and independently verify the current Base Sepolia pilot with separate
+   administrator, attester, issuer, principal, agent, and escrow roles.
+3. Replay the required scenarios and publish the evidence manifest.
+4. Record a 60–90 second demonstration.
+5. Complete and submit the accelerator application package.
+
+## Open risks
+
+Market timing for agent-held tokenized assets, incumbent bundling, solo-founder
+capacity, regulated-provider procurement, and the audit/legal burden of market
+settlement are material. The operating response is a narrow infrastructure
+wedge, explicit product boundaries, customer-operated production integrations,
+standards compatibility, and proof before claims.

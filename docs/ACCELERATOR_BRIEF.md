@@ -43,6 +43,13 @@ The repository currently demonstrates:
 All production gates are fail-closed. PII remains offchain and Custos does not
 hold customer funds or keys.
 
+The evidence baseline is 43 contract tests, 21 API tests, and 7 SDK tests, plus
+application builds, ABI-freshness checks, a production dependency audit, and a
+complete lifecycle CI smoke test. The earlier Base Sepolia v1 deployment is
+historical proof only and is interface-incompatible with the current stack. The
+current architecture is demonstrated locally; its fresh public deployment,
+verification, pilot replay, and recording are the next milestone.
+
 ## Initial wedge
 
 The first users are tokenized-asset issuers, transfer agents, regulated venues,

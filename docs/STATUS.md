@@ -1,74 +1,101 @@
-# Custos — Execution Status
+# Custos — execution status
 
-Founder: Lalithesh (solo, seeking cofounder, starting cold — no existing crypto/payments network).
-Sequence chosen 2026-07-10: **Validation → Prototype → Deck**, with a gate check between phases.
+*As of 2026-07-11. Canonical internal status; update this file whenever a public
+claim, deployment, or go-to-market stage changes.*
 
-## Phase 1 — Validation (IN PROGRESS, started 2026-07-10)
+## Current position
 
-Goal: verify the load-bearing market claims before writing code, and build the cold-start outreach kit.
+Custos is pre-customer, accelerator-first, and technically pilot-ready on a
+local chain. The product is compliance and delegated-authority infrastructure
+for AI agents that hold or transact tokenized assets. The experimental market
+manager is a proof venue, not the company’s primary product or production DEX.
 
-- [x] Deep research: x402 real volume & genuine-commerce share, AP2 status, Mastercard Verifiable Intent, ERC-8004 status, competitor scan → `research/market-validation.md` (2026-07-10; 19 verified findings, 6 refuted claims)
-- [x] One-pager → `gtm/one-pager.md`
-- [x] Design-partner interview script → `gtm/design-partner-interview-script.md`
-- [x] Design-partner LOI template → `gtm/design-partner-loi-template.md`
-- [x] Cold outreach email templates → `gtm/outreach-emails.md`
-- [x] Cofounder pitch / recruiting brief → `gtm/cofounder-brief.md`
-- [ ] GATE 1 (AWAITING FOUNDER REVIEW): window is real but earlier + more contested than planned. Key decisions needed:
-  - Adopt the 7 corrections in `research/market-validation.md` §5 across all materials
-  - Positioning vs Skyfire (owns "KYA" branding, Coinbase Ventures/a16z-backed) and Catena Labs ($48M, OCC trust-charter path) — differentiation: open spec, non-custodial enforcement, cross-rail neutrality, outcome-data scoring
-  - Standards venue: pivot from "publish own spec as Schelling point" to contributing inside FIDO working groups + ERC-8004
-  - Follow-up research: competitor depth (is merchant-side Score uncontested?), FIDO WG membership path, FinCEN AML rulemaking tracking
+The current code is ahead of the public proof. The earlier Base Sepolia v1
+deployment completed the credential lifecycle, but it is interface-incompatible
+with the current architecture. No current deployment may be described as live
+until the fresh pilot is deployed, verified, replayed, and recorded.
 
-## PIVOT NOTE (2026-07-10, post-Gate-1)
+## Evidence ledger
 
-Founder redirected the MVP at the RWA compliance buyer: **Custos is now a
-compliance credential layer for AI agents transacting in tokenized RWAs**
-(KYB + sanctions → EAS attestation on Base → issuer gate contract enforcing
-per-token policy at transfer time). This merges the agent-trust thesis with
-the where-the-money-is-today RWA market surfaced in validation. The x402/KYA
-prototype moved to `legacy/`. New MVP built and E2E-verified — see Phase 2b.
+| Area | Current evidence | Status |
+|---|---|---|
+| Contracts | Registry, mandate, action authorizer, gate, and experimental market manager; 43 Foundry tests | Green locally and in CI |
+| API | Signed registration, resumable verification, revocation/erasure, versioned indexer, audit and rate limits; 21 tests | Green locally and in CI |
+| SDK | Registration and permission helpers, generated typed ABIs; 7 tests | Green locally and in CI |
+| End-to-end | Signed local lifecycle smoke test | Green in CI |
+| Public chain | Historical v1 Base Sepolia evidence only | Legacy; not current proof |
+| Security | Threat model and production release gates documented | Unaudited; testnet only |
+| Commercial | Target research and pilot materials exist | No customers or design partners claimed |
 
-## Phase 2b — RWA Compliance MVP (BUILT 2026-07-10)
+Total automated tests: **71** (43 contract, 21 API, 7 SDK), excluding build,
+ABI-freshness, dependency-audit, and lifecycle-smoke checks.
 
-- [x] Contracts: CustosRegistry (EAS-backed, revocable), CustosGate (per-token policy), MockTBill — 14 Foundry tests green
-- [x] API: Fastify + Prisma + BullMQ verification pipeline (KYB → sanctions → attest → register), chain indexer, admin revoke — 19 vitest tests green
-- [x] SDK: @custos/sdk (register / waitForVerification / isPermitted, typed ABIs)
-- [x] Dashboard: Next.js (agents, policy editor, audit trail, stats; SIWE-lite + dev bypass)
-- [x] Demo: full lifecycle green — unverified blocked → verified transfer → kill-switch revoked → blocked
-- [x] CI workflow, README, SECURITY.md
-- [x] Deployed to Base Sepolia (2026-07-10) with real EAS predeploys — registry 0x307D6709EFF49720f63C7ecD90cDc77Bbf818747, gate 0x837e675C7f560cB5b071E7909791C209Fa7B716D, cTBILL 0xaC19AD88879ED4CD3090D634210b221e95062CE7; full lifecycle E2E green on public testnet. Known limitation: chain-event indexer needs a filter-supporting RPC (Alchemy/Infura) on Sepolia — public RPC drops filters
-- [ ] Record 60–90s demo video (prereq for outreach — every email links it)
-- [ ] Real provider integrations (Persona KYB, OFAC screening)
-- [x] GTM kit rewritten for RWA-compliance positioning (2026-07-10): one-pager, issuer/operator interview scripts, outreach emails, cofounder brief
-- [x] Wave-1 target list built (2026-07-10): ~60 unique targets across 5 segments, 12-name Tier 1 → `research/target-list.md`; tracker at `research/outreach-tracker.md`
-- [ ] GATE 2: show to design partners (RWA issuers + agent platform operators)
+## What is built
 
-## Phase 2 — x402/KYA Prototype (SUPERSEDED, code in legacy/)
+1. **CustosRegistry:** EAS-backed credentials with expiry and revocation.
+2. **CustosAgentMandate:** principal-issued venue/action/asset scope, per-action
+   and cumulative caps, validity windows, revocation, and emergency freeze.
+3. **CustosActionAuthorizer:** single-use EIP-712 intents with ERC-1271 support,
+   sequential nonces, deadlines, executor binding, and cancel-all invalidation.
+4. **CustosGate:** fail-closed transfer and action policy with authoritative
+   audit separation and a controlled liquidity-exit invariant.
+5. **CustosMarketManager:** experimental singleton pools, exact-input swaps,
+   internal non-transferable LP balances, pause controls, and controlled exits.
 
-Goal: demoable wedge — agent registry + credential schema + policy module skeleton + x402 merchant middleware demo on Base testnet.
+The API, worker, SDK, dashboard, indexer, database migrations, demo, CI, and
+production checklist support that chain.
 
-- [x] KYA spec v0.1.0-draft + JSON schemas (`spec/`)
-- [x] Reference SDK: did:key, credentials, payment-bound presentations, policy commitments (`packages/kya-sdk`, 7 unit tests)
-- [x] Registry with revocation — in-memory reference (`packages/registry`)
-- [x] Score v0: tier/velocity/amount/sanctions rules (`packages/score`)
-- [x] Merchant middleware (Express) gating a 402 on a Custos check (`packages/middleware-express`)
-- [x] End-to-end demo: 8/8 scenarios green (`demo/run.js`) — verified purchase succeeds; forged, tier-inflated, replayed, stolen, revoked, abusive all fail
-- [ ] Registry prototype on-chain (EAS on Base Sepolia)
-- [ ] PolicyModule spec + skeleton (Foundry / ERC-4337)
-- [ ] Publish spec repo publicly (needed before outreach sends)
-- [ ] GATE 2: demo works; ready to show design partners
+## Immediate execution sequence
 
-## Phase 3 — Deck & fundraise prep (NOT STARTED)
+- [x] Align the accelerator brief with the delegated-authority product.
+- [x] Build the current contract stack and local proof venue.
+- [x] Add CI coverage for contracts, applications, generated ABIs, dependency
+  audit, and the complete lifecycle demo.
+- [x] Make the website, README, company summary, and status ledger match the
+  current code and deployment truth.
+- [ ] Choose separate testnet addresses for administrator, attester, issuer,
+  principal, agent, and controlled-exit recipient.
+- [ ] Deploy the current pilot to Base Sepolia and save a new versioned manifest.
+- [ ] Verify contract source, bytecode, roles, policies, and deployment block.
+- [ ] Replay every required pilot scenario and retain transaction links plus the
+  audit export.
+- [ ] Record a 60–90 second demonstration using the verified deployment.
+- [ ] Finish the accelerator deck, application answers, and technical data room.
+- [ ] Apply to the selected accelerator cohort.
 
-- [ ] Seed deck (from Step 13, updated with research + demo)
-- [ ] Investor memo (1–2 pages)
-- [ ] Data room skeleton
-- [ ] GATE 3: materials ready; begin outreach
+## Go-to-market decision
 
-## Standing decisions (from plan iteration)
+The founder has chosen an accelerator-led route. Before acceptance, optimize for
+reproducible technical proof, security clarity, and a strong application. After
+acceptance, use the accelerator network for issuer, transfer-agent, wallet,
+provider, counsel, and pilot introductions. Existing cold-outreach materials are
+research assets, not the active execution plan.
 
-- Operator-first GTM; lead with "you can't give your agent a corporate card"
-- Recourse absent from MVP messaging entirely
-- Open KYA spec, proprietary Score data
-- No token at launch; contingent CUST only at ≥$50M/mo protected volume
-- Kill criterion: <$3M/mo genuine protected volume by month 12 → pivot Score to stablecoin B2B fraud
+## Claims allowed today
+
+- “71 automated tests plus a full lifecycle CI smoke test.”
+- “Historical credential-lifecycle proof exists on Base Sepolia.”
+- “The current five-layer architecture is demonstrated locally.”
+- “Custos is pre-customer, testnet-only, and unaudited.”
+- “The market manager is an experimental reference venue.”
+
+Do not claim a current live deployment, production readiness, an audit,
+customers, design partners, protected volume, or regulatory approval without
+new documentary evidence.
+
+## Known constraints
+
+- Sequential intent nonces serialize each agent’s in-flight actions.
+- Emergency freeze is controlled by the Custos administrator, while principals
+  retain per-mandate revocation.
+- The experimental singleton manager custodies test assets and therefore has a
+  materially larger security and legal surface than the core infrastructure.
+- Production still requires multisig administration, KMS/HSM attestation, real
+  verification providers, independent audit and penetration test, monitoring,
+  specialist legal review, and customer-operated deployment boundaries.
+
+## Deferred work
+
+Real-provider integration, production deployment, a full Uniswap v4 benchmark,
+concentrated liquidity, vault strategies, generalized exchange UX, token
+incentives, and mainnet operation remain outside the accelerator proof milestone.

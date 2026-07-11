@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Custos — compliance infrastructure for AI agents in tokenized assets</title>
-<meta name="description" content="Custos verifies the entity behind an AI agent, attests it on-chain, and enforces issuer transfer policy at transfer time. Live on Base Sepolia; v2 redeployment in progress.">
+<meta name="description" content="Custos verifies who operates an AI agent, scopes its authority, authenticates its actions, and enforces issuer policy before execution. Testnet pilot in development.">
 <style>
   :root {
     --ground: #08090f;
@@ -68,13 +68,12 @@
     color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px;
     background: var(--glass);
   }
-  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--allow); animation: pulse 2.4s infinite; }
+  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); }
   @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(95,201,143,.45); }
     70% { box-shadow: 0 0 0 8px rgba(95,201,143,0); }
     100% { box-shadow: 0 0 0 0 rgba(95,201,143,0); }
   }
-  @media (prefers-reduced-motion: reduce) { .live .dot { animation: none; } }
 
   /* ---------- hero ---------- */
   header.hero { padding: 110px 0 56px; text-align: center; }
@@ -151,8 +150,9 @@
   .card p strong { color: var(--ink); font-weight: 500; }
 
   /* protocol steps */
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 1000px) { .steps { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px) { .steps { grid-template-columns: 1fr; } }
   .step {
     background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
     padding: 28px 26px;
@@ -211,8 +211,8 @@
     <div class="nav-links">
       <a href="#protocol">Protocol</a>
       <a href="#proof">Proof</a>
-      <a href="#partners">Design partners</a>
-      <span class="live"><span class="dot"></span>BASE SEPOLIA</span>
+      <a href="#partners">Pilot</a>
+      <span class="live"><span class="dot"></span>TESTNET PILOT PENDING</span>
     </div>
   </nav>
 
@@ -222,17 +222,18 @@
     <p class="sub">
       AI agents are becoming holders of tokenized assets — but compliance stacks verify people
       and companies, not autonomous software. Custos binds an agent to a KYB-verified operator,
-      attests it on-chain, and enforces the issuer's transfer policy at transfer time. With a kill switch.
+      scopes what it may do, authenticates each signed action, and enforces issuer policy before
+      execution. With a kill switch.
     </p>
     <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">Become a design partner</a>
-      <a class="btn ghost" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">View live contracts ↗</a>
+      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the technical brief</a>
+      <a class="btn ghost" href="#proof">Review current evidence ↓</a>
     </div>
   </header>
 
   <div class="terminal-frame reveal">
-    <div class="terminal" id="terminal" aria-label="Recording of the Custos credential lifecycle running on Base Sepolia">
-      <div class="t-head"><span>custos · agent lifecycle</span><span>base sepolia · 84532</span></div>
+    <div class="terminal" id="terminal" aria-label="Reproduction of the Custos credential lifecycle running locally">
+      <div class="t-head"><span>custos · agent lifecycle</span><span>local anvil · 31337</span></div>
       <div id="t-body"></div>
     </div>
   </div>
@@ -264,28 +265,32 @@
   <section id="protocol" class="reveal">
     <div class="section-head">
       <span class="micro">The protocol</span>
-      <h2>Verify the operator. Attest the agent. Enforce the policy.</h2>
+      <h2>Verify identity. Scope authority. Authenticate intent. Enforce policy.</h2>
     </div>
     <div class="steps">
       <div class="step">
         <div class="num">01</div>
-        <h3>Verify</h3>
-        <p>The agent's operator — a legal entity — passes KYB and sanctions screening.
-        Documents and identities stay off-chain, in the verification layer, always.</p>
+        <h3>Verify + attest</h3>
+        <p>The legal-entity operator passes KYB and sanctions screening. The agent receives a
+        revocable, minimum-data credential; documents and identities remain off-chain.</p>
       </div>
       <div class="step">
         <div class="num">02</div>
-        <h3>Attest</h3>
-        <p>A passing agent receives a revocable attestation on Base via the Ethereum Attestation
-        Service, carrying only <span style="font-family:var(--mono);font-size:.85em">verified · jurisdiction · accredited</span>.
-        No personal data touches the chain.</p>
+        <h3>Mandate</h3>
+        <p>The verified principal limits the agent to an exact venue, action, and asset, with
+        transaction and cumulative caps, validity dates, revocation, and emergency freeze.</p>
       </div>
       <div class="step">
         <div class="num">03</div>
+        <h3>Authorize</h3>
+        <p>The wallet signs every material action field using EIP-712 or ERC-1271. Executor binding,
+        deadlines, and single-use nonces prevent impersonation, tampering, and replay.</p>
+      </div>
+      <div class="step">
+        <div class="num">04</div>
         <h3>Enforce</h3>
-        <p>Issuers set policy per token — jurisdictions, accreditation, caps — and their token calls
-        the Custos gate in its transfer hook. Non-compliant transfers revert. Revocation takes
-        one call and holds on the next transfer.</p>
+        <p>Issuer policy checks the credential, venue, action, asset, jurisdiction, accreditation,
+        and amount before execution. Missing, expired, or revoked authority fails closed.</p>
       </div>
     </div>
     <div class="code"><span class="cm">// the issuer integration, in full</span>
@@ -309,9 +314,10 @@
         compatible with an immutable ledger because there is nothing personal to erase from it.</p>
       </div>
       <div class="card">
-        <h3>Non-custodial by construction.</h3>
-        <p>Custos never holds funds or customer keys. It is a software provider, not a money
-        transmitter — a property preserved religiously.</p>
+        <h3>Core infrastructure is non-custodial.</h3>
+        <p>The credential, mandate, authorizer, and gate never hold customer keys. The repository's
+        experimental market manager does custody test tokens, so it remains testnet-only pending
+        independent security and legal review.</p>
       </div>
       <div class="card">
         <h3>Fail closed.</h3>
@@ -329,31 +335,34 @@
   <section id="proof" class="reveal">
     <div class="section-head">
       <span class="micro">Proof, not promises</span>
-      <h2>Live on a public network. Inspect everything.</h2>
-      <p class="prose">The full credential lifecycle — an unverified agent blocked, verified, transacting,
-      revoked, and blocked again — runs against the real Ethereum Attestation Service on Base Sepolia. Links below are the v1 deployment; the hardened v2 contracts redeploy shortly.</p>
+      <h2>Reproducible today. Fresh public proof is the next gate.</h2>
+      <p class="prose">The current five-layer architecture and complete credential lifecycle run locally and
+      in CI. The earlier Base Sepolia deployment proves the original lifecycle but is incompatible with
+      the current interfaces. A fresh deployment will be published only after source, bytecode, roles,
+      policies, pilot transactions, and the audit export are independently checked.</p>
     </div>
     <div class="ledger">
       <div class="inner">
       <table>
-        <tr><td>Registry</td><td><a href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">0x307D6709EFF49720f63C7ecD90cDc77Bbf818747 ↗</a></td></tr>
-        <tr><td>Policy gate</td><td><a href="https://sepolia.basescan.org/address/0x837e675C7f560cB5b071E7909791C209Fa7B716D" target="_blank" rel="noreferrer">0x837e675C7f560cB5b071E7909791C209Fa7B716D ↗</a></td></tr>
-        <tr><td>Demo T-bill</td><td><a href="https://sepolia.basescan.org/address/0xaC19AD88879ED4CD3090D634210b221e95062CE7" target="_blank" rel="noreferrer">0xaC19AD88879ED4CD3090D634210b221e95062CE7 ↗</a></td></tr>
-        <tr><td>Attestation</td><td><a href="https://base-sepolia.easscan.org/attestation/view/0xb2e63832251366e58199270f08fb386b1a51ee4cb0a0b5544ac4f4c77f3509bb" target="_blank" rel="noreferrer">live example on EAS ↗</a></td></tr>
-        <tr><td>Test suite</td><td class="num">42 passing — contract invariants, pipeline, SDK, CI demo gate</td></tr>
+        <tr><td>Contract tests</td><td class="num">43 passing — credentials, mandates, intents, policy, and market invariants</td></tr>
+        <tr><td>API tests</td><td class="num">21 passing — verification pipeline, registration, revocation, and audit</td></tr>
+        <tr><td>SDK tests</td><td class="num">7 passing — typed client and generated ABI coverage</td></tr>
+        <tr><td>Lifecycle</td><td class="num">signed local smoke test enforced in CI</td></tr>
+        <tr><td>Current public pilot</td><td class="num">pending deployment and independent verification</td></tr>
+        <tr><td>Historical v1</td><td><a href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">legacy credential-lifecycle evidence ↗</a></td></tr>
       </table>
       </div>
     </div>
   </section>
 
   <section id="partners" class="cta-final reveal">
-    <span class="micro">Design partner program</span>
-    <h2>Ten issuers and agent platforms will shape the policy engine before it hardens.</h2>
-    <p class="prose">We run the gate on a test asset with you — integration measured in minutes, and we
-    do the work. Founding-partner pricing locked for 24 months. Your compliance requirements become
-    the roadmap.</p>
+    <span class="micro">Accelerator-ready pilot</span>
+    <h2>One verified company. One narrowly mandated agent. One restricted asset.</h2>
+    <p class="prose">The next milestone is a verified Base Sepolia pilot and a reproducible evidence
+    package for accelerator review. After acceptance, accelerator introductions become the path to
+    issuer, platform, provider, counsel, and paid-pilot relationships.</p>
     <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">Write to us</a>
+      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the accelerator brief</a>
     </div>
   </section>
 
@@ -366,8 +375,7 @@
 
 <script>
   const LINES = [
-    ["c-dim",    "$ pnpm demo --network base-sepolia"],
-    ["",         ""],
+    ["c-dim",    "$ pnpm demo"],
     ["c-accent", "[1] Issuer sets policy for cTBILL — US/GB only, 5,000 max per transfer"],
     ["c-allow",  "  ✓ policy active on-chain"],
     ["c-accent", "[2] \"Atlas\" (AI treasury agent) spins up a fresh wallet"],
@@ -375,7 +383,7 @@
     ["c-accent", "[3] Issuer attempts to send Atlas 1,000 cTBILL"],
     ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
     ["c-accent", "[4] Atlas registers — operator KYB + sanctions screening"],
-    ["c-allow",  "  ✓ VERIFIED — EAS attestation 0xb2e6…09bb"],
+    ["c-allow",  "  ✓ VERIFIED — local EAS-compatible attestation issued"],
     ["c-accent", "[5] Issuer retries the same transfer"],
     ["c-allow",  "  ✓ success — Atlas holds 1,000 cTBILL"],
     ["c-accent", "[6] Compliance revokes Atlas — kill switch"],
@@ -383,7 +391,7 @@
     ["c-accent", "[7] One more transfer attempt"],
     ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
     ["",         ""],
-    ["c-dim",    "unverified ✗ → verified ✓ → revoked ✗ — every step above is a real transaction."]
+    ["c-dim",    "unverified ✗ → verified ✓ → revoked ✗ — every step above is a real local transaction."]
   ];
 
   const body = document.getElementById('t-body');
