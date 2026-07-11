@@ -75,11 +75,17 @@ function _update(address from, address to, uint256 value) internal override {
 
 Then configure your policy (jurisdictions, accreditation, transfer caps, kill switch) in the dashboard at `/policies` — enforcement is on-chain, per transfer, with reasons on the audit trail.
 
+### Authenticated wallet actions
+
+Custos can evaluate swaps, liquidity entry, pool initialization, vault operations, and custom agent actions without trusting a router-supplied wallet address. The wallet signs a single-use EIP-712 intent binding the venue, approved executor, action, asset, amount, recipient, context, nonce, and deadline. `CustosActionAuthorizer` verifies that intent before `CustosGate` applies the exact authorizer/action/asset policy.
+
+This is the foundation for customer-operated, compliance-gated markets. Custos remains the operator-verification, credential, policy, revocation, and audit infrastructure; it does not ship a custom AMM or operate an unlicensed trading venue. See [docs/MARKETS_FOUNDATION.md](docs/MARKETS_FOUNDATION.md).
+
 ## Repo layout
 
 | Path | Contents |
 |---|---|
-| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, deploy script, 14 tests |
+| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, signed action authorizer, deploy script, and tests |
 | `api/` | Fastify verification API, BullMQ pipeline (KYB → sanctions → attest), chain indexer, Prisma models |
 | `sdk/` | `@custos/sdk` — register, poll status, on-chain permission checks, typed ABIs |
 | `dashboard/` | Next.js issuer dashboard: agents, policies, audit trail, stats |

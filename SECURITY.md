@@ -33,7 +33,28 @@ Two independent kill switches, either of which fails closed:
 
 ## Audit trail
 
-Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via `preflightAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `ActionChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via `preflightAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+
+## Authenticated market actions
+
+Market actions fail closed at three independent boundaries: the authorizer must
+hold `VENUE_ROLE`, the caller must hold the authorizer's `EXECUTOR_ROLE`, and
+the exact authorizer/action/asset tuple must have an active issuer policy. The
+wallet signs an EIP-712 intent binding the venue, executor, action, asset,
+amount, recipient, context, nonce, and deadline. This prevents a router or hook
+from claiming that a different verified wallet initiated its action. ERC-1271
+wallet signatures are supported through OpenZeppelin `SignatureChecker`.
+
+Each intent is single-use. The wallet may advance its nonce to cancel every
+older outstanding intent. Deploy one authorizer per venue integration so policy
+and audit records remain scoped to an exact enforcement boundary.
+
+Liquidity exits must not trap economic value, but a revoked wallet must not
+automatically receive a restricted asset. A production pool or vault integration
+must route restricted proceeds to issuer-controlled redemption escrow while
+returning unrestricted proceeds normally. The foundation contracts do not yet
+implement that settlement path; market deployment remains blocked until it is
+implemented and audited.
 
 ## Known MVP limitations
 

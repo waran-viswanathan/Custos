@@ -1,6 +1,12 @@
-import { createPublicClient, http, getAddress, type Address, type Chain, type Hex, type PublicClient } from 'viem';
+import { createPublicClient, http, getAddress, keccak256, stringToHex, type Address, type Chain, type Hex, type PublicClient } from 'viem';
 import { custosGateAbi, custosRegistryAbi } from './abis.js';
-export { custosRegistryAbi, custosGateAbi, mockTBillAbi, mockEasAbi } from './abis.js';
+export {
+  custosRegistryAbi,
+  custosGateAbi,
+  mockTBillAbi,
+  mockEasAbi,
+  custosActionAuthorizerAbi,
+} from './abis.js';
 
 export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address }
 export type AgentStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED' | 'REVOKED';
@@ -14,6 +20,51 @@ export interface RegistrationDetails {
 export interface RegisterInput extends RegistrationDetails { nonce: string; signature: Hex; domain: string }
 export interface RegistrationChallenge { wallet: Address; nonce: string; domain: string; expiresAt: string }
 export interface CustosConfig { apiUrl: string; registryAddress: Address; gateAddress: Address; rpcUrl?: string; chain?: Chain }
+
+export const CustosActions = {
+  SWAP: keccak256(stringToHex('SWAP')),
+  LIQUIDITY_ENTRY: keccak256(stringToHex('LIQUIDITY_ENTRY')),
+  LIQUIDITY_EXIT: keccak256(stringToHex('LIQUIDITY_EXIT')),
+  POOL_INITIALIZE: keccak256(stringToHex('POOL_INITIALIZE')),
+  EXTERNAL: keccak256(stringToHex('EXTERNAL_ACTION')),
+} as const;
+
+export interface ActionIntent {
+  agent: Address;
+  venue: Address;
+  executor: Address;
+  action: Hex;
+  asset: Address;
+  amount: bigint;
+  recipient: Address;
+  nonce: bigint;
+  deadline: bigint;
+  contextHash: Hex;
+}
+
+export const custosActionIntentTypes = {
+  ActionIntent: [
+    { name: 'agent', type: 'address' },
+    { name: 'venue', type: 'address' },
+    { name: 'executor', type: 'address' },
+    { name: 'action', type: 'bytes32' },
+    { name: 'asset', type: 'address' },
+    { name: 'amount', type: 'uint256' },
+    { name: 'recipient', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+    { name: 'contextHash', type: 'bytes32' },
+  ],
+} as const;
+
+export function actionIntentTypedData(chainId: number, authorizer: Address, message: ActionIntent) {
+  return {
+    domain: { name: 'Custos Action', version: '1', chainId, verifyingContract: getAddress(authorizer) },
+    types: custosActionIntentTypes,
+    primaryType: 'ActionIntent' as const,
+    message,
+  };
+}
 
 export function registrationMessage(input: RegistrationDetails, challenge: Pick<RegistrationChallenge, 'nonce' | 'domain'>): string {
   return [
@@ -65,6 +116,21 @@ export class Custos {
   }
   async isPermitted(agent: Address, token: Address, amount: bigint): Promise<{ allowed: boolean; reason: string }> {
     const [allowed, reason] = await this.client.readContract({ address: this.config.gateAddress, abi: custosGateAbi, functionName: 'isPermitted', args: [agent, token, amount] });
+    return { allowed, reason };
+  }
+  async isActionPermitted(
+    agent: Address,
+    venue: Address,
+    action: Hex,
+    asset: Address,
+    amount: bigint,
+  ): Promise<{ allowed: boolean; reason: string }> {
+    const [allowed, reason] = await this.client.readContract({
+      address: this.config.gateAddress,
+      abi: custosGateAbi,
+      functionName: 'isActionPermitted',
+      args: [getAddress(agent), getAddress(venue), action, getAddress(asset), amount],
+    });
     return { allowed, reason };
   }
   async isVerified(agent: Address): Promise<boolean> {
