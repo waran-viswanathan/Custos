@@ -8,6 +8,13 @@ The attester key signs EAS attestations and `CustosRegistry.registerAgent/revoke
 
 The EAS attestation payload is limited to the registered schema: `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`. Names, emails, and KYB documents stay in Postgres (`VerificationCheck.rawResult`), are never returned by public API endpoints, and never leave the API boundary. This keeps GDPR erasure compatible with chain immutability: erasing a subject deletes DB rows and revokes the attestation; nothing personal remains on-chain.
 
+## Agent/operator binding
+
+Production registration is challenge-response based. The API issues a short-lived,
+single-use nonce and verifies an agent-wallet signature over the complete operator
+application, domain, jurisdiction, ERC-8004 claim, and nonce. Unsigned registration
+is available only for local development and is rejected at production startup.
+
 ## Revocation flow
 
 Two independent kill switches, either of which fails closed:
@@ -26,16 +33,24 @@ Two independent kill switches, either of which fails closed:
 
 ## Audit trail
 
-Every contract state change emits an event; the indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via pre-flight `checkAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via pre-flight `checkAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
 
 ## Known MVP limitations
 
 - **Single attester = centralized trust.** Whoever holds the attester key can verify anyone. Roadmap: multi-attester with independent keys, then attester bonding/slashing.
-- **Mock KYB/sanctions providers** by default; Persona/OFAC integrations are skeletons behind env flags.
+- **Provider adapters require deployment-specific contracts.** Production startup requires authenticated KYB and sanctions adapter URLs and forbids mock providers.
 - **Recipient-only transfer checks** on `MockTBill`; sender-side checks and transfer-between-third-parties policies are v2.
 - **No rate limiting or API-key auth** on public endpoints (submit/status); a hostile client can spam registrations.
 - **No upgradeability proxies** — deliberate for the MVP (smaller audit surface); new versions deploy fresh with per-issuer opt-in migration. Noted as a v2 consideration.
-- **SIWE-lite dashboard auth** (nonce + signature + role check, HMAC cookie) rather than full EIP-4361; dev bypass flag must be off anywhere real.
+- **SIWE-lite dashboard auth** (nonce + signature + role check, HMAC cookie) rather than full EIP-4361. Production structurally disables the development bypass, rejects the default session secret, and uses secure cookies.
 - **Accreditation is inferred from the mock KYB result** (companies pass); a real accreditation check (506(c)-style) is a provider integration away.
 
 Report vulnerabilities to lalitheshnarayanan@gmail.com.
+
+
+## Production boundary
+
+Source hardening does not replace operational controls. Mainnet use requires a
+multisig administrator, KMS/HSM attester, separate issuer identity, real provider
+contracts, managed encrypted data stores, monitoring, backups, an external smart
+contract audit, and an application penetration test. See docs/PRODUCTION.md.
