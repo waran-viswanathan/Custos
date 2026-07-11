@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
-import { IEAS, Attestation } from "./vendor/eas/IEAS.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IEAS, Attestation} from "./vendor/eas/IEAS.sol";
 
 contract CustosRegistry is AccessControl {
     bytes32 public constant ATTESTER_ROLE = keccak256("ATTESTER_ROLE");
@@ -21,7 +21,13 @@ contract CustosRegistry is AccessControl {
     bytes32 public immutable schemaUID;
     mapping(address => AgentRecord) private _agents;
 
-    event AgentRegistered(address indexed agentWallet, uint256 erc8004TokenId, bytes32 attestationUID, bytes2 jurisdictionCode, bool accredited);
+    event AgentRegistered(
+        address indexed agentWallet,
+        uint256 erc8004TokenId,
+        bytes32 attestationUID,
+        bytes2 jurisdictionCode,
+        bool accredited
+    );
     event AgentRevoked(address indexed agentWallet, string reason);
     event AgentUpdated(address indexed agentWallet, bytes32 attestationUID);
 
@@ -84,8 +90,7 @@ contract CustosRegistry is AccessControl {
         try eas.getAttestation(rec.attestationUID) returns (Attestation memory att) {
             if (
                 att.uid == bytes32(0) || att.schema != schemaUID || att.recipient != agentWallet
-                    || att.revocationTime != 0
-                    || (att.expirationTime != 0 && att.expirationTime <= block.timestamp)
+                    || att.revocationTime != 0 || (att.expirationTime != 0 && att.expirationTime <= block.timestamp)
             ) return false;
             return true;
         } catch {
