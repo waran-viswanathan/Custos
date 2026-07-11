@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import { Script } from "forge-std/Script.sol";
-import { CustosRegistry } from "../src/CustosRegistry.sol";
-import { CustosGate } from "../src/CustosGate.sol";
-import { MockTBill } from "../src/MockTBill.sol";
-import { MockEAS } from "../src/MockEAS.sol";
-import { IEAS, ISchemaRegistry } from "../src/vendor/eas/IEAS.sol";
+import {Script} from "forge-std/Script.sol";
+import {CustosRegistry} from "../src/CustosRegistry.sol";
+import {CustosGate} from "../src/CustosGate.sol";
+import {MockTBill} from "../src/MockTBill.sol";
+import {MockEAS} from "../src/MockEAS.sol";
+import {IEAS, ISchemaRegistry} from "../src/vendor/eas/IEAS.sol";
 
 /// Deploys the Custos stack. On Base Sepolia (84532) it wires the real EAS
 /// predeploys; on any other chain (local anvil) it deploys MockEAS. Writes a
@@ -17,8 +17,7 @@ contract Deploy is Script {
     function run() external {
         // anvil default key #0 as fallback for local dev
         uint256 pk = vm.envOr(
-            "DEPLOYER_PRIVATE_KEY",
-            uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
+            "DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
         address deployer = vm.addr(pk);
         address attesterAddr = vm.envOr("ATTESTER_ADDRESS", deployer);
@@ -63,7 +62,8 @@ contract Deploy is Script {
         vm.serializeAddress(obj, "registry", address(registry));
         vm.serializeAddress(obj, "gate", address(gate));
         vm.serializeAddress(obj, "tbill", address(tbill));
-        vm.serializeAddress(obj, "admin", adminAddr);\n        vm.serializeAddress(obj, "attester", attesterAddr);
+        vm.serializeAddress(obj, "admin", adminAddr);
+        vm.serializeAddress(obj, "attester", attesterAddr);
         string memory json = vm.serializeAddress(obj, "issuer", issuerAddr);
 
         string memory path = block.chainid == 31337
