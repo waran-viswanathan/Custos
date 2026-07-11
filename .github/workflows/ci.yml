@@ -35,7 +35,7 @@ jobs:
       - run: pnpm --filter @custos/sdk test
       - run: pnpm --filter @custos/api build
       - run: pnpm --filter @custos/api test
-      - run: pnpm --filter @custos/demo-agent exec tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 demo.ts
+      - run: pnpm --filter @custos/demo-agent build
       - run: pnpm --filter @custos/dashboard build
         env:
           DEPLOYMENTS_FILE: ${{ github.workspace }}/contracts/deployments/ci-placeholder.json
