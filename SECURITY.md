@@ -33,7 +33,19 @@ Two independent kill switches, either of which fails closed:
 
 ## Audit trail
 
-Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via `preflightAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `ActionChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via `preflightAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+
+## External venue adapters
+
+Venue actions fail closed at two independent boundaries: an adapter must hold
+`VENUE_ROLE`, and the exact adapter/action/asset tuple must have an active
+issuer policy. Adapters authenticate the external venue before forwarding the
+agent identity to Custos. Policies for paired assets must pass on both sides.
+
+Liquidity exits are never compliance-blocked. They are authoritatively logged,
+but remain available to revoked or expired agents so an adapter cannot trap
+existing user capital. Revocation blocks new swaps, deposits, pool creation,
+and other risk-increasing activity.
 
 ## Known MVP limitations
 
