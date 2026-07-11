@@ -79,13 +79,13 @@ Then configure your policy (jurisdictions, accreditation, transfer caps, kill sw
 
 Custos can evaluate swaps, liquidity entry, pool initialization, vault operations, and custom agent actions without trusting a router-supplied wallet address. The wallet signs a single-use EIP-712 intent binding the venue, approved executor, action, asset, amount, recipient, context, nonce, and deadline. `CustosActionAuthorizer` verifies that intent before `CustosGate` applies the exact authorizer/action/asset policy.
 
-This is the foundation for customer-operated, compliance-gated markets. Custos remains the operator-verification, credential, policy, revocation, and audit infrastructure; it does not ship a custom AMM or operate an unlicensed trading venue. See [docs/MARKETS_FOUNDATION.md](docs/MARKETS_FOUNDATION.md).
+`CustosAgentMandate` adds the principal-to-agent authority layer: an operator can restrict an agent to an exact venue, action, and asset with transaction and cumulative caps, validity dates, revocation, and emergency freeze. Custos remains the operator-verification, credential, mandate, policy, revocation, and audit infrastructure.\n\nThe repository also contains an **experimental, testnet-only** Custos singleton market manager used to prove the complete flow and benchmark it against external venues. It is not audited or approved for production assets, and Custos is not presented as a generalized DEX. See [the market foundation](docs/MARKETS_FOUNDATION.md), [pilot runbook](docs/PILOT_RUNBOOK.md), and [market POC boundary](docs/MARKET_MANAGER_POC.md).
 
 ## Repo layout
 
 | Path | Contents |
 |---|---|
-| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, signed action authorizer, deploy script, and tests |
+| `contracts/` | Foundry: registry, gate, scoped agent mandates, signed action authorizer, experimental market manager, test assets, deployment scripts, and tests |
 | `api/` | Fastify verification API, BullMQ pipeline (KYB → sanctions → attest), chain indexer, Prisma models |
 | `sdk/` | `@custos/sdk` — register, poll status, on-chain permission checks, typed ABIs |
 | `dashboard/` | Next.js issuer dashboard: agents, policies, audit trail, stats |
@@ -93,4 +93,4 @@ This is the foundation for customer-operated, compliance-gated markets. Custos r
 | `docs/`, `gtm/`, `research/` | Business plan, validation research, go-to-market kit |
 | `legacy/` | Earlier x402/KYA prototype (superseded by this MVP) |
 
-Security model and known MVP limitations: [SECURITY.md](SECURITY.md). Production release requirements: [docs/PRODUCTION.md](docs/PRODUCTION.md).
+Security model and known MVP limitations: [SECURITY.md](SECURITY.md). Production release requirements: [docs/PRODUCTION.md](docs/PRODUCTION.md). Accelerator narrative: [docs/ACCELERATOR_BRIEF.md](docs/ACCELERATOR_BRIEF.md). Standards status: [docs/STANDARDS_COMPATIBILITY.md](docs/STANDARDS_COMPATIBILITY.md).
