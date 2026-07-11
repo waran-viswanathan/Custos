@@ -43,6 +43,9 @@ describe('Custos.register', () => {
       owner: { name: 'Atlas Capital LLC', email: 'ops@atlas.example', entityType: 'COMPANY' },
       jurisdiction: 'US',
       erc8004TokenId: 7n,
+      nonce: '00000000-0000-4000-8000-000000000001',
+      domain: 'api.custos.example',
+      signature: ('0x' + '11'.repeat(65)) as `0x${string}`,
     });
 
     expect(result.status).toBe('PENDING');
