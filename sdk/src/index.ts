@@ -2,7 +2,7 @@ import { createPublicClient, http, getAddress, type Address, type Chain, type He
 import { custosGateAbi, custosRegistryAbi } from './abis.js';
 export { custosRegistryAbi, custosGateAbi, mockTBillAbi, mockEasAbi } from './abis.js';
 
-export interface Deployments { chainId: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin?: Address; attester: Address; issuer: Address }
+export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address }
 export type AgentStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED' | 'REVOKED';
 export interface AgentStatusResponse { wallet: Address; status: AgentStatus; jurisdiction: string; erc8004TokenId: string | null; attestationUID: string | null; checks: Array<{ type: string; provider: string; status: string; completedAt: string | null }> }
 export interface RegistrationDetails {
