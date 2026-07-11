@@ -5,16 +5,17 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { CustosRegistry } from "./CustosRegistry.sol";
 
 /// @title CustosGate — per-token transfer policy enforcement.
-/// @notice RWA issuers (ISSUER_ROLE) configure a policy per token; gated
-/// tokens call checkAndLog() in their transfer hook. Fail closed: no active
-/// policy means no permitted transfers.
+/// @notice Token hooks use checkAndLog; issuer preflights use preflightAndLog.
+/// The two event classes are deliberately distinguishable so probes cannot be
+/// represented as completed transfer enforcement in an audit trail.
 contract CustosGate is AccessControl {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
+    uint256 public constant MAX_JURISDICTIONS = 32;
 
     struct Policy {
         bool requireAccredited;
-        bytes2[] allowedJurisdictions; // empty = all jurisdictions allowed
-        uint256 maxTransferAmount; // 0 = no cap
+        bytes2[] allowedJurisdictions;
+        uint256 maxTransferAmount;
         bool active;
     }
 
@@ -29,8 +30,19 @@ contract CustosGate is AccessControl {
         bool active
     );
     event TransferChecked(
-        address indexed agent, address indexed token, uint256 amount, bool allowed, string reason
+        address indexed agent,
+        address indexed token,
+        address indexed caller,
+        uint256 amount,
+        bool allowed,
+        bool authoritative,
+        string reason
     );
+
+    error InvalidToken();
+    error InvalidJurisdiction();
+    error TooManyJurisdictions();
+    error UnauthorizedTokenCaller();
 
     constructor(CustosRegistry _registry, address admin) {
         registry = _registry;
@@ -38,6 +50,14 @@ contract CustosGate is AccessControl {
     }
 
     function setPolicy(address token, Policy calldata p) external onlyRole(ISSUER_ROLE) {
+        if (token == address(0)) revert InvalidToken();
+        if (p.allowedJurisdictions.length > MAX_JURISDICTIONS) revert TooManyJurisdictions();
+        for (uint256 i = 0; i < p.allowedJurisdictions.length; i++) {
+            if (p.allowedJurisdictions[i] == bytes2(0)) revert InvalidJurisdiction();
+            for (uint256 j = 0; j < i; j++) {
+                if (p.allowedJurisdictions[i] == p.allowedJurisdictions[j]) revert InvalidJurisdiction();
+            }
+        }
         _policies[token] = p;
         emit PolicySet(token, p.requireAccredited, p.allowedJurisdictions, p.maxTransferAmount, p.active);
     }
@@ -46,8 +66,6 @@ contract CustosGate is AccessControl {
         return _policies[token];
     }
 
-    /// @notice Core compliance check. Returns (allowed, reason); reason is a
-    /// stable machine-readable code, empty when allowed.
     function isPermitted(address agent, address token, uint256 amount)
         public
         view
@@ -62,7 +80,7 @@ contract CustosGate is AccessControl {
 
         uint256 n = p.allowedJurisdictions.length;
         if (n > 0) {
-            bool found = false;
+            bool found;
             for (uint256 i = 0; i < n; i++) {
                 if (p.allowedJurisdictions[i] == rec.jurisdictionCode) {
                     found = true;
@@ -78,13 +96,25 @@ contract CustosGate is AccessControl {
         return (true, "");
     }
 
-    /// @notice Same check, with an on-chain audit event. NOTE: if the calling
-    /// token reverts on a false result, the event is rolled back with the tx —
-    /// blocked-transfer audit events therefore come from standalone pre-flight
-    /// checkAndLog calls (see demo-agent), permitted ones from the hook itself.
+    /// @notice Authoritative enforcement path. Only the token being evaluated
+    /// may call this function, preventing third parties from forging transfer
+    /// audit events for arbitrary token addresses.
     function checkAndLog(address agent, address token, uint256 amount) external returns (bool) {
+        if (msg.sender != token) revert UnauthorizedTokenCaller();
         (bool allowed, string memory reason) = isPermitted(agent, token, amount);
-        emit TransferChecked(agent, token, amount, allowed, reason);
+        emit TransferChecked(agent, token, msg.sender, amount, allowed, true, reason);
+        return allowed;
+    }
+
+    /// @notice Optional issuer-authenticated preflight. This is explicitly
+    /// marked non-authoritative and must not be counted as a token transfer.
+    function preflightAndLog(address agent, address token, uint256 amount)
+        external
+        onlyRole(ISSUER_ROLE)
+        returns (bool)
+    {
+        (bool allowed, string memory reason) = isPermitted(agent, token, amount);
+        emit TransferChecked(agent, token, msg.sender, amount, allowed, false, reason);
         return allowed;
     }
 }
