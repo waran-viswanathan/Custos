@@ -7,6 +7,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {CustosRegistry} from "../src/CustosRegistry.sol";
 import {CustosGate} from "../src/CustosGate.sol";
 import {CustosActionAuthorizer} from "../src/CustosActionAuthorizer.sol";
+import {CustosAgentMandate} from "../src/CustosAgentMandate.sol";
 import {CustosMarketManager} from "../src/markets/CustosMarketManager.sol";
 import {MockTBill} from "../src/MockTBill.sol";
 import {MockEAS} from "../src/MockEAS.sol";
@@ -30,6 +31,7 @@ contract MarketManagerTest is Test {
     CustosGate internal gate;
     CustosMarketManager internal manager;
     CustosActionAuthorizer internal authorizer;
+    CustosAgentMandate internal mandates;
     MockTBill internal tbill;
     TestUSD internal usd;
 
@@ -58,6 +60,7 @@ contract MarketManagerTest is Test {
         gate = new CustosGate(registry, admin);
         manager = new CustosMarketManager(gate, admin);
         authorizer = new CustosActionAuthorizer(gate, address(manager), admin);
+        mandates = new CustosAgentMandate(registry, admin);
         tbill = new MockTBill(gate, issuer);
         usd = new TestUSD();
 
@@ -68,12 +71,15 @@ contract MarketManagerTest is Test {
         gate.grantRole(gate.VENUE_ROLE(), address(manager));
         manager.grantRole(manager.MARKET_ADMIN_ROLE(), issuer);
         authorizer.grantRole(authorizer.EXECUTOR_ROLE(), address(manager));
+        mandates.grantRole(mandates.CONSUMER_ROLE(), address(authorizer));
+        authorizer.configureMandates(mandates);
         manager.configureAuthorizer(authorizer);
         vm.stopPrank();
 
         _verify(issuer, true);
         _verify(agent, false);
         _configurePolicies();
+        _grantMandates();
 
         vm.prank(issuer);
         poolId = manager.createPool(address(tbill), address(usd), address(tbill), 30);
@@ -135,6 +141,31 @@ contract MarketManagerTest is Test {
             liquidityAction,
             address(tbill),
             CustosGate.ActionPolicy(true, jurisdictions, 2_000_000e6, true)
+        );
+        vm.stopPrank();
+    }
+
+    function _grantMandates() internal {
+        vm.startPrank(issuer);
+        mandates.grantMandate(
+            agent,
+            address(manager),
+            gate.SWAP_ACTION(),
+            address(tbill),
+            100_000e6,
+            1_000_000e6,
+            uint64(block.timestamp),
+            uint64(block.timestamp + 30 days)
+        );
+        mandates.grantMandate(
+            issuer,
+            address(manager),
+            gate.LIQUIDITY_ENTRY_ACTION(),
+            address(tbill),
+            2_000_000e6,
+            3_000_000e6,
+            uint64(block.timestamp),
+            uint64(block.timestamp + 30 days)
         );
         vm.stopPrank();
     }
