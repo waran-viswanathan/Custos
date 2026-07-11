@@ -1,32 +1,19 @@
 {
   "name": "@custos/sdk",
-  "version": "0.1.0",
-  "description": "TypeScript SDK for Custos — compliance credentials for AI agents in tokenized RWAs",
+  "version": "0.2.0",
+  "description": "TypeScript SDK for Custos",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
   "files": ["dist"],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "build": "pnpm gen:abis && tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
     "gen:abis": "node scripts/gen-abis.mjs",
     "test": "vitest run"
   },
-  "peerDependencies": {
-    "viem": "^2.0.0"
-  },
-  "devDependencies": {
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.0",
-    "viem": "^2.21.0",
-    "vitest": "^2.1.0"
-  }
+  "peerDependencies": { "viem": "^2.0.0" },
+  "devDependencies": { "tsup": "^8.3.0", "typescript": "^5.6.0", "viem": "^2.21.0", "vitest": "^2.1.0" }
 }
