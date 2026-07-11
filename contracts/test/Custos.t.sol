@@ -229,10 +229,25 @@ contract CustosTest is Test {
         registry.registerAgent(agent, 1, uid2);
     }
 
+    function test_ThirdPartyCannotForgeAuthoritativeTransferEvent() public {
+        vm.prank(stranger);
+        vm.expectRevert(CustosGate.UnauthorizedTokenCaller.selector);
+        gate.checkAndLog(agent, address(tbill), 1_000e6);
+    }
+
+    function test_IssuerPreflightIsExplicitlyNonAuthoritative() public {
+        vm.expectEmit(true, true, true, true);
+        emit CustosGate.TransferChecked(agent, address(tbill), issuer, 1_000e6, false, false, "AGENT_NOT_VERIFIED");
+        vm.prank(issuer);
+        gate.preflightAndLog(agent, address(tbill), 1_000e6);
+    }
+
     function test_CheckAndLog_EmitsAuditEvent() public {
-        vm.expectEmit(true, true, false, true);
-        emit CustosGate.TransferChecked(agent, address(tbill), 1_000e6, false, "AGENT_NOT_VERIFIED");
+        vm.expectEmit(true, true, true, true);
+        emit CustosGate.TransferChecked(
+            agent, address(tbill), address(tbill), 1_000e6, false, true, "AGENT_NOT_VERIFIED"
+        );
+        vm.prank(address(tbill));
         gate.checkAndLog(agent, address(tbill), 1_000e6);
     }
 }
-
