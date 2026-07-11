@@ -206,19 +206,19 @@ contract VenueActionsTest is Test {
     }
 
     function test_OnlyConfiguredVenueCanUseAdapter() public {
-        vm.prank(stranger);
         vm.expectRevert(CustosVenueAdapter.UnauthorizedVenue.selector);
+        vm.prank(stranger);
         genericAdapter.authorize(agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0));
 
-        vm.prank(stranger);
         vm.expectRevert(AmbientCustosOracle.UnauthorizedAmbientCaller.selector);
+        vm.prank(stranger);
         ambient.checkApprovedForCrocSwap(agent, router, base, quote, true, true, 1, 500);
     }
 
     function test_UnregisteredAdapterCannotEmitAuthoritativeActions() public {
-        CustosVenueAdapter unregistered = new CustosVenueAdapter(gate, address(externalVenue));
+        CustosVenueAdapter unregistered = new CustosVenueAdapter(gate, address(this));
         vm.expectRevert(CustosGate.UnauthorizedVenueCaller.selector);
-        externalVenue.authorize(unregistered, agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0));
+        unregistered.authorize(agent, router, gate.EXTERNAL_ACTION(), base, 1, bytes32(0));
     }
 
     function test_CompositeAmbientActionChecksSwapAndLiquidityEntry() public {
@@ -247,8 +247,8 @@ contract VenueActionsTest is Test {
     }
 
     function test_CannotConfigurePolicyThatCouldBlockLiquidityExit() public {
-        vm.prank(issuer);
         vm.expectRevert(CustosGate.InvalidAction.selector);
+        vm.prank(issuer);
         gate.setActionPolicy(
             address(ambient),
             gate.LIQUIDITY_EXIT_ACTION(),
