@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {
-    Attestation,
-    AttestationRequest,
-    RevocationRequest
-} from "./vendor/eas/IEAS.sol";
+import {Attestation, AttestationRequest, RevocationRequest} from "./vendor/eas/IEAS.sol";
 
 /// @title MockEAS — minimal EAS + schema registry for local development and
 /// tests. Signature-compatible with the real predeploys so the rest of the
@@ -54,3 +50,4 @@ contract MockEAS {
         return _attestations[uid];
     }
 }
+
