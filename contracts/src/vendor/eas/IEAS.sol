@@ -56,3 +56,4 @@ interface IEAS {
 interface ISchemaRegistry {
     function register(string calldata schema, address resolver, bool revocable) external returns (bytes32);
 }
+
