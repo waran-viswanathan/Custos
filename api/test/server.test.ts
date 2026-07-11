@@ -86,7 +86,7 @@ describe('API endpoints', () => {
       wallet: account.address,
       ownerName: validBody.ownerName,
       ownerEmail: validBody.ownerEmail,
-      ownerEntityType: validBody.ownerEntityType,
+      ownerEntityType: 'COMPANY' as const,
       jurisdiction: validBody.jurisdiction,
       erc8004TokenId: null,
     };
