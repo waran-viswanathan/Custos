@@ -31,13 +31,14 @@
       <nav class="desktop-nav" aria-label="Primary navigation">
         <a href="#problem">Why Custos</a>
         <a href="#protocol">Protocol</a>
+        <a href="#console">Console</a>
         <a href="#markets">Actions</a>
         <a href="#evidence">Evidence</a>
       </nav>
 
       <div class="nav-actions">
         <span class="status-pill"><i></i> Pilot pending</span>
-        <a class="nav-cta" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20technical%20brief">Technical brief <span>↗</span></a>
+        <button class="nav-cta wallet-connect" type="button" data-connect-wallet>Connect wallet <span>↗</span></button>
         <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">
           <span></span><span></span>
         </button>
@@ -47,9 +48,10 @@
     <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
       <a href="#problem">Why Custos</a>
       <a href="#protocol">Protocol</a>
+      <a href="#console">Console</a>
       <a href="#markets">Actions</a>
       <a href="#evidence">Evidence</a>
-      <a href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20technical%20brief">Request technical brief ↗</a>
+      <button type="button" data-connect-wallet>Connect wallet ↗</button>
     </nav>
   </header>
 
@@ -58,13 +60,16 @@
       <div class="hero-grid" aria-hidden="true"></div>
       <div class="hero-glow hero-glow-a" aria-hidden="true"></div>
       <div class="hero-glow hero-glow-b" aria-hidden="true"></div>
+      <div class="policy-contours hero-contours" aria-hidden="true" data-contours>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
 
       <div class="hero-copy reveal">
         <p class="eyebrow"><span>01</span> Compliance + delegated authority for autonomous wallets</p>
         <h1>The machine can act.<br><em>Custos proves who stands behind it.</em></h1>
         <p class="hero-lede">AI agents are becoming holders of tokenized assets. Custos binds each agent to a verified operator, limits what it may do, and enforces issuer policy before value moves.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#protocol">Explore the protocol <span>↓</span></a>
+          <a class="button button-primary" href="#console">Open Custos Console <span>↘</span></a>
           <a class="button button-secondary" href="#evidence">Review the evidence</a>
         </div>
         <p class="hero-note"><span></span> Pre-customer · testnet-only · unaudited</p>
@@ -107,6 +112,59 @@
         <span>signed wallet intents</span><i></i>
       </div>
     </div>
+
+    <section class="wallet-console section-shell" id="console">
+      <div class="policy-contours console-contours" aria-hidden="true" data-contours>
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div class="wallet-intro reveal">
+        <p class="eyebrow"><span>LIVE</span> Custos Console preview</p>
+        <h2>Your wallet is the starting point.<br><em>Accountability is the product.</em></h2>
+        <p>Connect an operator or agent wallet to begin. Custos can prove control now; credential and mandate reads will activate when the fresh pilot contracts are deployed.</p>
+      </div>
+
+      <div class="wallet-workspace reveal" id="wallet-workspace">
+        <div class="wallet-workspace-bar">
+          <div><i></i><span>CUSTOS / WALLET CONTROL</span></div>
+          <b id="wallet-environment">BASE SEPOLIA · PILOT PENDING</b>
+        </div>
+
+        <div class="wallet-workspace-grid">
+          <div class="wallet-primary">
+            <div class="wallet-identity">
+              <div class="wallet-glyph" aria-hidden="true"><span></span></div>
+              <div>
+                <small>CONNECTED WALLET</small>
+                <strong id="wallet-address">No wallet connected</strong>
+                <span id="wallet-network">Connect to identify the account and network.</span>
+              </div>
+            </div>
+
+            <div class="wallet-controls">
+              <button class="button button-primary" type="button" data-connect-wallet id="console-connect">Connect wallet <span>↗</span></button>
+              <button class="button button-secondary" type="button" id="sign-proof" disabled>Sign control proof</button>
+            </div>
+            <p class="wallet-message" id="wallet-message" aria-live="polite">Connecting is free and does not send a transaction.</p>
+          </div>
+
+          <div class="wallet-status-grid">
+            <article class="wallet-status" id="status-control"><span>01</span><small>WALLET CONTROL</small><strong>NOT CONNECTED</strong><p>Connect, then sign a local proof message.</p></article>
+            <article class="wallet-status status-pending"><span>02</span><small>CUSTOS CREDENTIAL</small><strong>PILOT PENDING</strong><p>Verified operator, jurisdiction, expiry, and revocation.</p></article>
+            <article class="wallet-status status-pending"><span>03</span><small>AGENT MANDATE</small><strong>PILOT PENDING</strong><p>Venue, action, asset, caps, and validity window.</p></article>
+            <article class="wallet-status status-pending"><span>04</span><small>POLICY DECISION</small><strong>NOT REQUESTED</strong><p>Authoritative allow or block happens at execution.</p></article>
+          </div>
+        </div>
+
+        <div class="wallet-path">
+          <span>CONNECT</span><i></i><span>VERIFY OPERATOR</span><i></i><span>REGISTER AGENT</span><i></i><span>SET MANDATE</span><i></i><span>ENFORCE</span>
+        </div>
+      </div>
+
+      <div class="role-grid">
+        <article class="role-card reveal"><span>FOR OPERATORS</span><h3>Register and control agents.</h3><p>Complete KYB, bind an agent wallet, set its authority, then freeze or revoke it when needed.</p><a href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20operator%20pilot">Join operator pilot ↗</a></article>
+        <article class="role-card reveal"><span>FOR ISSUERS + VENUES</span><h3>Define and enforce policy.</h3><p>Configure eligibility, integrate the gate, preflight actions, and export authoritative evidence.</p><a href="#integration">See issuer integration ↓</a></article>
+      </div>
+    </section>
 
     <section class="problem section-shell" id="problem">
       <div class="section-intro reveal">
@@ -292,7 +350,7 @@
     <span class="code-keyword">address</span> to,
     <span class="code-keyword">uint256</span> value
 ) <span class="code-keyword">internal override</span> {
-    <span class="code-keyword">if</span> (from != <span class="code-keyword">address</span>(0) && to != <span class="code-keyword">address</span>(0)) {
+    <span class="code-keyword">if</span> (from != <span class="code-keyword">address</span>(0) &amp;&amp; to != <span class="code-keyword">address</span>(0)) {
         <span class="code-keyword">require</span>(
             gate.checkAndLog(to, <span class="code-keyword">address</span>(<span class="code-keyword">this</span>), value),
             <span class="code-string">"CUSTOS_BLOCKED"</span>
