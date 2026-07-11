@@ -1,15 +1,17 @@
-import { createPublicClient, http, getAddress, keccak256, stringToHex, type Address, type Chain, type Hex, type PublicClient } from 'viem';
+import { createPublicClient, encodeAbiParameters, http, getAddress, keccak256, stringToHex, type Address, type Chain, type Hex, type PublicClient } from 'viem';
 import { custosGateAbi, custosRegistryAbi } from './abis.js';
 export {
   custosRegistryAbi,
   custosGateAbi,
   mockTBillAbi,
   mockEasAbi,
+  mockUsdAbi,
   custosActionAuthorizerAbi,
+  custosAgentMandateAbi,
   custosMarketManagerAbi,
 } from './abis.js';
 
-export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address }
+export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address; experimental?: boolean; settlementToken?: Address; mandates?: Address; actionAuthorizer?: Address; marketManager?: Address }
 export type AgentStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED' | 'REVOKED';
 export interface AgentStatusResponse { wallet: Address; status: AgentStatus; jurisdiction: string; erc8004TokenId: string | null; attestationUID: string | null; checks: Array<{ type: string; provider: string; status: string; completedAt: string | null }> }
 export interface RegistrationDetails {
@@ -41,6 +43,24 @@ export interface ActionIntent {
   nonce: bigint;
   deadline: bigint;
   contextHash: Hex;
+}
+
+export interface AgentMandateGrant {
+  agent: Address;
+  venue: Address;
+  action: Hex;
+  asset: Address;
+  maxPerAction: bigint;
+  maxTotal: bigint;
+  validAfter: bigint;
+  validUntil: bigint;
+}
+
+export function mandateScopeKey(grant: Pick<AgentMandateGrant, 'agent' | 'venue' | 'action' | 'asset'>): Hex {
+  return keccak256(encodeAbiParameters(
+    [{ type: 'address' }, { type: 'address' }, { type: 'bytes32' }, { type: 'address' }],
+    [getAddress(grant.agent), getAddress(grant.venue), grant.action, getAddress(grant.asset)],
+  ));
 }
 
 export const custosActionIntentTypes = {
