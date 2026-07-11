@@ -7,6 +7,13 @@ The native benchmark case exists as
 the next implementation benchmark and must use the official v4 core/periphery
 contracts rather than a locally simplified imitation.
 
+CI run 64 measured the authenticated native exact-input swap at `364,848` gas
+on head `ee5a598c33a5fe2718ff41d6a23ff61af5e4cc8c`. This includes the agent
+signature, operator mandate, issuer action policy, reserve update, settlement,
+restricted-token recipient enforcement, and audit events. It is a single
+baseline measurement, not an architecture decision; the matched v4 number is
+still required.
+
 Uniswap's permissioned-pool work and dependency revisions are moving. Pin exact
 commits and licenses in the benchmark PR so the result remains reproducible.
 
