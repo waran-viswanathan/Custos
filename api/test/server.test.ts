@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildServer, type ServerDeps } from '../src/server.js';
+import { buildServer, type ServerDeps } from '../src/server.js';\nimport { registrationMessage } from '../src/registration.js';\nimport { privateKeyToAccount } from 'viem/accounts';
 
 function makeServerDeps() {
   const agents = new Map<string, any>();
@@ -33,6 +33,20 @@ function makeServerDeps() {
           return agents.size;
         },
       },
+      registrationChallenge: {
+        async upsert(args: any) {
+          const row = { wallet: args.where.wallet, ...args.create, ...args.update };
+          challenges.set(args.where.wallet, row);
+          return row;
+        },
+        async findUnique(args: any) { return challenges.get(args.where.wallet) ?? null; },
+        async deleteMany(args: any) {
+          const row = challenges.get(args.where.wallet);
+          if (!row || row.nonce !== args.where.nonce) return { count: 0 };
+          challenges.delete(args.where.wallet);
+          return { count: 1 };
+        },
+      },
       verificationCheck: { async count() { return 0; } },
       auditEvent: {
         async create(args: any) { audits.push(args.data); return args.data; },
@@ -59,6 +73,27 @@ const validBody = {
 };
 
 describe('API endpoints', () => {
+  it('cryptographically binds the submitted operator details to the agent wallet', async () => {
+    const { deps, audits } = makeServerDeps();
+    const app = buildServer(deps);
+    const account = privateKeyToAccount('0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80');
+    const challengeRes = await app.inject({ method: 'POST', url: '/v1/agents/challenge', payload: { wallet: account.address } });
+    expect(challengeRes.statusCode).toBe(200);
+    const challenge = challengeRes.json();
+    const details = {
+      wallet: account.address,
+      ownerName: validBody.ownerName,
+      ownerEmail: validBody.ownerEmail,
+      ownerEntityType: validBody.ownerEntityType,
+      jurisdiction: validBody.jurisdiction,
+      erc8004TokenId: null,
+    };
+    const signature = await account.signMessage({ message: registrationMessage(details, challenge.nonce, challenge.domain) });
+    const result = await app.inject({ method: 'POST', url: '/v1/agents', payload: { ...validBody, wallet: account.address, nonce: challenge.nonce, signature } });
+    expect(result.statusCode).toBe(202);
+    expect((audits[0].payload as any).walletProofVerified).toBe(true);
+  });
+
   it('POST /v1/agents accepts a valid submission and enqueues verification', async () => {
     const { deps, enqueued } = makeServerDeps();
     const app = buildServer(deps);
