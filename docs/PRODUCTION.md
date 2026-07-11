@@ -24,12 +24,16 @@ cannot be provisioned in source control.
   wallet-signature requirement.
 - Complete a third-party smart-contract audit and an application penetration
   test before mainnet use.
-- Grant `VENUE_ROLE` only to reviewed adapters whose immutable external venue
+- Grant `VENUE_ROLE` only to reviewed action authorizers whose immutable venue
   address and deployed bytecode have been independently verified.
+- Grant `EXECUTOR_ROLE` only to audited hooks or routers. Confirm every action
+  path authenticates the wallet's EIP-712 or ERC-1271 intent rather than
+  trusting an address supplied by a router.
 - For paired-asset venues, configure and review both asset policies before
   enabling swaps, liquidity entry, or pool initialization.
-- Preserve and test the invariant that liquidity exits remain available after
-  credential expiration or revocation.
+- Implement and test controlled exits: unrestricted proceeds may return to the
+  wallet, while restricted proceeds for a revoked wallet go to issuer-controlled
+  redemption escrow. Do not launch a venue that can permanently trap value.
 
 ## Data lifecycle
 
