@@ -40,7 +40,7 @@ prototype moved to `legacy/`. New MVP built and E2E-verified — see Phase 2b.
 - [ ] Record 60–90s demo video (prereq for outreach — every email links it)
 - [ ] Real provider integrations (Persona KYB, OFAC screening)
 - [x] GTM kit rewritten for RWA-compliance positioning (2026-07-10): one-pager, issuer/operator interview scripts, outreach emails, cofounder brief
-- [ ] Build wave-1 target list (~60 names: issuers, tokenization platforms, agent-treasury teams)
+- [x] Wave-1 target list built (2026-07-10): ~60 unique targets across 5 segments, 12-name Tier 1 → `research/target-list.md`; tracker at `research/outreach-tracker.md`
 - [ ] GATE 2: show to design partners (RWA issuers + agent platform operators)
 
 ## Phase 2 — x402/KYA Prototype (SUPERSEDED, code in legacy/)
