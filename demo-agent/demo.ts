@@ -54,6 +54,13 @@ const ok = (msg: string) => console.log(`  ✅ ${msg}`);
 const blocked = (msg: string) => console.log(`  ❌ ${msg}`);
 const step = (n: number, msg: string) => console.log(`\n[${n}] ${msg}`);
 const cTBILL = (amount: bigint) => `${formatUnits(amount, 6)} cTBILL`;
+const balanceOfAbi = [{
+  type: 'function',
+  name: 'balanceOf',
+  stateMutability: 'view',
+  inputs: [{ name: 'account', type: 'address' }],
+  outputs: [{ name: '', type: 'uint256' }],
+}] as const;
 
 async function transferTBill(to: Address, amount: bigint): Promise<{ ok: boolean; reason?: string }> {
   try {
@@ -104,7 +111,7 @@ async function main() {
   await publicClient.waitForTransactionReceipt({ hash: await issuer.writeContract(setPolicySim.request) });
 
   const supply = await publicClient.readContract({
-    address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [issuerAddr],
+    address: deployments.tbill, abi: balanceOfAbi, functionName: 'balanceOf', args: [issuerAddr],
   });
   if (supply === 0n) {
     const mintSim = await publicClient.simulateContract({
@@ -156,7 +163,7 @@ async function main() {
   let balance = 0n;
   for (let i = 0; i < 10 && balance === 0n; i++) {
     balance = await publicClient.readContract({
-      address: deployments.tbill, abi: mockTBillAbi, functionName: 'balanceOf', args: [atlas.address],
+      address: deployments.tbill, abi: balanceOfAbi, functionName: 'balanceOf', args: [atlas.address],
     });
     if (balance === 0n) await new Promise((r) => setTimeout(r, 2000));
   }
