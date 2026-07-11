@@ -10,6 +10,12 @@ dotenv.config();
 
 const DEV_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 const DEV_ADMIN = 'dev-admin-token-change-me';
+const envBoolean = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+  if (value.toLowerCase() === 'true') return true;
+  if (value.toLowerCase() === 'false') return false;
+  return value;
+}, z.boolean());
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -28,9 +34,9 @@ const EnvSchema = z.object({
   OFAC_API_KEY: z.string().optional(),
   KYB_PROVIDER_URL: z.string().url().optional(),
   SANCTIONS_PROVIDER_URL: z.string().url().optional(),
-  ALLOW_MOCK_PROVIDERS: z.coerce.boolean().default(true),
-  ALLOW_UNSIGNED_REGISTRATION: z.coerce.boolean().default(true),
-  INDEXER_CONFIRMATIONS: z.coerce.number().int().min(0).max(1000).default(12),
+  ALLOW_MOCK_PROVIDERS: envBoolean.default(true),
+  ALLOW_UNSIGNED_REGISTRATION: envBoolean.default(true),
+  INDEXER_CONFIRMATIONS: z.coerce.number().int().min(0).max(1000).default(1),
   INDEXER_START_BLOCK: z.coerce.bigint().optional(),
 }).superRefine((v, ctx) => {
   if (v.NODE_ENV !== 'production') return;
@@ -42,6 +48,7 @@ const EnvSchema = z.object({
   if (v.ALLOW_UNSIGNED_REGISTRATION) reject('ALLOW_UNSIGNED_REGISTRATION', 'unsigned registration forbidden in production');
   if (!v.PERSONA_API_KEY || !v.OFAC_API_KEY || !v.KYB_PROVIDER_URL || !v.SANCTIONS_PROVIDER_URL) reject('PERSONA_API_KEY', 'real KYB and sanctions provider credentials and URLs are required in production');
   if (v.INDEXER_START_BLOCK === undefined) reject('INDEXER_START_BLOCK', 'deployment block required in production');
+  if (v.INDEXER_CONFIRMATIONS < 2) reject('INDEXER_CONFIRMATIONS', 'at least two confirmations required in production');
 });
 
 export const env = EnvSchema.parse(process.env);
