@@ -75,11 +75,19 @@ function _update(address from, address to, uint256 value) internal override {
 
 Then configure your policy (jurisdictions, accreditation, transfer caps, kill switch) in the dashboard at `/policies` — enforcement is on-chain, per transfer, with reasons on the audit trail.
 
+### Integration for swaps and external venues
+
+Custos can also authorize swaps, liquidity entry, pool initialization, and custom agent actions without owning the venue. Deploy a venue adapter, grant only that adapter `VENUE_ROLE`, then configure policies for the exact adapter/action/asset tuples. Paired-asset actions require both asset policies to pass.
+
+`CustosVenueAdapter` is the venue-neutral integration point. `AmbientCustosOracle` implements Ambient's permission-oracle callback ABI for permissioned pool types, including swaps, ambient or concentrated liquidity, burns, and pool initialization. The adapter authenticates the configured Ambient DEX caller before consulting Custos.
+
+Liquidity exit is a deliberate exception: it is always allowed and authoritatively logged, even after a credential expires or is revoked. Custos can prevent new risk without trapping existing capital in an external venue.
+
 ## Repo layout
 
 | Path | Contents |
 |---|---|
-| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, deploy script, 14 tests |
+| `contracts/` | Foundry: `CustosRegistry`, `CustosGate`, `MockTBill`, EAS mock, venue adapters, deploy script, and tests |
 | `api/` | Fastify verification API, BullMQ pipeline (KYB → sanctions → attest), chain indexer, Prisma models |
 | `sdk/` | `@custos/sdk` — register, poll status, on-chain permission checks, typed ABIs |
 | `dashboard/` | Next.js issuer dashboard: agents, policies, audit trail, stats |
