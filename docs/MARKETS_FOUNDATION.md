@@ -53,9 +53,11 @@ CustosGate -- credential + jurisdiction + accreditation + amount policy
 customer-operated pool or vault executes only on approval
 ```
 
-The first target market engine is a minimal Uniswap v4 hook integration. Custos
-will not implement custom swap curves or token deltas. The hook should only
-authenticate, consult policy, and allow or revert.
+The first engineering decision is now an evidence-based comparison: a minimal
+Custos-native singleton manager versus a minimal Uniswap v4 hook. The custom
+proof implements only constant-product exact-input swaps and internal LP
+positions. It is not production market infrastructure and does not establish a
+decision to operate a venue.
 
 ## Required design work before a v4 hook
 
@@ -79,8 +81,8 @@ escrow until the holder is re-verified or redeemed off-chain.
 
 1. **Foundation:** per-action policies, authenticated intents, SDK typed data,
    action audit events, threat model, and tests.
-2. **Swap proof:** minimal v4 `beforeSwap` hook on testnet, one restricted pair,
-   no custom deltas, spoofing and replay tests.
+2. **Swap proof:** benchmark a minimal native singleton against a minimal v4
+   `beforeSwap` hook using the same restricted pair, compliance flow, and tests.
 3. **Liquidity:** gated position ownership, accredited-provider policy, and
    controlled exit/redemption.
 4. **Vault:** ERC-4626 integration with gated shares and a hold-only reference
