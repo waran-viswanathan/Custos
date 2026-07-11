@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Custos — compliance infrastructure for AI agents in tokenized assets</title>
-<meta name="description" content="Custos verifies the entity behind an AI agent, attests it on-chain, and enforces issuer transfer policy at transfer time. V2 testnet redeployment pending.">
+<meta name="description" content="Custos verifies the entity behind an AI agent, attests it on-chain, and enforces issuer transfer policy at transfer time. Live on Base Sepolia; v2 redeployment in progress.">
 <style>
   :root {
-    --ground: #141210;
-    --panel: #1b1815;
-    --ink: #e8e2d5;
-    --dim: #97907f;
-    --line: #2c2823;
-    --bronze: #c9a55f;
-    --bronze-dim: #8a744a;
-    --allow: #6fae7f;
-    --block: #c26d5a;
-    --serif: 'Iowan Old Style', Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+    --ground: #08090f;
+    --ink: #e9ecf4;
+    --dim: #8a92a6;
+    --line: rgba(233, 236, 244, 0.09);
+    --glass: rgba(233, 236, 244, 0.03);
+    --violet: #a08cff;
+    --aqua: #6fe3d4;
+    --allow: #5fc98f;
+    --block: #e07863;
+    --sans: -apple-system, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
     --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
     color-scheme: dark;
   }
@@ -26,172 +26,176 @@
   body {
     background: var(--ground);
     color: var(--ink);
-    font-family: var(--serif);
-    font-size: 17px;
+    font-family: var(--sans);
+    font-size: 16.5px;
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
-  a { color: var(--bronze); text-decoration: none; }
-  a:hover { text-decoration: underline; text-underline-offset: 3px; }
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--bronze); outline-offset: 3px; }
+  a { color: var(--aqua); text-decoration: none; }
+  a:hover { opacity: 0.85; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
 
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 24px; position: relative; }
 
-  .inscription {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--bronze-dim);
+  /* ambient glow */
+  .glow {
+    position: absolute; pointer-events: none; z-index: -1;
+    width: 780px; height: 780px; border-radius: 50%;
+    filter: blur(110px); opacity: 0.16;
+  }
+  .glow.violet { background: var(--violet); top: -300px; left: -180px; }
+  .glow.aqua { background: var(--aqua); top: 60px; right: -320px; opacity: 0.10; }
+
+  .micro {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim);
   }
 
   /* ---------- nav ---------- */
   nav {
-    display: flex; align-items: baseline; justify-content: space-between; gap: 24px;
-    padding: 28px 0 24px;
-    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    padding: 26px 0;
   }
-  .wordmark {
-    font-family: var(--serif);
-    font-size: 1.15rem; letter-spacing: 0.34em; text-transform: uppercase;
-    color: var(--ink); font-weight: 400;
-  }
-  .wordmark:hover { text-decoration: none; }
-  .nav-links { display: flex; gap: 28px; align-items: baseline; flex-wrap: wrap; }
-  .nav-links a { font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; color: var(--dim); }
-  .nav-links a:hover { color: var(--ink); text-decoration: none; }
+  .wordmark { font-weight: 600; font-size: 1.05rem; letter-spacing: 0.02em; color: var(--ink); }
+  .wordmark:hover { opacity: 1; }
+  .nav-links { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
+  .nav-links a { font-size: 0.85rem; color: var(--dim); }
+  .nav-links a:hover { color: var(--ink); opacity: 1; }
   .live {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--dim);
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.12em;
+    color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px;
+    background: var(--glass);
   }
-  .live .dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--allow);
-    box-shadow: 0 0 0 0 rgba(111,174,127,.5);
-    animation: pulse 2.4s infinite;
-  }
+  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--allow); animation: pulse 2.4s infinite; }
   @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(111,174,127,.45); }
-    70% { box-shadow: 0 0 0 9px rgba(111,174,127,0); }
-    100% { box-shadow: 0 0 0 0 rgba(111,174,127,0); }
+    0% { box-shadow: 0 0 0 0 rgba(95,201,143,.45); }
+    70% { box-shadow: 0 0 0 8px rgba(95,201,143,0); }
+    100% { box-shadow: 0 0 0 0 rgba(95,201,143,0); }
   }
   @media (prefers-reduced-motion: reduce) { .live .dot { animation: none; } }
 
   /* ---------- hero ---------- */
-  header.hero { padding: 96px 0 44px; }
-  .hero .inscription { margin-bottom: 28px; }
+  header.hero { padding: 110px 0 56px; text-align: center; }
+  .hero .micro { color: var(--violet); margin-bottom: 26px; display: block; }
   h1 {
-    font-size: clamp(2.5rem, 6.4vw, 4.4rem);
-    line-height: 1.06;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-    max-width: 19ch;
+    font-size: clamp(2.5rem, 6.2vw, 4.2rem);
+    line-height: 1.07; font-weight: 300; letter-spacing: -0.025em;
+    text-wrap: balance; max-width: 21ch; margin: 0 auto;
   }
-  h1 em { font-style: italic; color: var(--bronze); }
-  .hero p.sub {
-    margin-top: 30px; max-width: 58ch;
-    font-size: 1.08rem; color: var(--dim);
+  h1 strong { font-weight: 600;
+    background: linear-gradient(100deg, var(--violet), var(--aqua));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .cta-row { margin-top: 40px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .hero p.sub { margin: 28px auto 0; max-width: 60ch; font-size: 1.06rem; color: var(--dim); font-weight: 300; }
+  .cta-row { margin-top: 42px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
   .btn {
-    font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em;
-    padding: 13px 22px; border: 1px solid var(--bronze-dim);
-    color: var(--bronze); background: transparent; cursor: pointer;
-    transition: background .18s, color .18s;
+    font-size: 0.88rem; font-weight: 500; letter-spacing: 0.01em;
+    padding: 13px 26px; border-radius: 999px; cursor: pointer;
+    border: 1px solid transparent;
+    background: linear-gradient(100deg, var(--violet), var(--aqua));
+    color: #0a0b12; transition: transform .15s ease, opacity .15s ease;
+    display: inline-block;
   }
-  .btn:hover { background: var(--bronze); color: var(--ground); text-decoration: none; }
-  .btn.ghost { border-color: var(--line); color: var(--dim); }
-  .btn.ghost:hover { background: var(--panel); color: var(--ink); }
+  .btn:hover { transform: translateY(-1px); opacity: 0.92; }
+  .btn.ghost { background: var(--glass); border-color: var(--line); color: var(--ink); }
+  .btn.ghost:hover { border-color: rgba(233,236,244,0.25); }
 
   /* ---------- terminal ---------- */
-  .terminal-frame { padding: 8px 0 100px; }
+  .terminal-frame { padding: 30px 0 110px; }
   .terminal {
-    background: #0e0d0b;
-    border: 1px solid var(--line);
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    line-height: 1.75;
-    padding: 26px 28px 30px;
-    overflow-x: auto;
-    min-height: 340px;
+    background: rgba(10, 11, 18, 0.85);
+    border: 1px solid var(--line); border-radius: 16px;
+    font-family: var(--mono); font-size: 0.8rem; line-height: 1.75;
+    padding: 24px 28px 28px; overflow-x: auto; min-height: 340px;
+    box-shadow: 0 30px 80px -40px rgba(160, 140, 255, 0.25);
   }
   .terminal .t-head {
     color: var(--dim); border-bottom: 1px solid var(--line);
     padding-bottom: 12px; margin-bottom: 16px;
     display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    font-size: 0.72rem; letter-spacing: 0.08em;
   }
   .terminal .ln { white-space: pre-wrap; color: var(--ink); opacity: 0; }
   .terminal .ln.shown { opacity: 1; transition: opacity .25s; }
   .terminal .ln.c-dim { color: var(--dim); }
   .terminal .ln.c-allow { color: var(--allow); }
   .terminal .ln.c-block { color: var(--block); }
-  .terminal .ln.c-bronze { color: var(--bronze); }
-  .caret { display: inline-block; width: 8px; height: 1em; background: var(--bronze); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
+  .terminal .ln.c-accent { color: var(--violet); }
+  .caret { display: inline-block; width: 8px; height: 1em; background: var(--aqua); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
   @keyframes blink { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
 
   /* ---------- sections ---------- */
-  section { padding: 90px 0; border-top: 1px solid var(--line); }
-  .section-label { margin-bottom: 44px; }
+  section { padding: 96px 0; border-top: 1px solid var(--line); }
+  .section-head { text-align: center; margin-bottom: 56px; }
+  .section-head .micro { display: block; margin-bottom: 18px; }
   h2 {
-    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
-    font-weight: 400; line-height: 1.2; text-wrap: balance;
-    max-width: 26ch;
+    font-size: clamp(1.65rem, 3.2vw, 2.3rem); font-weight: 400;
+    letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance;
+    max-width: 30ch; margin: 0 auto;
   }
-  .prose { max-width: 62ch; color: var(--dim); margin-top: 18px; }
-  .prose strong { color: var(--ink); font-weight: 400; }
+  .section-head .prose { margin: 18px auto 0; }
+  .prose { max-width: 62ch; color: var(--dim); font-weight: 300; }
+  .prose strong { color: var(--ink); font-weight: 500; }
 
-  /* problem */
-  .three { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px; }
-  @media (max-width: 800px) { .three { grid-template-columns: 1fr; } }
-  .three h3 { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--bronze-dim); font-weight: 400; margin-bottom: 14px; }
-  .three p { color: var(--dim); font-size: 0.98rem; }
-  .three p strong { color: var(--ink); font-weight: 400; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
+    padding: 28px 26px;
+  }
+  .card h3 { font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--aqua); font-weight: 400; margin-bottom: 14px; }
+  .card p { color: var(--dim); font-size: 0.95rem; font-weight: 300; }
+  .card p strong { color: var(--ink); font-weight: 500; }
 
   /* protocol steps */
-  .step { display: grid; grid-template-columns: 90px 1fr; gap: 28px; padding: 44px 0; border-top: 1px solid var(--line); }
-  .step:first-of-type { border-top: none; padding-top: 12px; }
-  @media (max-width: 700px) { .step { grid-template-columns: 1fr; gap: 10px; } }
-  .step .numeral { font-family: var(--serif); font-size: 2rem; color: var(--bronze-dim); line-height: 1.1; }
-  .step h3 { font-size: 1.35rem; font-weight: 400; margin-bottom: 10px; }
-  .step p { color: var(--dim); max-width: 58ch; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 800px) { .steps { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
+    padding: 28px 26px;
+  }
+  .step .num { font-family: var(--mono); font-size: 0.72rem; color: var(--violet); letter-spacing: 0.1em; margin-bottom: 16px; }
+  .step h3 { font-size: 1.15rem; font-weight: 500; margin-bottom: 10px; }
+  .step p { color: var(--dim); font-size: 0.95rem; font-weight: 300; }
   .code {
-    margin-top: 20px; background: #0e0d0b; border: 1px solid var(--line);
-    font-family: var(--mono); font-size: 0.78rem; line-height: 1.7;
-    padding: 18px 22px; overflow-x: auto; color: var(--ink); white-space: pre;
+    margin-top: 44px; background: rgba(10, 11, 18, 0.85); border: 1px solid var(--line); border-radius: 16px;
+    font-family: var(--mono); font-size: 0.76rem; line-height: 1.7;
+    padding: 20px 24px; overflow-x: auto; color: var(--ink); white-space: pre;
   }
   .code .cm { color: var(--dim); }
-  .code .kw { color: var(--bronze); }
+  .code .kw { color: var(--violet); }
+  .code .str { color: var(--aqua); }
 
   /* principles */
-  .principles { margin-top: 52px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .principles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
   @media (max-width: 700px) { .principles { grid-template-columns: 1fr; } }
-  .principles div { background: var(--ground); padding: 30px 28px; }
-  .principles h3 { font-size: 1.12rem; font-weight: 400; margin-bottom: 8px; }
-  .principles p { color: var(--dim); font-size: 0.94rem; }
+  .principles .card h3 { color: var(--ink); font-family: var(--sans); font-size: 1.05rem; text-transform: none; letter-spacing: 0; font-weight: 500; margin-bottom: 8px; }
 
   /* proof ledger */
-  .ledger { margin-top: 48px; border: 1px solid var(--line); overflow-x: auto; }
+  .ledger { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--glass); }
+  .ledger .inner { overflow-x: auto; }
   .ledger table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; }
-  .ledger td { padding: 15px 20px; border-top: 1px solid var(--line); vertical-align: baseline; }
+  .ledger td { padding: 16px 22px; border-top: 1px solid var(--line); vertical-align: baseline; }
   .ledger tr:first-child td { border-top: none; }
-  .ledger td:first-child { color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem; white-space: nowrap; }
+  .ledger td:first-child { color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.66rem; white-space: nowrap; }
   .ledger td:last-child { word-break: break-all; }
   .ledger .num { font-variant-numeric: tabular-nums; }
 
   /* cta */
-  .cta-final { text-align: left; }
-  .cta-final h2 { max-width: 22ch; }
+  .cta-final { text-align: center; }
+  .cta-final .prose { margin: 18px auto 0; }
+  .cta-final h2 { margin-top: 18px; }
 
   footer {
     border-top: 1px solid var(--line);
-    padding: 36px 0 56px;
-    display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap;
-    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; color: var(--dim);
+    padding: 34px 0 54px;
+    display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
   }
 
-  /* reveal on scroll */
   .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
   .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
@@ -199,6 +203,8 @@
 </head>
 <body>
 <div class="wrap">
+  <div class="glow violet" aria-hidden="true"></div>
+  <div class="glow aqua" aria-hidden="true"></div>
 
   <nav>
     <a class="wordmark" href="#">Custos</a>
@@ -206,46 +212,48 @@
       <a href="#protocol">Protocol</a>
       <a href="#proof">Proof</a>
       <a href="#partners">Design partners</a>
-      <span class="live"><span class="dot"></span>V2 REDEPLOY PENDING</span>
+      <span class="live"><span class="dot"></span>BASE SEPOLIA</span>
     </div>
   </nav>
 
   <header class="hero">
-    <p class="inscription">QVIS CVSTODIET IPSOS CVSTODES</p>
-    <h1>The watchers are machines now. <em>Custos verifies them.</em></h1>
+    <span class="micro">Who watches the watchmen?</span>
+    <h1>The watchers are machines now. <strong>Custos verifies them.</strong></h1>
     <p class="sub">
       AI agents are becoming holders of tokenized assets — but compliance stacks verify people
       and companies, not autonomous software. Custos binds an agent to a KYB-verified operator,
       attests it on-chain, and enforces the issuer's transfer policy at transfer time. With a kill switch.
     </p>
     <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">BECOME A DESIGN PARTNER</a>
-      <a class="btn ghost" href="#proof">VIEW DEPLOYMENT STATUS</a>
+      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">Become a design partner</a>
+      <a class="btn ghost" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">View live contracts ↗</a>
     </div>
   </header>
 
   <div class="terminal-frame reveal">
-    <div class="terminal" id="terminal" aria-label="Recording of the Custos v2 credential lifecycle running locally">
-      <div class="t-head"><span>custos — agent lifecycle</span><span>v2 · local verification</span></div>
+    <div class="terminal" id="terminal" aria-label="Recording of the Custos credential lifecycle running on Base Sepolia">
+      <div class="t-head"><span>custos · agent lifecycle</span><span>base sepolia · 84532</span></div>
       <div id="t-body"></div>
     </div>
   </div>
 
   <section id="problem" class="reveal">
-    <p class="inscription section-label">THE GAP</p>
-    <h2>An agent wallet has no KYC file, no jurisdiction, and no one to subpoena.</h2>
-    <div class="three">
-      <div>
+    <div class="section-head">
+      <span class="micro">The gap</span>
+      <h2>An agent wallet has no KYC file, no jurisdiction, and no one to subpoena.</h2>
+    </div>
+    <div class="cards">
+      <div class="card">
         <h3>Issuers</h3>
         <p>Tokenized treasuries, funds, and equities enforce holder eligibility at transfer time.
         An autonomous agent fits none of the checks — so today the choice is <strong>block all agents, or hope</strong>.</p>
       </div>
-      <div>
+      <div class="card">
         <h3>Operators</h3>
         <p>Teams whose agents manage real value can't prove who stands behind a wallet, under what
         authority it acts, or that it can be shut off. <strong>Doors stay closed.</strong></p>
       </div>
-      <div>
+      <div class="card">
         <h3>Regulators</h3>
         <p>Stablecoin and tokenization rules are converging on entity-level accountability for
         automated actors. <strong>"Who is behind this wallet?"</strong> is becoming an examiner's question.</p>
@@ -254,66 +262,63 @@
   </section>
 
   <section id="protocol" class="reveal">
-    <p class="inscription section-label">THE PROTOCOL</p>
-    <h2>Verify the operator. Attest the agent. Enforce the policy.</h2>
-
-    <div style="margin-top:52px">
+    <div class="section-head">
+      <span class="micro">The protocol</span>
+      <h2>Verify the operator. Attest the agent. Enforce the policy.</h2>
+    </div>
+    <div class="steps">
       <div class="step">
-        <div class="numeral">I</div>
-        <div>
-          <h3>Verify</h3>
-          <p>The agent's operator — a legal entity — passes KYB and sanctions screening.
-          Documents and identities stay off-chain, in the verification layer, always.</p>
-        </div>
+        <div class="num">01</div>
+        <h3>Verify</h3>
+        <p>The agent's operator — a legal entity — passes KYB and sanctions screening.
+        Documents and identities stay off-chain, in the verification layer, always.</p>
       </div>
       <div class="step">
-        <div class="numeral">II</div>
-        <div>
-          <h3>Attest</h3>
-          <p>A passing agent receives a revocable attestation on Base via the Ethereum Attestation
-          Service, carrying only what a counterparty needs: <span style="font-family:var(--mono);font-size:.85em">verified · jurisdiction · accredited</span>.
-          No personal data touches the chain.</p>
-        </div>
+        <div class="num">02</div>
+        <h3>Attest</h3>
+        <p>A passing agent receives a revocable attestation on Base via the Ethereum Attestation
+        Service, carrying only <span style="font-family:var(--mono);font-size:.85em">verified · jurisdiction · accredited</span>.
+        No personal data touches the chain.</p>
       </div>
       <div class="step">
-        <div class="numeral">III</div>
-        <div>
-          <h3>Enforce</h3>
-          <p>Issuers set policy per token — allowed jurisdictions, accreditation, transfer caps —
-          and their token calls the Custos gate in its transfer hook. Non-compliant transfers revert
-          with a machine-readable reason. Revocation takes one call and holds on the next transfer.</p>
-          <div class="code"><span class="cm">// the issuer integration, in full</span>
+        <div class="num">03</div>
+        <h3>Enforce</h3>
+        <p>Issuers set policy per token — jurisdictions, accreditation, caps — and their token calls
+        the Custos gate in its transfer hook. Non-compliant transfers revert. Revocation takes
+        one call and holds on the next transfer.</p>
+      </div>
+    </div>
+    <div class="code"><span class="cm">// the issuer integration, in full</span>
 <span class="kw">function</span> _update(<span class="kw">address</span> from, <span class="kw">address</span> to, <span class="kw">uint256</span> value) <span class="kw">internal override</span> {
     <span class="kw">if</span> (from != <span class="kw">address</span>(0) && to != <span class="kw">address</span>(0)) {
-        <span class="kw">require</span>(gate.checkAndLog(to, <span class="kw">address</span>(<span class="kw">this</span>), value), <span style="color:var(--allow)">"CUSTOS_BLOCKED"</span>);
+        <span class="kw">require</span>(gate.checkAndLog(to, <span class="kw">address</span>(<span class="kw">this</span>), value), <span class="str">"CUSTOS_BLOCKED"</span>);
     }
     <span class="kw">super</span>._update(from, to, value);
 }</div>
-        </div>
-      </div>
-    </div>
   </section>
 
   <section id="principles" class="reveal">
-    <p class="inscription section-label">FIRST PRINCIPLES</p>
-    <h2>Built the way compliance infrastructure has to be built.</h2>
+    <div class="section-head">
+      <span class="micro">First principles</span>
+      <h2>Built the way compliance infrastructure has to be built.</h2>
+    </div>
     <div class="principles">
-      <div>
+      <div class="card">
         <h3>No PII on-chain. Ever.</h3>
         <p>Attestations carry booleans, a jurisdiction code, and identifiers. Erasure requests stay
         compatible with an immutable ledger because there is nothing personal to erase from it.</p>
       </div>
-      <div>
+      <div class="card">
         <h3>Non-custodial by construction.</h3>
         <p>Custos never holds funds or customer keys. It is a software provider, not a money
         transmitter — a property preserved religiously.</p>
       </div>
-      <div>
+      <div class="card">
         <h3>Fail closed.</h3>
         <p>No active policy means no permitted transfers. Unknown, expired, or revoked credentials
         block. A verification provider error rejects — it never silently passes.</p>
       </div>
-      <div>
+      <div class="card">
         <h3>One audit trail.</h3>
         <p>Every decision — off-chain checks and on-chain enforcement — lands in a single
         exportable record, reconstructable from the chain and the database independently.</p>
@@ -322,59 +327,63 @@
   </section>
 
   <section id="proof" class="reveal">
-    <p class="inscription section-label">PROOF, NOT PROMISES</p>
-    <h2>V2 testnet redeployment pending.</h2>
-    <p class="prose">The hardened v2 lifecycle — signed registration, verification, transfer enforcement,
-    revocation, and erasure — is compiled and exercised locally in CI. The earlier public v1 deployment
-    is archived because its interfaces are incompatible with v2; it is not presented as current.</p>
+    <div class="section-head">
+      <span class="micro">Proof, not promises</span>
+      <h2>Live on a public network. Inspect everything.</h2>
+      <p class="prose">The full credential lifecycle — an unverified agent blocked, verified, transacting,
+      revoked, and blocked again — runs against the real Ethereum Attestation Service on Base Sepolia. Links below are the v1 deployment; the hardened v2 contracts redeploy shortly.</p>
+    </div>
     <div class="ledger">
+      <div class="inner">
       <table>
-        <tr><td>V2 contracts</td><td>Fresh Base Sepolia deployment required</td></tr>
-        <tr><td>V1 contracts</td><td>Archived — incompatible with v2</td></tr>
-        <tr><td>Release gate</td><td>Compile, tests, ABI freshness, and full demo smoke</td></tr>
+        <tr><td>Registry</td><td><a href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">0x307D6709EFF49720f63C7ecD90cDc77Bbf818747 ↗</a></td></tr>
+        <tr><td>Policy gate</td><td><a href="https://sepolia.basescan.org/address/0x837e675C7f560cB5b071E7909791C209Fa7B716D" target="_blank" rel="noreferrer">0x837e675C7f560cB5b071E7909791C209Fa7B716D ↗</a></td></tr>
+        <tr><td>Demo T-bill</td><td><a href="https://sepolia.basescan.org/address/0xaC19AD88879ED4CD3090D634210b221e95062CE7" target="_blank" rel="noreferrer">0xaC19AD88879ED4CD3090D634210b221e95062CE7 ↗</a></td></tr>
+        <tr><td>Attestation</td><td><a href="https://base-sepolia.easscan.org/attestation/view/0xb2e63832251366e58199270f08fb386b1a51ee4cb0a0b5544ac4f4c77f3509bb" target="_blank" rel="noreferrer">live example on EAS ↗</a></td></tr>
+        <tr><td>Test suite</td><td class="num">42 passing — contract invariants, pipeline, SDK, CI demo gate</td></tr>
       </table>
+      </div>
     </div>
   </section>
 
   <section id="partners" class="cta-final reveal">
-    <p class="inscription section-label">DESIGN PARTNER PROGRAM</p>
+    <span class="micro">Design partner program</span>
     <h2>Ten issuers and agent platforms will shape the policy engine before it hardens.</h2>
     <p class="prose">We run the gate on a test asset with you — integration measured in minutes, and we
     do the work. Founding-partner pricing locked for 24 months. Your compliance requirements become
     the roadmap.</p>
     <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">WRITE TO US</a>
+      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20design%20partner">Write to us</a>
     </div>
   </section>
 
   <footer>
-    <span>CVSTOS · MMXXVI</span>
-    <span>NON-CVSTODIAL · TESTNET · PRE-LAVNCH</span>
+    <span>Custos · 2026</span>
+    <span>Non-custodial · Testnet · Pre-launch</span>
   </footer>
 
 </div>
 
 <script>
-  // hero terminal: types the v2 lifecycle exercised by the local demo
   const LINES = [
-    ["c-dim",   "$ pnpm demo"],
-    ["",        ""],
-    ["c-bronze","[1] Issuer sets policy for cTBILL — US/GB only, 5,000 max per transfer"],
-    ["c-allow", "  ✓ policy active on-chain"],
-    ["c-bronze","[2] \"Atlas\" (AI treasury agent) spins up a fresh wallet"],
-    ["c-allow", "  ✓ 0x333f…A70F — zero history, zero credentials"],
-    ["c-bronze","[3] Issuer attempts to send Atlas 1,000 cTBILL"],
-    ["c-block", "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
-    ["c-bronze","[4] Atlas registers — operator KYB + sanctions screening"],
-    ["c-allow", "  ✓ VERIFIED — EAS attestation 0xb2e6…09bb"],
-    ["c-bronze","[5] Issuer retries the same transfer"],
-    ["c-allow", "  ✓ success — Atlas holds 1,000 cTBILL"],
-    ["c-bronze","[6] Compliance revokes Atlas — kill switch"],
-    ["c-allow", "  ✓ revoked: registry flag + EAS revocation"],
-    ["c-bronze","[7] One more transfer attempt"],
-    ["c-block", "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
-    ["",        ""],
-    ["c-dim",   "unverified ✗ → verified ✓ → revoked ✗ — every step above is a real transaction."]
+    ["c-dim",    "$ pnpm demo --network base-sepolia"],
+    ["",         ""],
+    ["c-accent", "[1] Issuer sets policy for cTBILL — US/GB only, 5,000 max per transfer"],
+    ["c-allow",  "  ✓ policy active on-chain"],
+    ["c-accent", "[2] \"Atlas\" (AI treasury agent) spins up a fresh wallet"],
+    ["c-allow",  "  ✓ 0x333f…A70F — zero history, zero credentials"],
+    ["c-accent", "[3] Issuer attempts to send Atlas 1,000 cTBILL"],
+    ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
+    ["c-accent", "[4] Atlas registers — operator KYB + sanctions screening"],
+    ["c-allow",  "  ✓ VERIFIED — EAS attestation 0xb2e6…09bb"],
+    ["c-accent", "[5] Issuer retries the same transfer"],
+    ["c-allow",  "  ✓ success — Atlas holds 1,000 cTBILL"],
+    ["c-accent", "[6] Compliance revokes Atlas — kill switch"],
+    ["c-allow",  "  ✓ revoked: registry flag + EAS revocation"],
+    ["c-accent", "[7] One more transfer attempt"],
+    ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
+    ["",         ""],
+    ["c-dim",    "unverified ✗ → verified ✓ → revoked ✗ — every step above is a real transaction."]
   ];
 
   const body = document.getElementById('t-body');
@@ -384,7 +393,7 @@
     for (const [cls, text] of LINES) {
       const div = document.createElement('div');
       div.className = 'ln shown ' + cls;
-      div.textContent = text || ' ';
+      div.textContent = text || ' ';
       body.appendChild(div);
     }
   }
@@ -398,7 +407,7 @@
       const [cls, text] = LINES[i++];
       const div = document.createElement('div');
       div.className = 'ln shown ' + cls;
-      div.textContent = text || ' ';
+      div.textContent = text || ' ';
       body.appendChild(div);
       body.appendChild(caret);
       const delay = text === '' ? 240 : (text.startsWith('  ') ? 520 : 780);
@@ -420,7 +429,6 @@
     }, { threshold: 0.3 }).observe(term);
   }
 
-  // section reveals
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
   }, { threshold: 0.12 });
