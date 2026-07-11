@@ -17,6 +17,8 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
       - run: forge fmt --check
         working-directory: contracts
+      - run: forge build --sizes
+        working-directory: contracts
       - run: forge test -vv
         working-directory: contracts
 
@@ -31,11 +33,17 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @custos/api prisma:generate
+      - run: pnpm --filter @custos/api exec prisma validate
+      - run: pnpm --filter @custos/sdk gen:abis
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-sdk-abi
+          path: sdk/src/abis.ts
       - run: pnpm --filter @custos/sdk build
       - run: pnpm --filter @custos/sdk test
       - run: pnpm --filter @custos/api build
       - run: pnpm --filter @custos/api test
-      - run: pnpm --filter @custos/demo-agent build
+      - run: pnpm --filter @custos/demo-agent exec tsc --noEmit --module NodeNext --moduleResolution NodeNext --target ES2022 demo.ts
       - run: pnpm --filter @custos/dashboard build
         env:
           DEPLOYMENTS_FILE: ${{ github.workspace }}/contracts/deployments/ci-placeholder.json
@@ -50,3 +58,19 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm audit --prod --audit-level high
+
+  demo-smoke:
+    needs: [contracts, node]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with: { submodules: recursive }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: pnpm }
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: pnpm install --frozen-lockfile
+      - run: timeout 5m pnpm demo
+      - if: always()
+        run: docker compose down --volumes
