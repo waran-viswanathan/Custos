@@ -273,19 +273,11 @@ contract VenueActionsTest is Test {
     }
 
     function test_CannotConfigurePolicyThatCouldBlockLiquidityExit() public {
+        bytes32 exitAction = gate.LIQUIDITY_EXIT_ACTION();
+        CustosGate.ActionPolicy memory policy = CustosGate.ActionPolicy(false, _jurisdictions("US"), 0, true);
         vm.prank(issuer);
-        (bool success, bytes memory result) = address(gate)
-            .call(
-                abi.encodeCall(
-                    CustosGate.setActionPolicy,
-                    (
-                        address(ambient),
-                        gate.LIQUIDITY_EXIT_ACTION(),
-                        base,
-                        CustosGate.ActionPolicy(false, _jurisdictions("US"), 0, true)
-                    )
-                )
-            );
+        (bool success, bytes memory result) =
+            address(gate).call(abi.encodeCall(CustosGate.setActionPolicy, (address(ambient), exitAction, base, policy)));
         _assertRevertedWith(success, result, CustosGate.InvalidAction.selector);
     }
 
