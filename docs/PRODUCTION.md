@@ -24,6 +24,12 @@ cannot be provisioned in source control.
   wallet-signature requirement.
 - Complete a third-party smart-contract audit and an application penetration
   test before mainnet use.
+- Grant `VENUE_ROLE` only to reviewed adapters whose immutable external venue
+  address and deployed bytecode have been independently verified.
+- For paired-asset venues, configure and review both asset policies before
+  enabling swaps, liquidity entry, or pool initialization.
+- Preserve and test the invariant that liquidity exits remain available after
+  credential expiration or revocation.
 
 ## Data lifecycle
 
