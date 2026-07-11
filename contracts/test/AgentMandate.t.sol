@@ -1,4 +1,3 @@
-Formatted /Users/lalithesh/Documents/Codex/2026-07-10/let/work/production-hardening/contracts/test/AgentMandate.t.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
