@@ -31,7 +31,7 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
   const [requireAccredited, setRequireAccredited] = useState(false);
   const [jurisdictions, setJurisdictions] = useState<string[]>([]);
   const [customJur, setCustomJur] = useState('');
-  const [maxAmount, setMaxAmount] = useState(''); // human units, 6 decimals; empty = no cap
+  const [maxAmount, setMaxAmount] = useState('');\n  const [tokenDecimals, setTokenDecimals] = useState(18);
   const [active, setActive] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -47,10 +47,10 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
     if (!isAddress(token)) return;
     try {
       const client = createPublicClient({ chain, transport: http(rpcUrl) });
-      const p = await client.readContract({ address: gate, abi: custosGateAbi, functionName: 'getPolicy', args: [token as Address] });
+      const [p, decimals] = await Promise.all([\n        client.readContract({ address: gate, abi: custosGateAbi, functionName: 'getPolicy', args: [token as Address] }),\n        client.readContract({ address: token as Address, abi: erc20Abi, functionName: 'decimals' }),\n      ]);\n      setTokenDecimals(decimals);
       setRequireAccredited(p.requireAccredited);
       setJurisdictions(p.allowedJurisdictions.map((j: Hex) => fromHex(j, 'string').replace(/\0/g, '')));
-      setMaxAmount(p.maxTransferAmount === 0n ? '' : formatUnits(p.maxTransferAmount, 6));
+      setMaxAmount(p.maxTransferAmount === 0n ? '' : formatUnits(p.maxTransferAmount, decimals));
       setActive(p.active);
       setStatus(p.active ? 'Loaded existing policy.' : 'No active policy for this token (fail closed: all transfers blocked).');
     } catch (err) {
@@ -84,13 +84,13 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
           {
             requireAccredited,
             allowedJurisdictions: jurisdictions.map((j) => toHex(j.toUpperCase(), { size: 2 })),
-            maxTransferAmount: maxAmount.trim() === '' ? 0n : parseUnits(maxAmount, 6),
+            maxTransferAmount: maxAmount.trim() === '' ? 0n : parseUnits(maxAmount, tokenDecimals),
             active,
           },
         ],
         account,
       });
-      setStatus(`Policy submitted: ${hash}`);
+      const publicClient = createPublicClient({ chain, transport: http(rpcUrl) });\n      const receipt = await publicClient.waitForTransactionReceipt({ hash });\n      if (receipt.status !== 'success') throw new Error(`policy transaction reverted: ${hash}`);\n      setStatus(`Policy confirmed on-chain: ${hash}`);
     } catch (err) {
       setStatus(`Failed: ${err instanceof Error ? err.message : err}`);
     } finally {
@@ -156,7 +156,7 @@ export function PolicyEditor({ gate, defaultToken, chainId, rpcUrl }: Props) {
       </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-4">
-        <div className="text-sm font-medium">Max transfer amount (cTBILL)</div>
+        <div className="text-sm font-medium">Max transfer amount (token decimals: {tokenDecimals})</div>
         <div className="text-xs text-zinc-500">Empty = no cap</div>
         <input
           value={maxAmount}
