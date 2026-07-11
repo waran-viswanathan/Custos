@@ -13,8 +13,7 @@ const names = {
   CustosGate: 'custosGateAbi',
   MockTBill: 'mockTBillAbi',
   MockEAS: 'mockEasAbi',
-  CustosVenueAdapter: 'custosVenueAdapterAbi',
-  AmbientCustosOracle: 'ambientCustosOracleAbi',
+  CustosActionAuthorizer: 'custosActionAuthorizerAbi',
 };
 
 let out =
