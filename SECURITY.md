@@ -33,20 +33,19 @@ Two independent kill switches, either of which fails closed:
 
 ## Audit trail
 
-Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via pre-flight `checkAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
+Every contract state change emits an event; only calls made by the token itself are marked as authoritative transfer enforcement. Issuer preflights are separately authenticated and labeled. The indexer mirrors `TransferChecked`, `AgentRegistered`, and `AgentRevoked` into Postgres alongside API-side events, so the full history is reconstructable from chain + DB. One nuance: a token that reverts on a failed check rolls back the `TransferChecked` event with the transaction — blocked *transfer attempts* are therefore audited via `preflightAndLog` calls (as the demo shows) or the caller's revert reason, while permitted transfers are always on-chain audited.
 
 ## Known MVP limitations
 
 - **Single attester = centralized trust.** Whoever holds the attester key can verify anyone. Roadmap: multi-attester with independent keys, then attester bonding/slashing.
 - **Provider adapters require deployment-specific contracts.** Production startup requires authenticated KYB and sanctions adapter URLs and forbids mock providers.
 - **Recipient-only transfer checks** on `MockTBill`; sender-side checks and transfer-between-third-parties policies are v2.
-- **No rate limiting or API-key auth** on public endpoints (submit/status); a hostile client can spam registrations.
+- **Public endpoints use process-local rate limiting but no client authentication.** Production should use a shared edge or Redis-backed limiter and abuse monitoring across replicas.
 - **No upgradeability proxies** — deliberate for the MVP (smaller audit surface); new versions deploy fresh with per-issuer opt-in migration. Noted as a v2 consideration.
 - **SIWE-lite dashboard auth** (nonce + signature + role check, HMAC cookie) rather than full EIP-4361. Production structurally disables the development bypass, rejects the default session secret, and uses secure cookies.
 - **Accreditation is inferred from the mock KYB result** (companies pass); a real accreditation check (506(c)-style) is a provider integration away.
 
 Report vulnerabilities to lalitheshnarayanan@gmail.com.
-
 
 ## Production boundary
 
