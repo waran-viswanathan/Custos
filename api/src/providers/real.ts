@@ -20,9 +20,9 @@ async function runProvider(url: string, apiKey: string, input: CheckInput): Prom
   return {
     passed: parsed.passed,
     provider: new URL(url).hostname,
-    reason: parsed.reason,
     // Store a provider reference and decision attributes, never raw documents.
     raw: { referenceId: parsed.referenceId, ...parsed.attributes },
+    ...(parsed.reason ? { reason: parsed.reason } : {}),
   };
 }
 
