@@ -36,11 +36,8 @@ jobs:
       - run: pnpm --filter @custos/api exec prisma validate
         env:
           DATABASE_URL: postgresql://custos:custos@localhost:5432/custos
+      - run: test ! -e sdk/src/abis.ts && git check-ignore sdk/src/abis.ts
       - run: pnpm --filter @custos/sdk gen:abis
-      - uses: actions/upload-artifact@v4
-        with:
-          name: generated-sdk-abi
-          path: sdk/src/abis.ts
       - run: pnpm --filter @custos/sdk build
       - run: pnpm --filter @custos/sdk test
       - run: pnpm --filter @custos/api build
