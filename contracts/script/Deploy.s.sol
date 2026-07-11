@@ -20,6 +20,7 @@ contract Deploy is Script {
             "DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
         );
         address deployer = vm.addr(pk);
+        address adminAddr = vm.envOr("ADMIN_ADDRESS", deployer);
         address attesterAddr = vm.envOr("ATTESTER_ADDRESS", deployer);
         address issuerAddr = vm.envOr("ISSUER_ADDRESS", deployer);
 
@@ -53,10 +54,22 @@ contract Deploy is Script {
         registry.grantRole(registry.ATTESTER_ROLE(), attesterAddr);
         gate.grantRole(gate.ISSUER_ROLE(), issuerAddr);
 
+        // The deployer must be the temporary administrator while assigning
+        // roles. Hand governance to the configured administrator last and
+        // remove the deployer's authority when the addresses differ.
+        if (adminAddr != deployer) {
+            registry.grantRole(registry.DEFAULT_ADMIN_ROLE(), adminAddr);
+            gate.grantRole(gate.DEFAULT_ADMIN_ROLE(), adminAddr);
+            registry.revokeRole(registry.DEFAULT_ADMIN_ROLE(), deployer);
+            gate.revokeRole(gate.DEFAULT_ADMIN_ROLE(), deployer);
+        }
+
         vm.stopBroadcast();
 
         string memory obj = "deployments";
+        vm.serializeUint(obj, "version", 2);
         vm.serializeUint(obj, "chainId", block.chainid);
+        vm.serializeUint(obj, "deploymentBlock", block.number);
         vm.serializeAddress(obj, "eas", easAddr);
         vm.serializeBytes32(obj, "schemaUID", schemaUID);
         vm.serializeAddress(obj, "registry", address(registry));
