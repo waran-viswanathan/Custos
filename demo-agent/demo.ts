@@ -20,7 +20,7 @@ import {
   type Hex,
 } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
-import { Custos, custosGateAbi, mockTBillAbi, type Deployments } from '@custos/sdk';
+import { Custos, custosGateAbi, mockTBillAbi, registrationMessage, type Deployments } from '@custos/sdk';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4000';
 const RPC_URL = process.env.RPC_URL ?? 'http://127.0.0.1:8545';
@@ -126,7 +126,7 @@ async function main() {
   // reverted transfer rolls back its own event)
   const preflight = await custos.isPermitted(atlas.address, deployments.tbill, parseUnits('1000', 6));
   const logSim = await publicClient.simulateContract({
-    address: deployments.gate, abi: custosGateAbi, functionName: 'checkAndLog',
+    address: deployments.gate, abi: custosGateAbi, functionName: 'preflightAndLog',
     args: [atlas.address, deployments.tbill, parseUnits('1000', 6)], account: issuer.account,
   });
   await publicClient.waitForTransactionReceipt({ hash: await issuer.writeContract(logSim.request) });
@@ -135,12 +135,15 @@ async function main() {
   else throw new Error('expected the unverified transfer to revert!');
 
   step(4, 'Atlas registers with Custos (owner: Atlas Capital LLC, US) and undergoes KYB + sanctions screening');
-  await custos.register({
+  const registration = {
     wallet: atlas.address,
-    owner: { name: 'Atlas Capital LLC', email: 'ops@atlascapital.example', entityType: 'COMPANY' },
+    owner: { name: 'Atlas Capital LLC', email: 'ops@atlascapital.example', entityType: 'COMPANY' as const },
     jurisdiction: 'US',
     erc8004TokenId: 7,
-  });
+  };
+  const challenge = await custos.challenge(atlas.address);
+  const signature = await atlas.signMessage({ message: registrationMessage(registration, challenge) });
+  await custos.register({ ...registration, nonce: challenge.nonce, domain: challenge.domain, signature });
   ok('submitted — verification pipeline running (KYB → sanctions → on-chain attestation)');
   const verified = await custos.waitForVerification(atlas.address, { timeoutMs: 120_000 });
   if (verified.status !== 'VERIFIED') throw new Error(`expected VERIFIED, got ${verified.status}`);
