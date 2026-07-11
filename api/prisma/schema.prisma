@@ -7,10 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum EntityType { INDIVIDUAL COMPANY }
-enum AgentStatus { PENDING IN_REVIEW VERIFIED REJECTED REVOKED }
-enum CheckType { KYB SANCTIONS ACCREDITATION }
-enum CheckStatus { PENDING PASSED FAILED }
+enum EntityType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum AgentStatus {
+  PENDING
+  IN_REVIEW
+  VERIFIED
+  REJECTED
+  REVOKED
+}
+
+enum CheckType {
+  KYB
+  SANCTIONS
+  ACCREDITATION
+}
+
+enum CheckStatus {
+  PENDING
+  PASSED
+  FAILED
+}
 
 model Agent {
   id                    String      @id @default(cuid())
