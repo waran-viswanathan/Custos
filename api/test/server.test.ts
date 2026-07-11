@@ -7,6 +7,7 @@ function makeServerDeps() {
   const agents = new Map<string, any>();
   const audits: any[] = [];
   const enqueued: string[] = [];
+  const challenges = new Map<string, { wallet: string; nonce: string; expiresAt: Date }>();
   let seq = 0;
 
   const deps: ServerDeps = {
