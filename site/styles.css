@@ -67,13 +67,11 @@ h1 em, h2 em { color: var(--blue-light); font-style: normal; }
   padding: 0 var(--pad); display: flex; align-items: center; justify-content: space-between; gap: 32px;
 }
 .brand { display: inline-flex; align-items: center; gap: 11px; font-size: 20px; font-weight: 700; letter-spacing: -.035em; }
-.brand-mark { position: relative; width: 27px; height: 31px; display: inline-grid; place-items: center; }
-.brand-mark::before, .brand-mark::after, .brand-mark span {
-  content: ""; position: absolute; border: 1px solid var(--paper); border-radius: 50% 50% 46% 46%; transform: rotate(45deg);
-}
-.brand-mark::before { width: 20px; height: 20px; top: 1px; }
-.brand-mark::after { width: 13px; height: 13px; top: 8px; border-color: var(--blue-light); }
-.brand-mark span { width: 5px; height: 5px; top: 15px; background: var(--mint); border: 0; box-shadow: 0 0 14px var(--mint); }
+.brand-mark { position: relative; width: 29px; height: 29px; display: inline-grid; place-items: center; }
+.brand-mark::before, .brand-mark::after { content: ""; position: absolute; top: 3px; bottom: 3px; width: 10px; }
+.brand-mark::before { left: 2px; border: 1.5px solid var(--paper); border-right: 0; border-radius: 3px 0 0 3px; transform: skewY(-13deg); }
+.brand-mark::after { right: 2px; border: 1.5px solid var(--blue-light); border-left: 0; border-radius: 0 3px 3px 0; transform: skewY(13deg); }
+.brand-mark span { position: absolute; width: 7px; height: 7px; border: 1px solid var(--paper); background: var(--blue); box-shadow: 0 0 0 3px rgba(52,120,255,.15), 0 0 15px rgba(52,120,255,.8); transform: rotate(45deg); }
 .desktop-nav { display: flex; align-items: center; gap: clamp(22px, 3vw, 46px); margin-left: auto; }
 .desktop-nav a { color: #b6b3bb; font-size: 13px; transition: color .2s ease; }
 .desktop-nav a:hover { color: var(--paper); }
@@ -175,11 +173,11 @@ h1 em, h2 em { color: var(--blue-light); font-style: normal; }
 @keyframes rotate-reverse { to { transform: translate(-50%, -50%) rotate(-360deg); } }
 .core { position: absolute; left: 50%; top: 50%; width: 150px; height: 150px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid rgba(52,120,255,.55); border-radius: 50%; background: rgba(7,9,14,.96); box-shadow: 0 0 70px rgba(52,120,255,.2); }
 .core-halo { position: absolute; inset: 9px; border: 1px solid rgba(255,255,255,.09); border-radius: inherit; }
-.core-mark { position: relative; width: 30px; height: 34px; margin-bottom: 8px; }
-.core-mark::before, .core-mark::after, .core-mark span { content: ""; position: absolute; border: 1px solid var(--paper); border-radius: 50% 50% 46% 46%; transform: rotate(45deg); }
-.core-mark::before { width: 24px; height: 24px; left: 3px; }
-.core-mark::after { width: 14px; height: 14px; left: 8px; top: 8px; border-color: var(--blue-light); }
-.core-mark span { width: 6px; height: 6px; top: 15px; left: 12px; border: 0; background: var(--mint); box-shadow: 0 0 11px var(--mint); }
+.core-mark { position: relative; width: 34px; height: 34px; margin-bottom: 8px; }
+.core-mark::before, .core-mark::after { content: ""; position: absolute; top: 3px; bottom: 3px; width: 12px; }
+.core-mark::before { left: 2px; border: 1px solid var(--paper); border-right: 0; border-radius: 4px 0 0 4px; transform: skewY(-13deg); }
+.core-mark::after { right: 2px; border: 1px solid var(--blue-light); border-left: 0; border-radius: 0 4px 4px 0; transform: skewY(13deg); }
+.core-mark span { position: absolute; left: 13px; top: 13px; width: 8px; height: 8px; border: 1px solid var(--paper); background: var(--blue); box-shadow: 0 0 0 4px rgba(52,120,255,.14), 0 0 14px var(--blue); transform: rotate(45deg); }
 .core small { color: var(--muted); font-family: var(--mono); font-size: 8px; letter-spacing: .2em; }
 .core strong { color: var(--mint); font-family: var(--mono); font-size: 12px; letter-spacing: .13em; }
 .signal { position: absolute; z-index: 2; height: 1px; background: linear-gradient(90deg, transparent, var(--mint), transparent); transform-origin: left center; animation: signal 2.8s ease-in-out infinite; }
@@ -224,11 +222,11 @@ h1 em, h2 em { color: var(--blue-light); font-style: normal; }
 .wallet-workspace-grid { display: grid; grid-template-columns: .8fr 1.2fr; }
 .wallet-primary { min-height: 430px; padding: clamp(28px, 4vw, 55px); display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--line); }
 .wallet-identity { display: flex; align-items: center; gap: 24px; }
-.wallet-glyph { position: relative; flex: 0 0 auto; width: 74px; height: 74px; display: grid; place-items: center; border: 1px solid rgba(52,120,255,.42); border-radius: 50%; background: radial-gradient(circle, rgba(52,120,255,.18), transparent 65%); }
-.wallet-glyph::before, .wallet-glyph::after, .wallet-glyph span { content: ""; position: absolute; border: 1px solid var(--paper); border-radius: 50% 50% 46% 46%; transform: rotate(45deg); }
-.wallet-glyph::before { width: 30px; height: 30px; }
-.wallet-glyph::after { width: 18px; height: 18px; border-color: var(--blue-light); }
-.wallet-glyph span { width: 7px; height: 7px; border: 0; background: var(--blue); box-shadow: 0 0 13px var(--blue); }
+.wallet-glyph { position: relative; flex: 0 0 auto; width: 74px; height: 74px; display: grid; place-items: center; border: 1px solid rgba(52,120,255,.42); border-radius: 18px; background: radial-gradient(circle, rgba(52,120,255,.18), transparent 65%); }
+.wallet-glyph::before, .wallet-glyph::after { content: ""; position: absolute; top: 18px; bottom: 18px; width: 14px; }
+.wallet-glyph::before { left: 17px; border: 1px solid var(--paper); border-right: 0; border-radius: 4px 0 0 4px; transform: skewY(-13deg); }
+.wallet-glyph::after { right: 17px; border: 1px solid var(--blue-light); border-left: 0; border-radius: 0 4px 4px 0; transform: skewY(13deg); }
+.wallet-glyph span { position: absolute; width: 10px; height: 10px; border: 1px solid var(--paper); background: var(--blue); box-shadow: 0 0 0 4px rgba(52,120,255,.14), 0 0 15px var(--blue); transform: rotate(45deg); }
 .wallet-identity small, .wallet-identity span { display: block; font-family: var(--mono); }
 .wallet-identity small { color: #65626b; font-size: 8px; letter-spacing: .12em; }
 .wallet-identity strong { display: block; margin-top: 8px; font-family: var(--mono); font-size: clamp(15px, 1.4vw, 20px); font-weight: 500; overflow-wrap: anywhere; }
