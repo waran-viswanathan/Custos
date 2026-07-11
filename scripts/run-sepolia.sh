@@ -21,7 +21,7 @@ lsof -ti:3000 2>/dev/null | xargs kill 2>/dev/null || true
 pkill -f 'custos.*src/worker\.ts' 2>/dev/null || true
 sleep 1
 
-echo "▶ syncing database schema"
+echo "▶ building SDK from current contract ABIs"\npnpm --filter @custos/sdk build\n\necho "▶ syncing database schema"
 pnpm --filter @custos/api exec prisma db push --skip-generate >/dev/null
 
 echo "▶ starting API (:4000), worker, dashboard (:3000) against Base Sepolia"
