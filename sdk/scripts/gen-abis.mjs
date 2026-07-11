@@ -14,6 +14,7 @@ const names = {
   MockTBill: 'mockTBillAbi',
   MockEAS: 'mockEasAbi',
   CustosActionAuthorizer: 'custosActionAuthorizerAbi',
+  CustosMarketManager: 'custosMarketManagerAbi',
 };
 
 let out =
