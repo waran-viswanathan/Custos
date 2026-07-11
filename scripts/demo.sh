@@ -57,8 +57,12 @@ fi
 echo "▶ deploying contracts to anvil"
 (cd contracts && forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast -q)
 
-# --- generated SDK ABI + database schema ---\necho "▶ building SDK from current contract ABIs"\npnpm --filter @custos/sdk build\n\n# --- database schema ---
-echo "▶ building SDK from current contract ABIs"\npnpm --filter @custos/sdk build\n\necho "▶ syncing database schema"
+# --- generated SDK ABI + database schema ---
+echo "▶ building SDK from current contract ABIs"
+pnpm --filter @custos/sdk build
+
+# --- database schema ---
+echo "▶ syncing database schema"
 pnpm --filter @custos/api exec prisma db push --skip-generate >/dev/null
 
 # --- api + worker (logs to files so shutdown noise stays out of the demo) ---
