@@ -94,12 +94,18 @@ The repository also contains an **experimental, testnet-only** Custos singleton 
 
 - Local and CI evidence: 43 contract tests, 21 API tests, and 7 SDK tests, plus
   the complete lifecycle smoke test.
-- Public-chain evidence: the earlier Base Sepolia deployment is retained as
-  historical v1 proof only and is interface-incompatible with the current code.
-- Next release gate: deploy the current architecture with separated roles,
-  verify source and bytecode, replay the pilot, publish the manifest, and record
-  the demonstration. Until then, Custos is pre-customer, unaudited, and not
+- Public-chain evidence: the canonical experimental v3 stack was freshly
+  deployed at Base Sepolia block 44039414 with seven Sourcify-verified
+  contracts, 29 passing wiring/role checks, 21 successful configuration
+  transactions, 13 passing configuration checks, 34 passing adversarial replay
+  assertions, 78 exported audit logs, and retained manifest-matched role keys.
+  The block-44038124 deployment is archived as historical evidence.
+- Next release gate: record and publish the 60–90 second demonstration from the
+  completed v3 evidence package. Until then, Custos is pre-customer, unaudited, and not
   production-ready.
+
+See the [human-readable Base Sepolia replay summary](contracts/deployments/pilot-84532-replay-summary.md)
+and its linked machine-readable evidence package.
 
 ## Repo layout
 
