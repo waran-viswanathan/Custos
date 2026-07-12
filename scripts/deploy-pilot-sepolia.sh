@@ -19,6 +19,30 @@ if [ "$BALANCE" = "0" ]; then
 fi
 
 echo "deploying experimental Custos market pilot to Base Sepolia"
+
+manifest="contracts/deployments/pilot-84532.json"
+if [ -f "$manifest" ]; then
+  latest_broadcast="contracts/broadcast/DeployPilot.s.sol/84532/run-latest.json"
+  receipt_count=0
+  if [ -f "$latest_broadcast" ]; then
+    receipt_count=$(jq '.receipts | length' "$latest_broadcast")
+  fi
+  if [ "$receipt_count" -gt 0 ]; then
+    previous_block=$(jq -r '.deploymentBlock' "$manifest")
+    archive_prefix="contracts/deployments/pilot-84532-block-$previous_block"
+    cp "$manifest" "$archive_prefix.json"
+    for evidence in verification wiring; do
+      evidence_file="contracts/deployments/pilot-84532-$evidence.json"
+      if [ -f "$evidence_file" ]; then
+        mv "$evidence_file" "$archive_prefix-$evidence.json"
+      fi
+    done
+    echo "archived previous pilot evidence at block $previous_block"
+  else
+    echo "replacing prior simulation-only manifest (no transactions were broadcast)"
+  fi
+fi
+
 (cd contracts && DEPLOYER_PRIVATE_KEY="$SEPOLIA_DEPLOYER_PRIVATE_KEY" \
   forge script script/DeployPilot.s.sol --rpc-url https://sepolia.base.org --broadcast -q)
 echo "pilot manifest written to contracts/deployments/pilot-84532.json"
