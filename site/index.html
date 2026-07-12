@@ -37,7 +37,7 @@
       </nav>
 
       <div class="nav-actions">
-        <span class="status-pill"><i></i> Pilot pending</span>
+        <span class="status-pill"><i></i> Public pilot proven</span>
         <button class="nav-cta wallet-connect" type="button" data-connect-wallet>Connect wallet <span>↗</span></button>
         <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">
           <span></span><span></span>
@@ -107,7 +107,8 @@
         <span>revocable credentials</span><i></i>
         <span>scoped agent mandates</span><i></i>
         <span>fail-closed enforcement</span><i></i>
-        <span>historical v1 on Base Sepolia</span><i></i>
+        <span>v3 deployed on Base Sepolia</span><i></i>
+        <span>34 replay assertions passed</span><i></i>
         <span>71 automated tests</span><i></i>
         <span>signed wallet intents</span><i></i>
       </div>
@@ -120,13 +121,13 @@
       <div class="wallet-intro reveal">
         <p class="eyebrow"><span>LIVE</span> Custos Console preview</p>
         <h2>Your wallet is the starting point.<br><em>Accountability is the product.</em></h2>
-        <p>Connect an operator or agent wallet to begin. Custos can prove control now; credential and mandate reads will activate when the fresh pilot contracts are deployed.</p>
+        <p>Connect an operator or agent wallet to begin. Custos can prove control now; credential and mandate reads will activate when the source-verified pilot is wired into this console.</p>
       </div>
 
       <div class="wallet-workspace reveal" id="wallet-workspace">
         <div class="wallet-workspace-bar">
           <div><i></i><span>CUSTOS / WALLET CONTROL</span></div>
-          <b id="wallet-environment">BASE SEPOLIA · PILOT PENDING</b>
+          <b id="wallet-environment">BASE SEPOLIA · V3 PILOT PROVEN</b>
         </div>
 
         <div class="wallet-workspace-grid">
@@ -149,8 +150,8 @@
 
           <div class="wallet-status-grid">
             <article class="wallet-status" id="status-control"><span>01</span><small>WALLET CONTROL</small><strong>NOT CONNECTED</strong><p>Connect, then sign a local proof message.</p></article>
-            <article class="wallet-status status-pending"><span>02</span><small>CUSTOS CREDENTIAL</small><strong>PILOT PENDING</strong><p>Verified operator, jurisdiction, expiry, and revocation.</p></article>
-            <article class="wallet-status status-pending"><span>03</span><small>AGENT MANDATE</small><strong>PILOT PENDING</strong><p>Venue, action, asset, caps, and validity window.</p></article>
+            <article class="wallet-status status-pending"><span>02</span><small>CUSTOS CREDENTIAL</small><strong>READ NOT WIRED</strong><p>Verified operator, jurisdiction, expiry, and revocation.</p></article>
+            <article class="wallet-status status-pending"><span>03</span><small>AGENT MANDATE</small><strong>READ NOT WIRED</strong><p>Venue, action, asset, caps, and validity window.</p></article>
             <article class="wallet-status status-pending"><span>04</span><small>POLICY DECISION</small><strong>NOT REQUESTED</strong><p>Authoritative allow or block happens at execution.</p></article>
           </div>
         </div>
@@ -367,7 +368,7 @@
         <div class="evidence-heading reveal">
           <p class="eyebrow"><span>07</span> Proof, not promises</p>
           <h2>The claims stop<br><em>where the evidence stops.</em></h2>
-          <p>The current architecture is reproducible locally and enforced in CI. The earlier Base Sepolia deployment is historical proof only; the fresh pilot remains the next public milestone.</p>
+          <p>The v3 architecture is reproducible locally and enforced in CI. The canonical stack at Base Sepolia block 44039414 has seven Sourcify-verified contracts, 29 passing wiring and role checks, 21 successful configuration transactions, 13 configuration checks, and 34 passing adversarial replay assertions.</p>
         </div>
 
         <div class="metric-grid">
@@ -379,7 +380,8 @@
 
         <div class="proof-ledger reveal">
           <div class="proof-row"><span>Current architecture</span><b>LOCAL + CI</b><em class="proof-green">REPRODUCIBLE</em></div>
-          <div class="proof-row"><span>Fresh Base Sepolia pilot</span><b>VERSIONED MANIFEST</b><em class="proof-blue">PENDING</em></div>
+          <a class="proof-row" href="https://sepolia.basescan.org/address/0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f" target="_blank" rel="noreferrer"><span>Canonical v3 Base Sepolia pilot</span><b>7 VERIFIED · 34 REPLAY ASSERTIONS</b><em class="proof-green">PROVEN ↗</em></a>
+          <div class="proof-row"><span>Replay evidence package</span><b>19 SUCCESS · 14 REVERT · 78 LOGS</b><em class="proof-green">COMPLETE</em></div>
           <a class="proof-row" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer"><span>Historical v1 lifecycle</span><b>INTERFACE-INCOMPATIBLE</b><em>VIEW EVIDENCE ↗</em></a>
           <div class="proof-row"><span>Production status</span><b>PRE-CUSTOMER · UNAUDITED</b><em>NOT PRODUCTION-READY</em></div>
         </div>
@@ -404,7 +406,7 @@
       <div class="final-copy reveal">
         <p class="eyebrow"><span>09</span> The verified-agent pilot</p>
         <h2>One company. One mandated agent.<br><em>One restricted asset.</em></h2>
-        <p>The next milestone is a fresh Base Sepolia deployment, independently checked roles and bytecode, a replayed evidence package, and a 60-second public demonstration.</p>
+        <p>The public pilot replay is complete. The next milestone is a 60–90 second demonstration built from the verified evidence package.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the accelerator brief <span>↗</span></a>
           <a class="button button-secondary" href="#evidence">Inspect current proof</a>
