@@ -1,0 +1,74 @@
+{
+  "chainId": 84532,
+  "deploymentBlock": 44039414,
+  "configuredAt": "2026-07-12T09:27:00.300Z",
+  "poolId": "0xfd4c4875b78c6eac23a4a584f094a02cd1fe72c19f13baf7e3244f535e247889",
+  "feeBps": 30,
+  "actors": {
+    "principal": "0x5775Fca4A583C98F9637Bb9b9E2E2CBe380c110c",
+    "agent": "0x5227e9Dc3a7427CcA6FB1379EBA8e453e27b614B",
+    "exitRecipient": "0x0a7d59740133a721EE21886F74802579B3A71e7D"
+  },
+  "credentials": {
+    "principal": {
+      "address": "0x5775Fca4A583C98F9637Bb9b9E2E2CBe380c110c",
+      "attestationUID": "0x4b206de4058bd2ba7ac8d8ed549a26c17257c6b576d50412464e5f2ef761bb02",
+      "tokenId": "1001"
+    },
+    "agent": {
+      "address": "0x5227e9Dc3a7427CcA6FB1379EBA8e453e27b614B",
+      "attestationUID": "0x9c9272f6c2a5e9269d34e59747ae51bc8a77a75c7c034cb247d7f2f9eb8f8826",
+      "tokenId": "1002"
+    },
+    "issuer": {
+      "address": "0x7c786968091b41E7483454FA0a9F6478BD6f6f4D",
+      "attestationUID": "0x4bb07ae6fd7c4560620a781c835343fcb94dcbadfca22f4b68338bcc1be4ada5",
+      "tokenId": "1003"
+    },
+    "exitRecipient": {
+      "address": "0x0a7d59740133a721EE21886F74802579B3A71e7D",
+      "attestationUID": "0x6883f04141483f132bbcd5191e3607bc8165a7d010a39f5417f75504c318e880",
+      "tokenId": "1004"
+    }
+  },
+  "policy": {
+    "jurisdictions": [
+      "US",
+      "GB"
+    ],
+    "maxTransferAmount": "5000000000",
+    "actionMaxAmount": "100000000000"
+  },
+  "pool": {
+    "token0": "0x7a9976FCa5B8f5D7C4E5461cCbF3C62E4cAD7B18",
+    "token1": "0x834dcb644E0BbdAacdD48066B551c1d50BDc97cb",
+    "policyAsset": "0x7a9976FCa5B8f5D7C4E5461cCbF3C62E4cAD7B18",
+    "reserve0": "0",
+    "reserve1": "0",
+    "totalShares": "0",
+    "active": true
+  },
+  "transactions": {
+    "attest.principal": "0x3f92070135237270fffe4f00b4d55967ec6af7d08ca6d68f67c46bd765db1033",
+    "register.principal": "0xf084a06df40847231e78db94af3924854c73ebb471fe9cd9f8098880cacd8a40",
+    "attest.agent": "0x1f7743370b24ee55e048947051feaed4ea10dfeca76fb8cb1df093dd5f33e5c6",
+    "register.agent": "0xf77ae1a55d2ffd379ad81968490ea6a56dc4a0aa03f494f499ad56a8881c5390",
+    "attest.issuer": "0x8fe41a895130b3ac95c418ac4e59641f6e2a72c8b19ea50b04719cd7831bd89e",
+    "register.issuer": "0xd527c46611df37f7d1b16732b796ec1840698e366ee1896fa576bbc82c31c266",
+    "attest.exitRecipient": "0x082a70e46de6e662f72188dc97869d80bf54112bc75d6e86abb41848b45721c4",
+    "register.exitRecipient": "0xd380d99034bde6670d06fe49505ee9a86e4d0e84073e968b64bafe330966417e",
+    "policy.transfer": "0xe6421d333eae6f8fd0fe6e7590251aaa2656a05f8767342162d27082b2b7d36b",
+    "policy.settlement": "0xd8f5a9ace57e55c17cd056006f20fa6e34f4328f2852701773e795a63ba4e02c",
+    "policy.swap": "0xbe1f52eedfa9ea844c7cb02222d6e685ad465050335aee1c2d7d53869660134f",
+    "policy.liquidityEntry": "0xc3f0370cf04dd4155f341230c28ec3ec5d59844cdd66633b32b1d7ab3238b5d0",
+    "policy.poolInitialize": "0xb5c0037e1820e2b8769e04ba8816ab4764ff2f907892973906f2fccd90eaad9b",
+    "pool.create": "0x2f705936b0fc89e2407ebd16e0aa0dc6a363bee620cafbe09d5b86390bf26974",
+    "mint.tbill": "0x9d12ad8408aee08f215ea0f7b4be93e7c437dd7c275ca99e67baa4cb31cfb454",
+    "mint.settlement": "0x8c42af4d6aa94c93c1ff91e250f978308c05c03701da89fa2298c87b0aa7788f",
+    "mandate.swap": "0x06c55b3b0e49e3ab74aced092064bba22365d13bcfd7d370e57fe189f71cb2b5",
+    "mandate.liquidity": "0xdc4b36ded116d164d694e39dc9f5d2e0e5b612467405b0690c6648118e12caa1",
+    "approve.tbill": "0x735f26da83f22d0d6018b5da52d0dfcef660a74ed7c92b7247c6d2712ea52983",
+    "approve.settlement": "0xfba7dae0015c7ae72978a96e7bdabb0b506f614382f536a335805ff512c91f33",
+    "liquidity.seed": "0xe5d0af6d9550015353d347aac57466fd5168569715fcd83e61e3e68a3d1af60f"
+  }
+}
