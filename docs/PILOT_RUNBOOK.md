@@ -22,6 +22,43 @@ Use separate addresses for every role.
 
 ## Configuration
 
+After deployment verification, wiring checks, actor creation, and testnet ETH
+funding, run:
+
+```bash
+bash scripts/configure-pilot-sepolia.sh
+```
+
+The script is resumable. It issues and registers the four pilot credentials,
+sets transfer and action policies, approves the exact settlement contract,
+creates the pool, grants scoped swap and liquidity mandates, mints test assets,
+and seeds initial liquidity using an agent-signed EIP-712 intent. It writes the
+public transaction and policy evidence to
+`contracts/deployments/pilot-84532-configuration.json`; it never writes private
+keys to that evidence file.
+
+Independently verify the resulting on-chain state and every configuration
+receipt with:
+
+```bash
+bash scripts/check-pilot-configuration.sh
+```
+
+The verifier is read-only and saves its result to
+`contracts/deployments/pilot-84532-configuration-check.json`.
+
+Before the adversarial replay, top every transaction wallet back up to the
+scripted replay floor, then run the resumable replay:
+
+```bash
+bash scripts/fund-pilot-wallets.sh
+bash scripts/replay-pilot-sepolia.sh
+```
+
+The replay deliberately broadcasts both successful and reverted transactions.
+Its checkpoints, transaction hashes, final state, and raw on-chain audit logs
+are written to `contracts/deployments/pilot-84532-replay.json`.
+
 1. Deploy fresh registry, gate, mandate registry, action authorizer, market
    manager, restricted test asset, and settlement test asset.
 2. Grant the minimum required roles and record every assignment.
