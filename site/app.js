@@ -112,7 +112,7 @@ async function renderWallet(account, chainId) {
   if (!activeAccount) {
     if (walletAddress) walletAddress.textContent = 'No wallet connected';
     if (walletNetwork) walletNetwork.textContent = 'Connect to identify the account and network.';
-    if (walletEnvironment) walletEnvironment.textContent = 'BASE SEPOLIA · PILOT PENDING';
+    if (walletEnvironment) walletEnvironment.textContent = 'BASE SEPOLIA · V3 PILOT PROVEN';
     signProofButton?.setAttribute('disabled', '');
     connectButtons.forEach((button) => { button.firstChild.textContent = 'Connect wallet '; });
     controlStatus?.classList.remove('connected');
@@ -122,7 +122,7 @@ async function renderWallet(account, chainId) {
 
   if (walletAddress) walletAddress.textContent = activeAccount;
   if (walletNetwork) walletNetwork.textContent = `${chainName} · ${shortAddress(activeAccount)}`;
-  if (walletEnvironment) walletEnvironment.textContent = isPilotChain ? 'BASE SEPOLIA · WALLET READY' : `${chainName.toUpperCase()} · PILOT USES BASE SEPOLIA`;
+  if (walletEnvironment) walletEnvironment.textContent = isPilotChain ? 'BASE SEPOLIA · WALLET READY · V3 PROVEN' : `${chainName.toUpperCase()} · PILOT USES BASE SEPOLIA`;
   signProofButton?.removeAttribute('disabled');
   connectButtons.forEach((button) => { button.firstChild.textContent = `${shortAddress(activeAccount)} `; });
   controlStatus?.classList.add('connected');
