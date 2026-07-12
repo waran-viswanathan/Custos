@@ -1,446 +1,427 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Custos — compliance infrastructure for AI agents in tokenized assets</title>
-<meta name="description" content="Custos verifies who operates an AI agent, scopes its authority, authenticates its actions, and enforces issuer policy before execution. Testnet pilot in development.">
-<style>
-  :root {
-    --ground: #08090f;
-    --ink: #e9ecf4;
-    --dim: #8a92a6;
-    --line: rgba(233, 236, 244, 0.09);
-    --glass: rgba(233, 236, 244, 0.03);
-    --violet: #a08cff;
-    --aqua: #6fe3d4;
-    --allow: #5fc98f;
-    --block: #e07863;
-    --sans: -apple-system, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-    color-scheme: dark;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  body {
-    background: var(--ground);
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 16.5px;
-    line-height: 1.65;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
-  a { color: var(--aqua); text-decoration: none; }
-  a:hover { opacity: 0.85; }
-  a:focus-visible, button:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; border-radius: 4px; }
-
-  .wrap { max-width: 1020px; margin: 0 auto; padding: 0 24px; position: relative; }
-
-  /* ambient glow */
-  .glow {
-    position: absolute; pointer-events: none; z-index: -1;
-    width: 780px; height: 780px; border-radius: 50%;
-    filter: blur(110px); opacity: 0.16;
-  }
-  .glow.violet { background: var(--violet); top: -300px; left: -180px; }
-  .glow.aqua { background: var(--aqua); top: 60px; right: -320px; opacity: 0.10; }
-
-  .micro {
-    font-family: var(--mono); font-size: 0.68rem;
-    letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim);
-  }
-
-  /* ---------- nav ---------- */
-  nav {
-    display: flex; align-items: center; justify-content: space-between; gap: 20px;
-    padding: 26px 0;
-  }
-  .wordmark { font-weight: 600; font-size: 1.05rem; letter-spacing: 0.02em; color: var(--ink); }
-  .wordmark:hover { opacity: 1; }
-  .nav-links { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
-  .nav-links a { font-size: 0.85rem; color: var(--dim); }
-  .nav-links a:hover { color: var(--ink); opacity: 1; }
-  .live {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.12em;
-    color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px;
-    background: var(--glass);
-  }
-  .live .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(95,201,143,.45); }
-    70% { box-shadow: 0 0 0 8px rgba(95,201,143,0); }
-    100% { box-shadow: 0 0 0 0 rgba(95,201,143,0); }
-  }
-
-  /* ---------- hero ---------- */
-  header.hero { padding: 110px 0 56px; text-align: center; }
-  .hero .micro { color: var(--violet); margin-bottom: 26px; display: block; }
-  h1 {
-    font-size: clamp(2.5rem, 6.2vw, 4.2rem);
-    line-height: 1.07; font-weight: 300; letter-spacing: -0.025em;
-    text-wrap: balance; max-width: 21ch; margin: 0 auto;
-  }
-  h1 strong { font-weight: 600;
-    background: linear-gradient(100deg, var(--violet), var(--aqua));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .hero p.sub { margin: 28px auto 0; max-width: 60ch; font-size: 1.06rem; color: var(--dim); font-weight: 300; }
-  .cta-row { margin-top: 42px; display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
-  .btn {
-    font-size: 0.88rem; font-weight: 500; letter-spacing: 0.01em;
-    padding: 13px 26px; border-radius: 999px; cursor: pointer;
-    border: 1px solid transparent;
-    background: linear-gradient(100deg, var(--violet), var(--aqua));
-    color: #0a0b12; transition: transform .15s ease, opacity .15s ease;
-    display: inline-block;
-  }
-  .btn:hover { transform: translateY(-1px); opacity: 0.92; }
-  .btn.ghost { background: var(--glass); border-color: var(--line); color: var(--ink); }
-  .btn.ghost:hover { border-color: rgba(233,236,244,0.25); }
-
-  /* ---------- terminal ---------- */
-  .terminal-frame { padding: 30px 0 110px; }
-  .terminal {
-    background: rgba(10, 11, 18, 0.85);
-    border: 1px solid var(--line); border-radius: 16px;
-    font-family: var(--mono); font-size: 0.8rem; line-height: 1.75;
-    padding: 24px 28px 28px; overflow-x: auto; min-height: 340px;
-    box-shadow: 0 30px 80px -40px rgba(160, 140, 255, 0.25);
-  }
-  .terminal .t-head {
-    color: var(--dim); border-bottom: 1px solid var(--line);
-    padding-bottom: 12px; margin-bottom: 16px;
-    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    font-size: 0.72rem; letter-spacing: 0.08em;
-  }
-  .terminal .ln { white-space: pre-wrap; color: var(--ink); opacity: 0; }
-  .terminal .ln.shown { opacity: 1; transition: opacity .25s; }
-  .terminal .ln.c-dim { color: var(--dim); }
-  .terminal .ln.c-allow { color: var(--allow); }
-  .terminal .ln.c-block { color: var(--block); }
-  .terminal .ln.c-accent { color: var(--violet); }
-  .caret { display: inline-block; width: 8px; height: 1em; background: var(--aqua); vertical-align: text-bottom; animation: blink 1s steps(1) infinite; }
-  @keyframes blink { 50% { opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) { .caret { animation: none; } }
-
-  /* ---------- sections ---------- */
-  section { padding: 96px 0; border-top: 1px solid var(--line); }
-  .section-head { text-align: center; margin-bottom: 56px; }
-  .section-head .micro { display: block; margin-bottom: 18px; }
-  h2 {
-    font-size: clamp(1.65rem, 3.2vw, 2.3rem); font-weight: 400;
-    letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance;
-    max-width: 30ch; margin: 0 auto;
-  }
-  .section-head .prose { margin: 18px auto 0; }
-  .prose { max-width: 62ch; color: var(--dim); font-weight: 300; }
-  .prose strong { color: var(--ink); font-weight: 500; }
-
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
-    padding: 28px 26px;
-  }
-  .card h3 { font-size: 0.72rem; font-family: var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--aqua); font-weight: 400; margin-bottom: 14px; }
-  .card p { color: var(--dim); font-size: 0.95rem; font-weight: 300; }
-  .card p strong { color: var(--ink); font-weight: 500; }
-
-  /* protocol steps */
-  .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  @media (max-width: 1000px) { .steps { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 600px) { .steps { grid-template-columns: 1fr; } }
-  .step {
-    background: var(--glass); border: 1px solid var(--line); border-radius: 16px;
-    padding: 28px 26px;
-  }
-  .step .num { font-family: var(--mono); font-size: 0.72rem; color: var(--violet); letter-spacing: 0.1em; margin-bottom: 16px; }
-  .step h3 { font-size: 1.15rem; font-weight: 500; margin-bottom: 10px; }
-  .step p { color: var(--dim); font-size: 0.95rem; font-weight: 300; }
-  .code {
-    margin-top: 44px; background: rgba(10, 11, 18, 0.85); border: 1px solid var(--line); border-radius: 16px;
-    font-family: var(--mono); font-size: 0.76rem; line-height: 1.7;
-    padding: 20px 24px; overflow-x: auto; color: var(--ink); white-space: pre;
-  }
-  .code .cm { color: var(--dim); }
-  .code .kw { color: var(--violet); }
-  .code .str { color: var(--aqua); }
-
-  /* principles */
-  .principles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-  @media (max-width: 700px) { .principles { grid-template-columns: 1fr; } }
-  .principles .card h3 { color: var(--ink); font-family: var(--sans); font-size: 1.05rem; text-transform: none; letter-spacing: 0; font-weight: 500; margin-bottom: 8px; }
-
-  /* proof ledger */
-  .ledger { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--glass); }
-  .ledger .inner { overflow-x: auto; }
-  .ledger table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; }
-  .ledger td { padding: 16px 22px; border-top: 1px solid var(--line); vertical-align: baseline; }
-  .ledger tr:first-child td { border-top: none; }
-  .ledger td:first-child { color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.66rem; white-space: nowrap; }
-  .ledger td:last-child { word-break: break-all; }
-  .ledger .num { font-variant-numeric: tabular-nums; }
-
-  /* cta */
-  .cta-final { text-align: center; }
-  .cta-final .prose { margin: 18px auto 0; }
-  .cta-final h2 { margin-top: 18px; }
-
-  footer {
-    border-top: 1px solid var(--line);
-    padding: 34px 0 54px;
-    display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;
-    font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
-  }
-
-  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
-  .reveal.in { opacity: 1; transform: none; }
-  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070708">
+  <title>Custos — the control plane for autonomous wallets</title>
+  <meta name="description" content="Custos verifies who operates an AI agent, scopes its authority, authenticates every action, and enforces issuer policy before execution.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Custos — the control plane for autonomous wallets">
+  <meta property="og:description" content="Verify the operator. Scope the mandate. Enforce every action.">
+  <meta property="og:image" content="/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Custos — the control plane for autonomous wallets">
+  <meta name="twitter:card" content="summary_large_image">
+  <script>document.documentElement.classList.add('js')</script>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
 </head>
 <body>
-<div class="wrap">
-  <div class="glow violet" aria-hidden="true"></div>
-  <div class="glow aqua" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-  <nav>
-    <a class="wordmark" href="#">Custos</a>
-    <div class="nav-links">
+  <header class="site-header" id="top">
+    <div class="nav-shell">
+      <a class="brand" href="#top" aria-label="Custos home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>custos</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#problem">Why Custos</a>
+        <a href="#protocol">Protocol</a>
+        <a href="#console">Console</a>
+        <a href="#markets">Actions</a>
+        <a href="#evidence">Evidence</a>
+      </nav>
+
+      <div class="nav-actions">
+        <span class="status-pill"><i></i> Public pilot proven</span>
+        <button class="nav-cta wallet-connect" type="button" data-connect-wallet>Connect wallet <span>↗</span></button>
+        <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
+      <a href="#problem">Why Custos</a>
       <a href="#protocol">Protocol</a>
-      <a href="#proof">Proof</a>
-      <a href="#partners">Pilot</a>
-      <span class="live"><span class="dot"></span>TESTNET PILOT PENDING</span>
-    </div>
-  </nav>
-
-  <header class="hero">
-    <span class="micro">Who watches the watchmen?</span>
-    <h1>The watchers are machines now. <strong>Custos verifies them.</strong></h1>
-    <p class="sub">
-      AI agents are becoming holders of tokenized assets — but compliance stacks verify people
-      and companies, not autonomous software. Custos binds an agent to a KYB-verified operator,
-      scopes what it may do, authenticates each signed action, and enforces issuer policy before
-      execution. With a kill switch.
-    </p>
-    <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the technical brief</a>
-      <a class="btn ghost" href="#proof">Review current evidence ↓</a>
-    </div>
+      <a href="#console">Console</a>
+      <a href="#markets">Actions</a>
+      <a href="#evidence">Evidence</a>
+      <button type="button" data-connect-wallet>Connect wallet ↗</button>
+    </nav>
   </header>
 
-  <div class="terminal-frame reveal">
-    <div class="terminal" id="terminal" aria-label="Reproduction of the Custos credential lifecycle running locally">
-      <div class="t-head"><span>custos · agent lifecycle</span><span>local anvil · 31337</span></div>
-      <div id="t-body"></div>
-    </div>
-  </div>
+  <main id="main">
+    <section class="hero section-shell">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-glow hero-glow-a" aria-hidden="true"></div>
+      <div class="hero-glow hero-glow-b" aria-hidden="true"></div>
+      <div class="policy-contours hero-contours" aria-hidden="true" data-contours>
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
 
-  <section id="problem" class="reveal">
-    <div class="section-head">
-      <span class="micro">The gap</span>
-      <h2>An agent wallet has no KYC file, no jurisdiction, and no one to subpoena.</h2>
-    </div>
-    <div class="cards">
-      <div class="card">
-        <h3>Issuers</h3>
-        <p>Tokenized treasuries, funds, and equities enforce holder eligibility at transfer time.
-        An autonomous agent fits none of the checks — so today the choice is <strong>block all agents, or hope</strong>.</p>
+      <div class="hero-copy reveal">
+        <p class="eyebrow"><span>01</span> Compliance + delegated authority for autonomous wallets</p>
+        <h1>The machine can act.<br><em>Custos proves who stands behind it.</em></h1>
+        <p class="hero-lede">AI agents are becoming holders of tokenized assets. Custos binds each agent to a verified operator, limits what it may do, and enforces issuer policy before value moves.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#console">Open Custos Console <span>↘</span></a>
+          <a class="button button-secondary" href="#evidence">Review the evidence</a>
+        </div>
+        <p class="hero-note"><span></span> Pre-customer · testnet-only · unaudited</p>
       </div>
-      <div class="card">
-        <h3>Operators</h3>
-        <p>Teams whose agents manage real value can't prove who stands behind a wallet, under what
-        authority it acts, or that it can be shut off. <strong>Doors stay closed.</strong></p>
-      </div>
-      <div class="card">
-        <h3>Regulators</h3>
-        <p>Stablecoin and tokenization rules are converging on entity-level accountability for
-        automated actors. <strong>"Who is behind this wallet?"</strong> is becoming an examiner's question.</p>
-      </div>
-    </div>
-  </section>
 
-  <section id="protocol" class="reveal">
-    <div class="section-head">
-      <span class="micro">The protocol</span>
-      <h2>Verify identity. Scope authority. Authenticate intent. Enforce policy.</h2>
+      <div class="guardian-stage reveal" aria-label="Custos control plane illustration">
+        <div class="guardian-field" id="guardian-field">
+          <div class="field-grid"></div>
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="orbit orbit-three"></div>
+          <div class="signal signal-a"></div>
+          <div class="signal signal-b"></div>
+          <div class="core">
+            <div class="core-halo"></div>
+            <div class="core-mark"><span></span></div>
+            <small>CUSTOS</small>
+            <strong>ALLOW</strong>
+          </div>
+          <div class="orbit-node node-operator"><i></i><span>OPERATOR</span><b>VERIFIED</b></div>
+          <div class="orbit-node node-agent"><i></i><span>AGENT</span><b>BOUND</b></div>
+          <div class="orbit-node node-mandate"><i></i><span>MANDATE</span><b>ACTIVE</b></div>
+          <div class="orbit-node node-policy"><i></i><span>POLICY</span><b>MATCHED</b></div>
+          <div class="field-caption"><span>ACTION 0x71A4</span><span>BASE-COMPATIBLE EVM</span></div>
+        </div>
+      </div>
+
+      <div class="hero-index" aria-hidden="true">C / 01</div>
+    </section>
+
+    <div class="evidence-ribbon" aria-label="Current evidence summary">
+      <div class="ribbon-track">
+        <span>71 automated tests</span><i></i>
+        <span>signed wallet intents</span><i></i>
+        <span>revocable credentials</span><i></i>
+        <span>scoped agent mandates</span><i></i>
+        <span>fail-closed enforcement</span><i></i>
+        <span>v3 deployed on Base Sepolia</span><i></i>
+        <span>34 replay assertions passed</span><i></i>
+        <span>71 automated tests</span><i></i>
+        <span>signed wallet intents</span><i></i>
+      </div>
     </div>
-    <div class="steps">
-      <div class="step">
-        <div class="num">01</div>
-        <h3>Verify + attest</h3>
-        <p>The legal-entity operator passes KYB and sanctions screening. The agent receives a
-        revocable, minimum-data credential; documents and identities remain off-chain.</p>
+
+    <section class="wallet-console section-shell" id="console">
+      <div class="policy-contours console-contours" aria-hidden="true" data-contours>
+        <i></i><i></i><i></i><i></i><i></i><i></i>
       </div>
-      <div class="step">
-        <div class="num">02</div>
-        <h3>Mandate</h3>
-        <p>The verified principal limits the agent to an exact venue, action, and asset, with
-        transaction and cumulative caps, validity dates, revocation, and emergency freeze.</p>
+      <div class="wallet-intro reveal">
+        <p class="eyebrow"><span>LIVE</span> Custos Console preview</p>
+        <h2>Your wallet is the starting point.<br><em>Accountability is the product.</em></h2>
+        <p>Connect an operator or agent wallet to begin. Custos can prove control now; credential and mandate reads will activate when the source-verified pilot is wired into this console.</p>
       </div>
-      <div class="step">
-        <div class="num">03</div>
-        <h3>Authorize</h3>
-        <p>The wallet signs every material action field using EIP-712 or ERC-1271. Executor binding,
-        deadlines, and single-use nonces prevent impersonation, tampering, and replay.</p>
+
+      <div class="wallet-workspace reveal" id="wallet-workspace">
+        <div class="wallet-workspace-bar">
+          <div><i></i><span>CUSTOS / WALLET CONTROL</span></div>
+          <b id="wallet-environment">BASE SEPOLIA · V3 PILOT PROVEN</b>
+        </div>
+
+        <div class="wallet-workspace-grid">
+          <div class="wallet-primary">
+            <div class="wallet-identity">
+              <div class="wallet-glyph" aria-hidden="true"><span></span></div>
+              <div>
+                <small>CONNECTED WALLET</small>
+                <strong id="wallet-address">No wallet connected</strong>
+                <span id="wallet-network">Connect to identify the account and network.</span>
+              </div>
+            </div>
+
+            <div class="wallet-controls">
+              <button class="button button-primary" type="button" data-connect-wallet id="console-connect">Connect wallet <span>↗</span></button>
+              <button class="button button-secondary" type="button" id="sign-proof" disabled>Sign control proof</button>
+            </div>
+            <p class="wallet-message" id="wallet-message" aria-live="polite">Connecting is free and does not send a transaction.</p>
+          </div>
+
+          <div class="wallet-status-grid">
+            <article class="wallet-status" id="status-control"><span>01</span><small>WALLET CONTROL</small><strong>NOT CONNECTED</strong><p>Connect, then sign a local proof message.</p></article>
+            <article class="wallet-status status-pending"><span>02</span><small>CUSTOS CREDENTIAL</small><strong>READ NOT WIRED</strong><p>Verified operator, jurisdiction, expiry, and revocation.</p></article>
+            <article class="wallet-status status-pending"><span>03</span><small>AGENT MANDATE</small><strong>READ NOT WIRED</strong><p>Venue, action, asset, caps, and validity window.</p></article>
+            <article class="wallet-status status-pending"><span>04</span><small>POLICY DECISION</small><strong>NOT REQUESTED</strong><p>Authoritative allow or block happens at execution.</p></article>
+          </div>
+        </div>
+
+        <div class="wallet-path">
+          <span>CONNECT</span><i></i><span>VERIFY OPERATOR</span><i></i><span>REGISTER AGENT</span><i></i><span>SET MANDATE</span><i></i><span>ENFORCE</span>
+        </div>
       </div>
-      <div class="step">
-        <div class="num">04</div>
-        <h3>Enforce</h3>
-        <p>Issuer policy checks the credential, venue, action, asset, jurisdiction, accreditation,
-        and amount before execution. Missing, expired, or revoked authority fails closed.</p>
+
+      <div class="role-grid">
+        <article class="role-card reveal"><span>FOR OPERATORS</span><h3>Register and control agents.</h3><p>Complete KYB, bind an agent wallet, set its authority, then freeze or revoke it when needed.</p><a href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20operator%20pilot">Join operator pilot ↗</a></article>
+        <article class="role-card reveal"><span>FOR ISSUERS + VENUES</span><h3>Define and enforce policy.</h3><p>Configure eligibility, integrate the gate, preflight actions, and export authoritative evidence.</p><a href="#integration">See issuer integration ↓</a></article>
       </div>
-    </div>
-    <div class="code"><span class="cm">// the issuer integration, in full</span>
-<span class="kw">function</span> _update(<span class="kw">address</span> from, <span class="kw">address</span> to, <span class="kw">uint256</span> value) <span class="kw">internal override</span> {
-    <span class="kw">if</span> (from != <span class="kw">address</span>(0) && to != <span class="kw">address</span>(0)) {
-        <span class="kw">require</span>(gate.checkAndLog(to, <span class="kw">address</span>(<span class="kw">this</span>), value), <span class="str">"CUSTOS_BLOCKED"</span>);
+    </section>
+
+    <section class="problem section-shell" id="problem">
+      <div class="section-intro reveal">
+        <p class="eyebrow"><span>02</span> The missing control plane</p>
+        <h2>A wallet can prove an address.<br><em>It cannot prove accountability.</em></h2>
+        <p>Compliance systems know how to verify people and companies. They do not know how to reason about autonomous software acting through a wallet.</p>
+      </div>
+
+      <div class="question-grid">
+        <article class="question-card reveal">
+          <div class="card-top"><span>For issuers</span><b>01</b></div>
+          <h3>May this agent hold the asset?</h3>
+          <p>Enforce jurisdiction, accreditation, amount caps, and credential status directly inside the token’s transfer path.</p>
+          <div class="card-signal"><span></span> Holder eligibility</div>
+        </article>
+        <article class="question-card reveal">
+          <div class="card-top"><span>For operators</span><b>02</b></div>
+          <h3>What exactly may it do?</h3>
+          <p>Delegate one venue, action, asset, recipient boundary, transaction cap, cumulative cap, and time window.</p>
+          <div class="card-signal"><span></span> Delegated authority</div>
+        </article>
+        <article class="question-card reveal">
+          <div class="card-top"><span>For examiners</span><b>03</b></div>
+          <h3>Who approved this action?</h3>
+          <p>Reconstruct the credential, mandate, signed intent, policy decision, execution, and revocation from one evidence trail.</p>
+          <div class="card-signal"><span></span> Verifiable evidence</div>
+        </article>
+      </div>
+    </section>
+
+    <section class="protocol" id="protocol">
+      <div class="section-shell protocol-layout">
+        <div class="protocol-heading reveal">
+          <p class="eyebrow"><span>03</span> The protocol</p>
+          <h2>Five checks.<br><em>One decision.</em></h2>
+          <p>Each layer answers a separate question and fails closed when its answer is missing, expired, revoked, or invalid.</p>
+          <div class="protocol-line" aria-hidden="true"><span></span></div>
+        </div>
+
+        <div class="layer-stack">
+          <article class="layer-card reveal">
+            <div class="layer-number">01</div>
+            <div class="layer-copy">
+              <p class="layer-contract">CustosRegistry</p>
+              <h3>Who is this agent?</h3>
+              <p>Bind the wallet to a KYB-verified legal operator and a revocable EAS credential. Expiry, revocation, or an unreadable credential blocks.</p>
+            </div>
+            <div class="layer-tags"><span>KYB</span><span>Sanctions</span><span>EAS</span></div>
+          </article>
+
+          <article class="layer-card reveal">
+            <div class="layer-number">02</div>
+            <div class="layer-copy">
+              <p class="layer-contract">CustosAgentMandate</p>
+              <h3>What authority does it hold?</h3>
+              <p>Scope authority by principal, venue, action, asset, per-action cap, cumulative cap, validity window, and recipient boundary.</p>
+            </div>
+            <div class="layer-tags"><span>Scope</span><span>Caps</span><span>Expiry</span></div>
+          </article>
+
+          <article class="layer-card reveal">
+            <div class="layer-number">03</div>
+            <div class="layer-copy">
+              <p class="layer-contract">CustosActionAuthorizer</p>
+              <h3>Did the wallet approve this exact action?</h3>
+              <p>EIP-712 intents bind every material field. ERC-1271 supports smart-account agents; nonces, deadlines, and executor binding stop replay and impersonation.</p>
+            </div>
+            <div class="layer-tags"><span>EIP-712</span><span>ERC-1271</span><span>Nonce</span></div>
+          </article>
+
+          <article class="layer-card reveal">
+            <div class="layer-number">04</div>
+            <div class="layer-copy">
+              <p class="layer-contract">CustosGate</p>
+              <h3>Does issuer policy permit it?</h3>
+              <p>Check the credential, jurisdiction, accreditation, venue, action, asset, and amount at transaction time. No active policy means no permission.</p>
+            </div>
+            <div class="layer-tags"><span>Policy</span><span>Revert</span><span>Audit</span></div>
+          </article>
+
+          <article class="layer-card layer-experimental reveal">
+            <div class="layer-number">05</div>
+            <div class="layer-copy">
+              <p class="layer-contract">Venue integration / reference manager</p>
+              <h3>Execute only after approval.</h3>
+              <p>Customer-operated tokens and venues consume the decision. The repository’s singleton market manager is an experimental proof venue for swaps and liquidity—not a production DEX.</p>
+            </div>
+            <div class="layer-tags"><span>Experimental</span><span>Testnet</span></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="decision section-shell" id="decision">
+      <div class="decision-head reveal">
+        <div>
+          <p class="eyebrow"><span>04</span> Decision model</p>
+          <h2>Policy meets intent<br><em>before settlement.</em></h2>
+        </div>
+        <p>This interactive model mirrors the control sequence. It is illustrative; the current transaction proof runs locally and in CI.</p>
+      </div>
+
+      <div class="decision-console reveal" id="decision-console">
+        <div class="console-bar">
+          <div class="console-id"><span></span> ACTION REQUEST / 0x71A4</div>
+          <div class="console-state" id="console-state">AGENT VERIFIED</div>
+        </div>
+
+        <div class="console-grid">
+          <div class="request-panel">
+            <p class="console-label">SIGNED INTENT</p>
+            <dl>
+              <div><dt>Agent</dt><dd>0x333f…A70F</dd></div>
+              <div><dt>Action</dt><dd>SWAP</dd></div>
+              <div><dt>Asset</dt><dd>cTBILL</dd></div>
+              <div><dt>Amount</dt><dd>1,000.00</dd></div>
+              <div><dt>Venue</dt><dd>APPROVED_01</dd></div>
+              <div><dt>Deadline</dt><dd>+ 04:52</dd></div>
+            </dl>
+          </div>
+
+          <div class="check-panel">
+            <p class="console-label">ENFORCEMENT PATH</p>
+            <ol class="check-list">
+              <li><span>01</span><div><b>Credential active</b><small>operator + agent verified</small></div><i></i></li>
+              <li><span>02</span><div><b>Mandate in scope</b><small>venue · action · asset · cap</small></div><i></i></li>
+              <li><span>03</span><div><b>Intent authentic</b><small>signature · nonce · deadline</small></div><i></i></li>
+              <li><span>04</span><div><b>Issuer policy matched</b><small>US/GB · accredited · amount</small></div><i></i></li>
+            </ol>
+          </div>
+
+          <div class="result-panel">
+            <p class="console-label">AUTHORITATIVE DECISION</p>
+            <div class="decision-word" id="decision-word">ALLOW</div>
+            <p id="decision-reason">All credential, mandate, signature, and issuer policy checks passed.</p>
+            <div class="result-meta"><span>Settlement</span><b>ATOMIC</b></div>
+            <div class="result-meta"><span>Audit event</span><b>READY</b></div>
+            <button class="kill-button" id="kill-button" type="button"><span></span><b>Trigger kill switch</b><small>See revocation propagate</small></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="markets" id="markets">
+      <div class="market-wave" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="section-shell markets-layout">
+        <div class="market-copy reveal">
+          <p class="eyebrow"><span>05</span> Portable enforcement</p>
+          <h2>Compliance travels with the agent.<br><em>Not the venue.</em></h2>
+          <p>Custos is infrastructure first. Issuers and appropriately operated venues can gate the actions they already support. A native reference market exists only to prove and benchmark the complete flow.</p>
+          <a class="text-link" href="#integration">See the integration <span>↘</span></a>
+        </div>
+
+        <div class="action-grid">
+          <article class="action-card reveal"><span>01</span><div class="action-icon">↔</div><h3>Swaps</h3><p>Authenticate the wallet and apply venue, asset, amount, recipient, and mandate policy.</p></article>
+          <article class="action-card reveal"><span>02</span><div class="action-icon">＋</div><h3>Liquidity entry</h3><p>Require eligible providers, approved settlement, scoped authority, and capped amounts.</p></article>
+          <article class="action-card reveal"><span>03</span><div class="action-icon">◫</div><h3>Pool initialization</h3><p>Restrict who can create markets for regulated assets and under which policy.</p></article>
+          <article class="action-card reveal"><span>04</span><div class="action-icon">□</div><h3>Vault actions</h3><p>Apply the same intent and policy boundary to deposits, withdrawals, and strategies.</p></article>
+          <article class="action-card action-wide reveal"><span>05</span><div class="action-icon">⌁</div><h3>External venues</h3><p>Deploy an authorizer per integration so policy and evidence remain scoped to the exact execution boundary.</p><b>VENUE-NEUTRAL</b></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="integration section-shell" id="integration">
+      <div class="integration-copy reveal">
+        <p class="eyebrow"><span>06</span> Issuer integration</p>
+        <h2>Five lines between an<br><em>unknown wallet and a permitted holder.</em></h2>
+        <p>Call the Custos gate inside the token transfer hook. A non-compliant transfer reverts before balances change.</p>
+        <ul>
+          <li><span>01</span> No PII enters the contract</li>
+          <li><span>02</span> Revocation applies on the next transfer</li>
+          <li><span>03</span> Every authoritative decision emits evidence</li>
+        </ul>
+      </div>
+
+      <div class="code-window reveal">
+        <div class="code-top"><span>RestrictedAsset.sol</span><button type="button" id="copy-code">Copy code</button></div>
+        <pre id="issuer-code"><code><span class="code-comment">// the issuer integration, in full</span>
+<span class="code-keyword">function</span> _update(
+    <span class="code-keyword">address</span> from,
+    <span class="code-keyword">address</span> to,
+    <span class="code-keyword">uint256</span> value
+) <span class="code-keyword">internal override</span> {
+    <span class="code-keyword">if</span> (from != <span class="code-keyword">address</span>(0) &amp;&amp; to != <span class="code-keyword">address</span>(0)) {
+        <span class="code-keyword">require</span>(
+            gate.checkAndLog(to, <span class="code-keyword">address</span>(<span class="code-keyword">this</span>), value),
+            <span class="code-string">"CUSTOS_BLOCKED"</span>
+        );
     }
-    <span class="kw">super</span>._update(from, to, value);
-}</div>
-  </section>
+    <span class="code-keyword">super</span>._update(from, to, value);
+}</code></pre>
+        <div class="code-foot"><span><i></i> FAIL CLOSED</span><span>SOLIDITY 0.8.24</span></div>
+      </div>
+    </section>
 
-  <section id="principles" class="reveal">
-    <div class="section-head">
-      <span class="micro">First principles</span>
-      <h2>Built the way compliance infrastructure has to be built.</h2>
-    </div>
-    <div class="principles">
-      <div class="card">
-        <h3>No PII on-chain. Ever.</h3>
-        <p>Attestations carry booleans, a jurisdiction code, and identifiers. Erasure requests stay
-        compatible with an immutable ledger because there is nothing personal to erase from it.</p>
-      </div>
-      <div class="card">
-        <h3>Core infrastructure is non-custodial.</h3>
-        <p>The credential, mandate, authorizer, and gate never hold customer keys. The repository's
-        experimental market manager does custody test tokens, so it remains testnet-only pending
-        independent security and legal review.</p>
-      </div>
-      <div class="card">
-        <h3>Fail closed.</h3>
-        <p>No active policy means no permitted transfers. Unknown, expired, or revoked credentials
-        block. A verification provider error rejects — it never silently passes.</p>
-      </div>
-      <div class="card">
-        <h3>One audit trail.</h3>
-        <p>Every decision — off-chain checks and on-chain enforcement — lands in a single
-        exportable record, reconstructable from the chain and the database independently.</p>
-      </div>
-    </div>
-  </section>
+    <section class="evidence" id="evidence">
+      <div class="section-shell">
+        <div class="evidence-heading reveal">
+          <p class="eyebrow"><span>07</span> Proof, not promises</p>
+          <h2>The claims stop<br><em>where the evidence stops.</em></h2>
+          <p>The v3 architecture is reproducible locally and enforced in CI. The canonical stack at Base Sepolia block 44039414 has seven Sourcify-verified contracts, 29 passing wiring and role checks, 21 successful configuration transactions, 13 configuration checks, and 34 passing adversarial replay assertions.</p>
+        </div>
 
-  <section id="proof" class="reveal">
-    <div class="section-head">
-      <span class="micro">Proof, not promises</span>
-      <h2>Reproducible today. Fresh public proof is the next gate.</h2>
-      <p class="prose">The current five-layer architecture and complete credential lifecycle run locally and
-      in CI. The earlier Base Sepolia deployment proves the original lifecycle but is incompatible with
-      the current interfaces. A fresh deployment will be published only after source, bytecode, roles,
-      policies, pilot transactions, and the audit export are independently checked.</p>
-    </div>
-    <div class="ledger">
-      <div class="inner">
-      <table>
-        <tr><td>Contract tests</td><td class="num">43 passing — credentials, mandates, intents, policy, and market invariants</td></tr>
-        <tr><td>API tests</td><td class="num">21 passing — verification pipeline, registration, revocation, and audit</td></tr>
-        <tr><td>SDK tests</td><td class="num">7 passing — typed client and generated ABI coverage</td></tr>
-        <tr><td>Lifecycle</td><td class="num">signed local smoke test enforced in CI</td></tr>
-        <tr><td>Current public pilot</td><td class="num">pending deployment and independent verification</td></tr>
-        <tr><td>Historical v1</td><td><a href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer">legacy credential-lifecycle evidence ↗</a></td></tr>
-      </table>
+        <div class="metric-grid">
+          <article class="metric metric-large reveal"><span>CONTRACTS</span><strong>43</strong><p>Foundry tests across credentials, mandates, intents, policy, and market invariants.</p></article>
+          <article class="metric reveal"><span>API</span><strong>21</strong><p>Verification, registration, revocation, erasure, indexing, and audit.</p></article>
+          <article class="metric reveal"><span>SDK</span><strong>07</strong><p>Typed clients, action intents, and generated ABI coverage.</p></article>
+          <article class="metric metric-ci reveal"><span>CI LIFECYCLE</span><strong><i></i> PASS</strong><p>Signed registration, policy, transfer, revocation, and blocked retry.</p></article>
+        </div>
+
+        <div class="proof-ledger reveal">
+          <div class="proof-row"><span>Current architecture</span><b>LOCAL + CI</b><em class="proof-green">REPRODUCIBLE</em></div>
+          <a class="proof-row" href="https://sepolia.basescan.org/address/0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f" target="_blank" rel="noreferrer"><span>Canonical v3 Base Sepolia pilot</span><b>7 VERIFIED · 34 REPLAY ASSERTIONS</b><em class="proof-green">PROVEN ↗</em></a>
+          <div class="proof-row"><span>Replay evidence package</span><b>19 SUCCESS · 14 REVERT · 78 LOGS</b><em class="proof-green">COMPLETE</em></div>
+          <a class="proof-row" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer"><span>Historical v1 lifecycle</span><b>INTERFACE-INCOMPATIBLE</b><em>VIEW EVIDENCE ↗</em></a>
+          <div class="proof-row"><span>Production status</span><b>PRE-CUSTOMER · UNAUDITED</b><em>NOT PRODUCTION-READY</em></div>
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="partners" class="cta-final reveal">
-    <span class="micro">Accelerator-ready pilot</span>
-    <h2>One verified company. One narrowly mandated agent. One restricted asset.</h2>
-    <p class="prose">The next milestone is a verified Base Sepolia pilot and a reproducible evidence
-    package for accelerator review. After acceptance, accelerator introductions become the path to
-    issuer, platform, provider, counsel, and paid-pilot relationships.</p>
-    <div class="cta-row">
-      <a class="btn" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the accelerator brief</a>
-    </div>
-  </section>
+    <section class="principles section-shell">
+      <div class="principles-heading reveal">
+        <p class="eyebrow"><span>08</span> First principles</p>
+        <h2>Built for the moment<br><em>the demo becomes infrastructure.</em></h2>
+      </div>
+      <div class="principle-grid">
+        <article class="principle reveal"><span>01</span><h3>No PII on-chain. Ever.</h3><p>Only minimum eligibility attributes and identifiers enter attestations. Documents remain with the verification provider.</p></article>
+        <article class="principle reveal"><span>02</span><h3>Fail closed by default.</h3><p>Unknown, missing, expired, revoked, or unreadable state denies the action. Provider failure never becomes permission.</p></article>
+        <article class="principle reveal"><span>03</span><h3>Core infrastructure is non-custodial.</h3><p>The credential, mandate, authorizer, and gate never hold customer keys. Settlement remains an explicit venue boundary.</p></article>
+        <article class="principle reveal"><span>04</span><h3>Exit cannot become confiscation.</h3><p>New risk can stop immediately while controlled exits route restricted proceeds to an eligible recipient or redemption path.</p></article>
+      </div>
+    </section>
 
-  <footer>
-    <span>Custos · 2026</span>
-    <span>Non-custodial · Testnet · Pre-launch</span>
+    <section class="final-cta section-shell" id="pilot">
+      <div class="cta-orbit" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="final-copy reveal">
+        <p class="eyebrow"><span>09</span> The verified-agent pilot</p>
+        <h2>One company. One mandated agent.<br><em>One restricted asset.</em></h2>
+        <p>The public pilot replay is complete. The next milestone is a 60–90 second demonstration built from the verified evidence package.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the accelerator brief <span>↗</span></a>
+          <a class="button button-secondary" href="#evidence">Inspect current proof</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-top">
+      <a class="brand footer-brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span></span><span>custos</span></a>
+      <p>Compliance and delegated-authority infrastructure<br>for autonomous wallets.</p>
+      <div class="footer-links"><a href="#protocol">Protocol</a><a href="#markets">Actions</a><a href="#evidence">Evidence</a><a href="mailto:lalitheshnarayanan@gmail.com">Contact</a></div>
+    </div>
+    <div class="footer-bottom"><span>© <span id="year">2026</span> Custos</span><span>Testnet · Pre-customer · Unaudited</span><span>Who watches the watchmen?</span></div>
   </footer>
-
-</div>
-
-<script>
-  const LINES = [
-    ["c-dim",    "$ pnpm demo"],
-    ["c-accent", "[1] Issuer sets policy for cTBILL — US/GB only, 5,000 max per transfer"],
-    ["c-allow",  "  ✓ policy active on-chain"],
-    ["c-accent", "[2] \"Atlas\" (AI treasury agent) spins up a fresh wallet"],
-    ["c-allow",  "  ✓ 0x333f…A70F — zero history, zero credentials"],
-    ["c-accent", "[3] Issuer attempts to send Atlas 1,000 cTBILL"],
-    ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
-    ["c-accent", "[4] Atlas registers — operator KYB + sanctions screening"],
-    ["c-allow",  "  ✓ VERIFIED — local EAS-compatible attestation issued"],
-    ["c-accent", "[5] Issuer retries the same transfer"],
-    ["c-allow",  "  ✓ success — Atlas holds 1,000 cTBILL"],
-    ["c-accent", "[6] Compliance revokes Atlas — kill switch"],
-    ["c-allow",  "  ✓ revoked: registry flag + EAS revocation"],
-    ["c-accent", "[7] One more transfer attempt"],
-    ["c-block",  "  ✗ transfer reverted: AGENT_NOT_VERIFIED"],
-    ["",         ""],
-    ["c-dim",    "unverified ✗ → verified ✓ → revoked ✗ — every step above is a real local transaction."]
-  ];
-
-  const body = document.getElementById('t-body');
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function renderAll() {
-    for (const [cls, text] of LINES) {
-      const div = document.createElement('div');
-      div.className = 'ln shown ' + cls;
-      div.textContent = text || ' ';
-      body.appendChild(div);
-    }
-  }
-
-  function typeLines() {
-    let i = 0;
-    const caret = document.createElement('span');
-    caret.className = 'caret';
-    function next() {
-      if (i >= LINES.length) { caret.remove(); return; }
-      const [cls, text] = LINES[i++];
-      const div = document.createElement('div');
-      div.className = 'ln shown ' + cls;
-      div.textContent = text || ' ';
-      body.appendChild(div);
-      body.appendChild(caret);
-      const delay = text === '' ? 240 : (text.startsWith('  ') ? 520 : 780);
-      setTimeout(next, delay);
-    }
-    next();
-  }
-
-  let started = false;
-  const term = document.getElementById('terminal');
-  if (reduced) { renderAll(); }
-  else {
-    new IntersectionObserver((entries, obs) => {
-      if (entries[0].isIntersecting && !started) {
-        started = true;
-        setTimeout(typeLines, 400);
-        obs.disconnect();
-      }
-    }, { threshold: 0.3 }).observe(term);
-  }
-
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
-</script>
 </body>
 </html>
