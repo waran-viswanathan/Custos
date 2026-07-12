@@ -45,10 +45,14 @@ hold customer funds or keys.
 
 The evidence baseline is 43 contract tests, 21 API tests, and 7 SDK tests, plus
 application builds, ABI-freshness checks, a production dependency audit, and a
-complete lifecycle CI smoke test. The earlier Base Sepolia v1 deployment is
-historical proof only and is interface-incompatible with the current stack. The
-current architecture is demonstrated locally; its fresh public deployment,
-verification, pilot replay, and recording are the next milestone.
+complete lifecycle CI smoke test. The experimental v3 stack is deployed on Base
+Sepolia at block 44039414 with seven Sourcify-verified contracts, 29 passing
+wiring/role checks, and new retained role keys that match the manifest. Policy
+configuration is complete and independently verified on-chain. The adversarial
+pilot replay passed 34 checkpointed assertions—19 successful transactions, 14
+intentional reverts, one observed mandate expiry—and exported 78 onchain audit
+logs. Recording is the next evidence milestone. The
+non-operable block-44038124 deployment and v1 are historical proof only.
 
 ## Initial wedge
 
@@ -99,7 +103,7 @@ agreement, not permissionless liquidity growth.
 ## Twelve-month milestones
 
 1. Complete standards-compatible mandate and policy SDKs.
-2. Complete external contract review and Base Sepolia pilot.
+2. Complete external contract review; the Base Sepolia pilot replay is complete.
 3. Convert two accelerator introductions into issuer pilots.
 4. Deploy the first customer-operated production integration after audit and
    legal approval.
