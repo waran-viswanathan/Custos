@@ -115,7 +115,15 @@ contract DeployPilot is Script {
         }
         schemaUID = vm.envOr("SCHEMA_UID", bytes32(0));
         if (schemaUID == bytes32(0)) {
-            schemaUID = ISchemaRegistry(schemaRegistryAddr).register(SCHEMA, address(0), true);
+            if (block.chainid == 84532) {
+                // EAS schema UIDs are deterministic and the Custos schema may
+                // already have been registered by an earlier deployment. A
+                // second register call reverts with AlreadyExists(), so reuse
+                // the canonical UID on the shared Base Sepolia registry.
+                schemaUID = keccak256(abi.encodePacked(SCHEMA, address(0), true));
+            } else {
+                schemaUID = ISchemaRegistry(schemaRegistryAddr).register(SCHEMA, address(0), true);
+            }
         }
     }
 
