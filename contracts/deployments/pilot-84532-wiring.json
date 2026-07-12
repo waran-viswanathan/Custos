@@ -1,0 +1,15 @@
+{
+  "chainId": 84532,
+  "deploymentBlock": 44039414,
+  "checkedAt": "2026-07-12",
+  "script": "scripts/check-pilot-sepolia.sh",
+  "status": "passed",
+  "checks": {
+    "immutableWiring": 10,
+    "tokenOwnership": 2,
+    "adminAssignments": 5,
+    "deployerAdminRemovals": 5,
+    "operationalRoleAssignments": 7,
+    "total": 29
+  }
+}
