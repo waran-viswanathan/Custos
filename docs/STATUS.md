@@ -1,19 +1,27 @@
 # Custos — execution status
 
-*As of 2026-07-11. Canonical internal status; update this file whenever a public
+*As of 2026-07-12. Canonical internal status; update this file whenever a public
 claim, deployment, or go-to-market stage changes.*
 
 ## Current position
 
-Custos is pre-customer, accelerator-first, and technically pilot-ready on a
-local chain. The product is compliance and delegated-authority infrastructure
+Custos is pre-customer, accelerator-first, and deployed as an experimental v3
+pilot on Base Sepolia. The product is compliance and delegated-authority infrastructure
 for AI agents that hold or transact tokenized assets. The experimental market
 manager is a proof venue, not the company’s primary product or production DEX.
 
-The current code is ahead of the public proof. The earlier Base Sepolia v1
-deployment completed the credential lifecycle, but it is interface-incompatible
-with the current architecture. No current deployment may be described as live
-until the fresh pilot is deployed, verified, replayed, and recorded.
+The canonical v3 contracts were freshly deployed at block 44039414 using new
+deployer, administrator, attester, and issuer identities whose testnet keys are
+retained locally and match the manifest. All 26 deployment/configuration
+transactions succeeded. All seven contracts are accepted by Sourcify (three
+fresh exact-match results and four already verified), and 29 independent wiring,
+ownership, admin, and role checks pass. All 21 credential, policy, mandate,
+pool, and initial-liquidity configuration transactions succeeded. Thirteen
+independent state and receipt checks pass. The adversarial replay passed all 34
+checkpointed assertions: 19 successful transactions, 14 intentionally reverted
+transactions, one observed expiry, and 78 exported onchain audit logs. Recording
+remains incomplete. The non-operable block-44038124 deployment is
+preserved as historical evidence.
 
 ## Evidence ledger
 
@@ -23,7 +31,7 @@ until the fresh pilot is deployed, verified, replayed, and recorded.
 | API | Signed registration, resumable verification, revocation/erasure, versioned indexer, audit and rate limits; 21 tests | Green locally and in CI |
 | SDK | Registration and permission helpers, generated typed ABIs; 7 tests | Green locally and in CI |
 | End-to-end | Signed local lifecycle smoke test | Green in CI |
-| Public chain | Historical v1 Base Sepolia evidence only | Legacy; not current proof |
+| Public chain | Canonical v3 at block 44039414; seven Sourcify-verified contracts; 29 wiring checks; 21 configuration transactions; 13 configuration checks; 34 replay assertions; 78 audit logs; retained keys | Public pilot replay passed; recording pending |
 | Security | Threat model and production release gates documented | Unaudited; testnet only |
 | Commercial | Target research and pilot materials exist | No customers or design partners claimed |
 
@@ -53,11 +61,18 @@ production checklist support that chain.
   audit, and the complete lifecycle demo.
 - [x] Make the website, README, company summary, and status ledger match the
   current code and deployment truth.
-- [ ] Choose separate testnet addresses for administrator, attester, issuer,
-  principal, agent, and controlled-exit recipient.
-- [ ] Deploy the current pilot to Base Sepolia and save a new versioned manifest.
-- [ ] Verify contract source, bytecode, roles, policies, and deployment block.
-- [ ] Replay every required pilot scenario and retain transaction links plus the
+- [x] Choose separate testnet addresses for administrator, attester, and issuer.
+- [x] Choose and fund separate principal, agent, and controlled-exit recipient
+  addresses for the replay.
+- [x] Archive the verified but non-operable block-44038124 evidence.
+- [x] Deploy canonical v3 with freshly generated, locally retained testnet role
+  keys and save a new versioned manifest.
+- [x] Verify all seven canonical contract sources through Sourcify.
+- [x] Verify canonical wiring, ownership, admin handoff, deployer removal, and
+  operational roles through 29 read-only RPC checks.
+- [x] Configure and independently verify credentials, transfer/action policies,
+  settlement approval, mandates, pool reserves, and initial liquidity.
+- [x] Replay every required pilot scenario and retain transaction links plus the
   audit export.
 - [ ] Record a 60–90 second demonstration using the verified deployment.
 - [ ] Finish the accelerator deck, application answers, and technical data room.
@@ -74,8 +89,15 @@ research assets, not the active execution plan.
 ## Claims allowed today
 
 - “71 automated tests plus a full lifecycle CI smoke test.”
-- “Historical credential-lifecycle proof exists on Base Sepolia.”
-- “The current five-layer architecture is demonstrated locally.”
+- “The canonical experimental v3 stack was freshly deployed at Base Sepolia
+  block 44039414 in 26 successful transactions, with seven Sourcify-verified
+  contracts, 29 passing wiring checks, 21 successful configuration
+  transactions, 13 passing configuration checks, 34 passing public-chain replay
+  assertions, 78 exported audit logs, and retained matching role keys.”
+- “The earlier block-44038124 v3 deployment has seven Sourcify exact matches and
+  29 passing checks but is historical, non-operable evidence.”
+- “The current five-layer architecture has completed its public Base Sepolia
+  pilot replay; recording and independent security review remain.”
 - “Custos is pre-customer, testnet-only, and unaudited.”
 - “The market manager is an experimental reference venue.”
 
