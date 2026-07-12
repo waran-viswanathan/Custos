@@ -1,0 +1,43 @@
+{
+  "chainId": 84532,
+  "deploymentBlock": 44039414,
+  "provider": "Sourcify",
+  "verifiedAt": "2026-07-12",
+  "status": "verified",
+  "contracts": {
+    "CustosRegistry": {
+      "address": "0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f",
+      "result": "already_verified"
+    },
+    "CustosGate": {
+      "address": "0xfdc52361c4A077e4c2449A89f4E6476ef901574B",
+      "result": "exact_match",
+      "jobId": "37bb8f95-4782-41cc-b06c-ea146aa80332",
+      "url": "https://sourcify.dev/server/v2/verify/37bb8f95-4782-41cc-b06c-ea146aa80332"
+    },
+    "CustosAgentMandate": {
+      "address": "0x942AB8C956C3448EE702D6De71831089180977a8",
+      "result": "already_verified"
+    },
+    "CustosMarketManager": {
+      "address": "0x8a9Fe0E8DfE43AF31037cf65442e43F3e9abC199",
+      "result": "already_verified"
+    },
+    "CustosActionAuthorizer": {
+      "address": "0xd0Eb567Cc5465a4238cC80899bB24B28594306B4",
+      "result": "already_verified"
+    },
+    "MockTBill": {
+      "address": "0x7a9976FCa5B8f5D7C4E5461cCbF3C62E4cAD7B18",
+      "result": "exact_match",
+      "jobId": "2580460b-e6d0-4b55-b581-184be654f3d4",
+      "url": "https://sourcify.dev/server/v2/verify/2580460b-e6d0-4b55-b581-184be654f3d4"
+    },
+    "MockUSD": {
+      "address": "0x834dcb644E0BbdAacdD48066B551c1d50BDc97cb",
+      "result": "exact_match",
+      "jobId": "fe32ce0e-3773-462e-b14e-487e19b194b7",
+      "url": "https://sourcify.dev/server/v2/verify/fe32ce0e-3773-462e-b14e-487e19b194b7"
+    }
+  }
+}

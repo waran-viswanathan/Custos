@@ -1,0 +1,43 @@
+{
+  "chainId": 84532,
+  "provider": "Sourcify",
+  "verifiedAt": "2026-07-12",
+  "status": "exact_match",
+  "contracts": {
+    "CustosRegistry": {
+      "address": "0xDf07E31DB2ccD1cB90AdeaCC368b745853d94E2b",
+      "jobId": "9ea5adcb-8769-4f63-bca0-cb627cc5163e",
+      "url": "https://sourcify.dev/server/v2/verify/9ea5adcb-8769-4f63-bca0-cb627cc5163e"
+    },
+    "CustosGate": {
+      "address": "0x613fD1BB45b3F7eD09DC3B0822aF6CAB0C6e6523",
+      "jobId": "c38947e3-b57a-470b-93e1-0692b5e5f22e",
+      "url": "https://sourcify.dev/server/v2/verify/c38947e3-b57a-470b-93e1-0692b5e5f22e"
+    },
+    "CustosAgentMandate": {
+      "address": "0xBFe2eBC51010FF1e80D869cA77554cB975420f75",
+      "jobId": "70155a49-2064-4823-ab42-f2bea614242d",
+      "url": "https://sourcify.dev/server/v2/verify/70155a49-2064-4823-ab42-f2bea614242d"
+    },
+    "CustosMarketManager": {
+      "address": "0xD7d79ABAfE83a64e6b2a90D101c37546482daAC3",
+      "jobId": "c09ca3da-3f2f-4928-88bd-cff5019d4893",
+      "url": "https://sourcify.dev/server/v2/verify/c09ca3da-3f2f-4928-88bd-cff5019d4893"
+    },
+    "CustosActionAuthorizer": {
+      "address": "0x3a748e338831Bc31166e1c112C51ca01B8E129ab",
+      "jobId": "1e9263c5-6e10-4133-8936-02f098b531da",
+      "url": "https://sourcify.dev/server/v2/verify/1e9263c5-6e10-4133-8936-02f098b531da"
+    },
+    "MockTBill": {
+      "address": "0x5De862066cdA47fE50450b4c3A25e4b31E573a07",
+      "jobId": "720df091-ae7e-4e9e-a251-569911872cb6",
+      "url": "https://sourcify.dev/server/v2/verify/720df091-ae7e-4e9e-a251-569911872cb6"
+    },
+    "MockUSD": {
+      "address": "0xE42f89355E9d11aadc82aa1653e0e0DDE44769f2",
+      "jobId": "b954efdf-e03e-4174-b1af-ddde2d7595e3",
+      "url": "https://sourcify.dev/server/v2/verify/b954efdf-e03e-4174-b1af-ddde2d7595e3"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "actionAuthorizer": "0x3a748e338831Bc31166e1c112C51ca01B8E129ab",
+  "admin": "0x9CB9eF2c16e0f5192dd3Dcc350c522ba9849b025",
+  "attester": "0x72a4F3836a94c31E2ebE725a934d6CbD1Dbc49C2",
+  "chainId": 84532,
+  "deploymentBlock": 44038124,
+  "eas": "0x4200000000000000000000000000000000000021",
+  "experimental": true,
+  "gate": "0x613fD1BB45b3F7eD09DC3B0822aF6CAB0C6e6523",
+  "issuer": "0x2a14ed5bBFd416078F98f81499EB6aBF035cEae9",
+  "mandates": "0xBFe2eBC51010FF1e80D869cA77554cB975420f75",
+  "marketManager": "0xD7d79ABAfE83a64e6b2a90D101c37546482daAC3",
+  "registry": "0xDf07E31DB2ccD1cB90AdeaCC368b745853d94E2b",
+  "schemaUID": "0x03f9699b0c47a7f47722e95aa98291f902c65f3d4c3a98cfbe909e8e292b1316",
+  "settlementToken": "0xE42f89355E9d11aadc82aa1653e0e0DDE44769f2",
+  "tbill": "0x5De862066cdA47fE50450b4c3A25e4b31E573a07",
+  "version": 3
+}

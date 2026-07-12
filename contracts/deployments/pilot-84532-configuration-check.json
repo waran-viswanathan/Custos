@@ -1,0 +1,27 @@
+{
+  "chainId": 84532,
+  "deploymentBlock": 44039414,
+  "checkedAt": "2026-07-12T09:38:14.098Z",
+  "poolId": "0xfd4c4875b78c6eac23a4a584f094a02cd1fe72c19f13baf7e3244f535e247889",
+  "checks": [
+    "principal credential active and matched",
+    "agent credential active and matched",
+    "issuer credential active and matched",
+    "exitRecipient credential active and matched",
+    "restricted-token transfer policy matched",
+    "exact market manager settlement approved",
+    "swap action policy matched",
+    "liquidity entry action policy matched",
+    "pool initialization action policy matched",
+    "pool reserves and agent liquidity matched",
+    "swap mandate active and matched",
+    "liquidity mandate active and matched",
+    "21 configuration receipts successful"
+  ],
+  "pool": {
+    "reserve0": "50000000000",
+    "reserve1": "50000000000",
+    "totalShares": "50000000000",
+    "agentShares": "49999999000"
+  }
+}

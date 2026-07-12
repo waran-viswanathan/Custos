@@ -1,6 +1,6 @@
 # Custos — company summary
 
-*As of 2026-07-11. Shareable with accelerator reviewers, advisors, and potential
+*As of 2026-07-12. Shareable with accelerator reviewers, advisors, and potential
 cofounders.*
 
 ## The company
@@ -46,11 +46,16 @@ testnet-only, and deliberately not positioned as a production DEX.
 - 43 contract tests, 21 API tests, and 7 SDK tests: **71 automated tests**.
 - CI also builds the applications, checks generated ABIs, audits production
   dependencies, and runs the signed credential lifecycle smoke test.
-- The earlier Base Sepolia v1 deployment proves the original credential
-  lifecycle but is interface-incompatible with the current contract stack.
-- The current five-layer architecture is reproducible locally. A fresh public
-  testnet deployment, verification, pilot replay, and recording are the next
-  evidence milestone.
+- The canonical experimental v3 stack was freshly deployed at Base Sepolia
+  block 44039414 with seven Sourcify-verified contracts, 29 passing wiring/role
+  checks, and new retained role keys matching the manifest. The block-44038124
+  deployment is archived as historical evidence.
+- The current five-layer architecture is reproducible locally. Policy
+  configuration is independently verified. The public replay passed 34
+  checkpointed assertions with 19 successful transactions, 14 intentional
+  reverts, one observed expiry, and 78 exported audit logs. Recording is the
+  next evidence milestone. V1 remains historical,
+  interface-incompatible proof.
 
 Custos is pre-customer, unaudited, and not production-ready. Those are release
 facts, not hidden footnotes.
@@ -82,11 +87,10 @@ does not claim customers, signed design partners, or commercial traction today.
 ## Immediate milestones
 
 1. Align every public surface with the current code and honest deployment state.
-2. Deploy and independently verify the current Base Sepolia pilot with separate
-   administrator, attester, issuer, principal, agent, and escrow roles.
-3. Replay the required scenarios and publish the evidence manifest.
-4. Record a 60–90 second demonstration.
-5. Complete and submit the accelerator application package.
+2. Independently verify the deployed Base Sepolia pilot's administrator,
+   attester, issuer, principal, agent, and escrow roles.
+3. Record and publish a 60–90 second demonstration from the completed replay.
+4. Complete and submit the accelerator application package.
 
 ## Open risks
 
