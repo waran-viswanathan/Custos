@@ -74,6 +74,8 @@ production checklist support that chain.
   settlement approval, mandates, pool reserves, and initial liquidity.
 - [x] Replay every required pilot scenario and retain transaction links plus the
   audit export.
+- [x] Prepare the timed demo narration, proof-link shot list, and recording
+  safety checklist.
 - [ ] Record a 60–90 second demonstration using the verified deployment.
 - [ ] Finish the accelerator deck, application answers, and technical data room.
 - [ ] Apply to the selected accelerator cohort.
