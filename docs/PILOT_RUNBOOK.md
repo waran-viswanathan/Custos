@@ -30,8 +30,9 @@ bash scripts/configure-pilot-sepolia.sh
 ```
 
 The script is resumable. It issues and registers the four pilot credentials,
-sets transfer and action policies, approves the exact settlement contract,
-creates the pool, grants scoped swap and liquidity mandates, mints test assets,
+activates a dual-signed principal-to-agent binding, sets transfer and action
+policies, approves the exact settlement contract, grants scoped pool, swap, and
+liquidity mandates, creates the pool with a signed intent, mints test assets,
 and seeds initial liquidity using an agent-signed EIP-712 intent. It writes the
 public transaction and policy evidence to
 `contracts/deployments/pilot-84532-configuration.json`; it never writes private
@@ -59,16 +60,18 @@ The replay deliberately broadcasts both successful and reverted transactions.
 Its checkpoints, transaction hashes, final state, and raw on-chain audit logs
 are written to `contracts/deployments/pilot-84532-replay.json`.
 
-1. Deploy fresh registry, gate, mandate registry, action authorizer, market
+1. Deploy fresh registry, operator binding, gate, mandate registry, action authorizer, market
    manager, restricted test asset, and settlement test asset.
 2. Grant the minimum required roles and record every assignment.
 3. Configure the authorizer's immutable venue and one-time mandate registry.
 4. Approve only the exact market manager as restricted-token settlement.
 5. Configure transfer, swap, and liquidity-entry policies.
 6. Verify the principal, agent, issuer, and controlled-exit recipient.
-7. Have the principal grant the agent a swap mandate with a transaction cap,
+7. Have the principal and agent sign the same binding approval and have the
+   attester activate it.
+8. Have the bound principal grant the agent a swap mandate with a transaction cap,
    cumulative cap, approved venue/asset/action, and short expiry.
-8. Initialize and seed one restricted-asset/settlement-asset pool.
+9. Initialize and seed one restricted-asset/settlement-asset pool.
 
 ## Required demonstration
 
@@ -91,8 +94,9 @@ are written to `contracts/deployments/pilot-84532-replay.json`.
 ## Pass criteria
 
 - Every denial happens before successful economic settlement.
-- Failed transactions roll back mandate spend, intent nonce, reserves, shares,
-  and token transfers atomically.
+- Structurally valid compliance denials retain an audit event and consume the
+  single-use intent nonce, but do not consume mandate spend or change reserves,
+  shares, or token balances. Malformed and economic failures revert atomically.
 - No PII appears in calldata, events, contract storage, or public logs.
 - No Custos-controlled address holds a user private key.
 - Deployment bytecode, roles, policies, and addresses match the signed manifest.
@@ -103,3 +107,9 @@ are written to `contracts/deployments/pilot-84532-replay.json`.
 Retain transaction links, deployment manifest, role matrix, policy snapshot,
 mandate parameters, audit export, CI run, contract source commit, and a short
 screen recording. Label all assets and contracts as testnet demonstrations.
+
+The committed manifest, evidence JSON, and live RPC are sufficient for wiring,
+signer, and source-verification workflows; ignored Foundry broadcast files are
+not part of the evidence package. Wallet reset scripts refuse to replace keys
+referenced by existing deployment/configuration evidence unless the operator
+supplies the explicit abandonment flag, and they create a protected backup first.

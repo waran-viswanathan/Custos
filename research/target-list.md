@@ -1,5 +1,10 @@
 # Wave-1 outreach target list
 
+> **Research snapshot, not traction.** Inclusion does not indicate contact,
+> interest, partnership, or customer status. Use the buyer criteria in
+> `docs/PRODUCT.md` before activating any target. Custos is currently
+> accelerator-first and pre-customer.
+
 Compiled 2026-07-10 from 4 parallel research passes (each target web-verified as active in 2025–26). ~60 unique targets after dedupe. **Caveat:** hooks were researched by agents — spot-check each hook (30 seconds on their site/X) before sending; a wrong hook kills a cold email.
 
 Email templates: `gtm/outreach-emails.md` (issuer / operator / compliance-voice variants). Log sends in `research/outreach-tracker.md`.

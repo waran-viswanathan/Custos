@@ -1,5 +1,11 @@
 # Know-Your-Agent (KYA) Credential Specification
 
+> **Superseded pre-pivot specification.** This draft describes the original
+> general-purpose KYA/x402 concept. It is preserved for research history and is
+> not the current Custos protocol, integration contract, roadmap, or public
+> product claim. See `../docs/PRODUCT.md` and the contracts in `../contracts/`
+> for the regulated-asset settlement product.
+
 **Version:** 0.1.0-draft · **Status:** Request for Comment · **License:** CC-BY-4.0
 
 > An open specification for verifiable AI-agent payment credentials: a standard way to express *"this agent, operated by this entity, may spend up to X, on Y, until Z"* — verifiable by any counterparty, on any payment rail.

@@ -1,43 +1,46 @@
-# Design-partner discovery interview (45 min)
+# Custos discovery interview
 
-Two variants: **Issuer** (tokenized-asset issuers, tokenization platforms, RWA marketplaces) and **Operator** (teams whose AI agents hold or move real value — agent treasuries, AI funds, DAO tooling).
+*Post-introduction research asset for the accelerator-led GTM plan. Ask about
+past and current behavior; do not lead with the product.*
 
-Rules: Mom Test discipline — ask about past and present behavior, never pitch until the last 5 minutes, never ask "would you use X?" Take verbatim quotes; they go in the deck.
+## Issuer, transfer-agent, or tokenization-platform questions
 
-## Opening (2 min)
+1. Walk through the path from a new entity completing KYB to its wallet's first
+   permitted transfer. Which system owns each decision?
+2. How do you distinguish a human-operated wallet, automated strategy, and AI
+   agent today? When has that distinction mattered?
+3. If a company delegates execution to software, where is that authority stored,
+   capped, approved, and revoked?
+4. How quickly does a failed re-screening or compromised wallet become blocked
+   at the token or settlement contract?
+5. Which restricted actions beyond holding matter—transfer, swap, redemption,
+   liquidity, collateral, or something else?
+6. What evidence must compliance, legal, auditors, and examiners reconstruct
+   after an allowed or denied transaction?
+7. Have autonomous or programmatic wallets caused a manual exception, rejected
+   customer, delayed launch, or control finding? What happened?
+8. Who owns the budget and approval for a new settlement-control integration?
+9. What are the non-negotiable requirements: contract audit, SOC 2, provider,
+   deployment ownership, data residency, insurance, or legal opinion?
 
-"I'm researching how compliance works when the holder of a tokenized asset isn't a person clicking buttons but software acting autonomously. I've built something here, but today I mostly want to learn how you handle this now."
+## Agent operator or institutional-wallet questions
 
-## Issuer variant
+1. Which restricted or regulated assets do your automated wallets touch today?
+2. What authority may each agent exercise, and where is that policy enforced?
+3. What do you show an issuer asking who controls the wallet and who approved a
+   specific action?
+4. How do you stop a compromised agent before the next transaction?
+5. Which issuer or venue currently blocks or manually reviews your automation?
+6. Would customer-operated onchain enforcement be required, preferred, or a
+   blocker? Why?
 
-**Current state (15 min)**
-1. Walk me through what happens today between a new wallet wanting your token and its first permitted transfer. Which vendors/steps are involved, and how long does it take?
-2. Have you seen wallets you suspected were automated/agent-controlled? How did you tell? What did you do?
-3. Does your current transfer-restriction setup distinguish "verified entity" from "verified entity's autonomous agent"? Has that distinction ever mattered?
-4. What's your revocation story — when someone fails re-screening, how fast does that propagate to actual transfer enforcement? Who pushes the button?
-5. What did your last compliance incident or near-miss around holder eligibility cost (time, legal, remediation)?
+## Product probe after discovery
 
-**Pain sizing (10 min)**
-6. Is there demand you're *not* serving because you can't verify the holder — funds, bots, agents, offshore structures? Roughly what volume walked away?
-7. If a regulated client asked "can your token be held by an AI agent, and who's accountable if it misbehaves?" — what would you answer today?
-8. What would need to be true for your compliance/legal team to sign off on agent-held positions?
+Show only the relevant control chain: verified operator → dual-signed binding →
+capped mandate → signed action → issuer settlement policy → evidence/revocation.
+Ask which component is valuable, redundant, or incompatible with the current
+stack. Do not ask a generic “would you use it?” question.
 
-**Solution probe (10 min)**
-9. If agent wallets came with a revocable on-chain credential binding them to a KYB'd operator — verified once, enforced at transfer time — what's the first flow you'd open up?
-10. Who signs off on adding a new eligibility vendor — compliance, legal, eng? What's the bar (SOC 2, audits, insurance)?
-11. What budget does this come from, and what do you pay today for KYC/transfer-agent tooling per holder?
-
-## Operator variant
-
-1. Do your agents hold or move tokenized assets or treasury funds today? Walk me through the last time one did.
-2. Has an issuer, exchange, or counterparty ever blocked, rate-limited, or refused your automated flows? What did that cost you?
-3. When a counterparty asks "who is accountable for this agent?" — what do you show them today?
-4. What happens if one of your agents is compromised — what's your shut-it-off story, and how fast is it?
-5. If a verified-agent credential opened issuer doors that are currently closed, which door matters most? What's it worth?
-6. Who in your org would own this — compliance, ops, eng? Out of which budget?
-
-**Close (5 min)** — 60-second demo (blocked → verified → transfer succeeds → revoked → blocked), then: "Would you be one of ~10 design partners — we run the gate on a test asset with you, founding pricing, your requirements shape the policy engine. Non-binding LOI." Ask for 2 referrals regardless of answer.
-
-## After every interview
-
-Log verbatim pain quotes, current per-holder compliance spend, walked-away volume numbers, LOI yes/no, referrals in `research/interviews/YYYY-MM-DD-company.md`. Update the tally in STATUS.md. 5 signed-off design partners is the exit criterion.
+Record factual pain, current vendor/process, budget owner, required integration,
+security/procurement bar, next step, and referrals. Do not claim a design partner
+until an authorized counterparty has agreed in writing.

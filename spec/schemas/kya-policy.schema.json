@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Archived schema for the superseded pre-pivot KYA/x402 draft; not the current Custos product contract.",
   "$id": "https://kya.dev/schemas/kya-policy.schema.json",
   "title": "KYA Spend Policy Document",
-  "description": "Policy document whose hash is carried as policyCommitment in a KYA credential (spec v0.1.0-draft)",
+  "description": "Archived policy document from the superseded Know-Your-Agent draft (spec v0.1.0-draft)",
   "type": "object",
   "required": ["version", "asset", "perTxnCap", "dailyCap", "killSwitch", "enforcement"],
   "properties": {

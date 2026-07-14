@@ -1,60 +1,59 @@
-# Cold outreach templates
+# Custos introduction follow-ups
 
-Sequencing for a cold-start founder: **working demo first, public testnet second, emails third.** Every email below leans on "this is live, here's the explorer link / 60-second demo video" — several times the reply rate of "founder with an idea." Prereqs before sending volume: (a) contracts on Base Sepolia with a public demo, (b) a 60–90s screen recording of the lifecycle demo, (c) the repo README presentable.
+*Inactive until v4 public proof is complete. The current route is accelerator
+first; use these after a warm introduction or program-organized meeting. Replace
+every bracketed field and never describe v3 as the current deployment.*
 
-Rules: ≤120 words, one specific observation about *them*, one clear ask (45-min interview, never a sale), no attachments, plain text.
+## Issuer or transfer-agent follow-up
 
-## 1. RWA issuer / tokenization platform
+Subject: autonomous wallets and [asset/platform] settlement controls
 
-Subject: **agent-held [their asset] — who's accountable?**
+Hi [Name]—thank you to [introducer] for connecting us.
 
-Hi [Name] — [specific: saw your tokenized treasury product / your transfer-restriction docs / your compliance post].
+I am building Custos, the regulated-asset settlement gate for autonomous
+wallets. It links a KYB-verified operator to an agent, limits the authority that
+operator delegated, authenticates the agent's exact signed action, and enforces
+issuer policy before value moves.
 
-Question I'm researching: when the holder of a tokenized asset is an AI agent rather than a person, whose KYC file backs the wallet? Every issuer stack I've looked at verifies entities — none bind an *agent* to the entity operating it, with revocation.
+I am not looking to pitch a generalized AI permission product or DEX. I would
+like to understand how [company] handles automated holders today, particularly
+authority, revocation, and audit evidence at the token or settlement boundary.
 
-I've built exactly that binding: KYB + sanctions → revocable on-chain attestation → a gate contract your token calls at transfer time (live demo: agent blocked → verified → transfers → revoked → blocked, 60 seconds: [link]).
-
-Could I get 45 minutes on how you handle automated holders today? Findings shared back.
-
-— Lalithesh
-
-## 2. Agent operator (AI treasury / agent fund / DAO tooling)
-
-Subject: **which doors stay closed to your agents**
-
-Hi [Name] — [specific: your agent treasury product / your post on agents managing funds].
-
-I keep hearing the same thing from teams whose agents touch real assets: issuers and counterparties can't verify who's behind an agent wallet, so they default to "no." Meanwhile one prompt-injection incident (Grok/Bankrbot, May) made everyone's compliance team twitchier.
-
-I've built a verified-agent credential: your entity passes KYB once, your agent gets a revocable on-chain attestation that compliance-gated assets check at transfer time — with a kill switch you control. Working demo: [link].
-
-45 minutes on which counterparty doors matter most to you? I'm picking 10 design partners now.
+Would 30 minutes next week be possible?
 
 — Lalithesh
 
-## 3. Compliance / legal at a crypto-native institution
+## Institutional wallet or agent-operator follow-up
 
-Subject: **KYA — the agent gap in transfer restrictions**
+Subject: proving agent authority to regulated-asset issuers
 
-Hi [Name] — your [talk/post] on [specific] made me think you're the right person to pressure-test something.
+Hi [Name]—[specific introduction context].
 
-Thesis: transfer restrictions verify entities; nothing today binds an autonomous agent to a verified entity with enforceable revocation. As agent-held positions grow, that gap becomes an examiner question with no good answer.
+Custos gives an autonomous wallet a KYB-backed operator binding, a narrowly
+capped mandate, and an issuer-enforced settlement check. The goal is to let an
+operator prove accountability and shut off new risk without giving Custos
+custody.
 
-I've built a candidate answer (KYB-backed revocable attestations + transfer-time enforcement, no PII on-chain) and want it torn apart by someone who reviews these programs for a living. 30 minutes?
+Could I learn which issuer or venue controls currently block your automated
+flows and what evidence they require? A 30-minute technical discussion would be
+valuable.
 
 — Lalithesh
 
-## 4. Follow-up (one only, +5 days)
+## Security or compliance advisor follow-up
 
-Subject: re: [same]
+Subject: pressure-testing autonomous-wallet settlement enforcement
 
-Hi [Name] — floating this once. One finding so far: [genuine, e.g. "3 of 4 issuers I've interviewed say they can't distinguish an agent wallet from a human one, and two admitted they'd rather not look"]. If that matches what you see, 30 minutes would be valuable; if not, I'll leave you alone.
+Hi [Name]—[specific context].
 
-## Target list construction
+I have a testnet system that composes operator KYB, dual-signed agent binding,
+delegated limits, wallet-signed actions, issuer policy, revocation, and a chain/
+database evidence trail. It is explicitly unaudited and not production-ready.
 
-- Tokenized-treasury issuers and their platform providers (the teams behind on-chain T-bill/money-market products; start with smaller/newer issuers — the giants move last)
-- Tokenization infrastructure and transfer-agent platforms (they must offer agent handling to *their* issuer clients — white-label angle)
-- RWA marketplaces and lending protocols accepting RWA collateral
-- Agent-treasury and AI-fund teams (agent frameworks with wallet integrations, DAO treasury tooling)
-- Compliance leaders who speak/write publicly on digital-asset programs
-- Track in `research/outreach-tracker.md`: name, company, segment, hook, sent date, reply, interview, LOI. Target: 60 sends → ~15 interviews → 5 LOIs.
+I would value 30 minutes on the control assumptions most likely to fail an
+issuer, transfer-agent, or examiner review.
+
+— Lalithesh
+
+One follow-up maximum. Do not send volume outreach before the v4 explorer links,
+replay evidence, and recording are public and consistent with `docs/STATUS.md`.

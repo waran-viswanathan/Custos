@@ -5,10 +5,16 @@ umask 077
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/pilot-wallet-safety.sh
+source scripts/lib/pilot-wallet-safety.sh
+
 if [ ! -f .env ]; then
   echo "missing .env"
   exit 1
 fi
+
+pilot_refuse_configured_actor_rotation "${1:-}"
+pilot_backup_env
 
 wallets=$(cast wallet new --number 3 --json)
 principal_key=$(printf '%s' "$wallets" | jq -r '.[0].private_key')
@@ -50,3 +56,4 @@ echo "principal:        $principal_address"
 echo "agent:            $agent_address"
 echo "exit recipient:   $exit_address"
 echo "private keys were not printed; do not delete .env"
+echo "the prior .env backup is retained under .custos-backups"

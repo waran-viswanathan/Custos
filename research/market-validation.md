@@ -1,5 +1,11 @@
 # Market Validation Report — Custos KYA Thesis
 
+> **Historical research snapshot.** This report evaluates the original broad
+> KYA/x402 thesis and explains why Custos narrowed its wedge. It is retained as
+> decision evidence, not as the current product plan. The current company is the
+> regulated-asset settlement gate for autonomous wallets; see
+> `docs/PRODUCT.md` and `docs/business-plan.md`.
+
 **Date:** 2026-07-10 · **Method:** deep-research workflow — 5 search angles, 24 sources fetched, 108 claims extracted, 25 adversarially verified (3-vote refutation panels): 19 confirmed, 6 refuted.
 
 ## Bottom line (Gate 1 verdict)

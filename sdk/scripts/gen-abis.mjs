@@ -16,7 +16,9 @@ const names = {
   MockUSD: 'mockUsdAbi',
   CustosActionAuthorizer: 'custosActionAuthorizerAbi',
   CustosAgentMandate: 'custosAgentMandateAbi',
+  CustosOperatorBinding: 'custosOperatorBindingAbi',
   CustosMarketManager: 'custosMarketManagerAbi',
+  CustosPrivateCredential: 'custosPrivateCredentialAbi',
 };
 
 let out =

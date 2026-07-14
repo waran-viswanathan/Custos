@@ -86,14 +86,21 @@ model AuditEvent {
   payload     Json
   chainTxHash String?
   chainLogKey String?  @unique
+  chainIndexerId String?
+  chainId     Int?
+  chainBlockNumber BigInt?
+  chainBlockHash String?
   createdAt   DateTime @default(now())
 
   @@index([agentId, createdAt])
   @@index([type, createdAt])
+  @@index([chainId, chainBlockNumber])
+  @@index([chainIndexerId, chainBlockNumber])
 }
 
 model IndexerCursor {
   id        String   @id
   lastBlock BigInt
+  lastBlockHash String?
   updatedAt DateTime @updatedAt
 }

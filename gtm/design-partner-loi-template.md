@@ -1,43 +1,50 @@
-# Design Partner Letter of Intent (non-binding)
+# Custos pilot letter of intent template
 
-> Template — have a lawyer glance at it before first real use, but keep it to one page; a heavyweight LOI kills momentum at this stage.
+> Non-binding working template. Obtain legal review before external use. Custos
+> is currently accelerator-first; use this only after a qualified introduction
+> and discovery process.
 
----
+**Date:** ____________
 
-**Letter of Intent — Custos Design Partner Program**
+**Between:** Custos, Inc. (in formation) ("Custos") and ____________________
+("Partner").
 
-Date: ____________
+This letter records non-binding interest in evaluating Custos's regulated-asset
+settlement controls for autonomous wallets.
 
-**Between:** Custos, Inc. (in formation) ("Custos") and ____________________ ("Partner").
+## Proposed pilot
 
-This letter expresses mutual intent and is **non-binding** except for the Confidentiality section.
+- Partner role: [ ] issuer [ ] transfer agent/platform [ ] regulated venue
+  [ ] institutional wallet/operator
+- Restricted test asset or policy boundary: ____________________
+- Verified principal/company: ____________________
+- Autonomous wallet(s): ____________________
+- Permitted venue/action/asset scope: ____________________
+- Transaction and cumulative limits: ____________________
+- Testnet or controlled staging environment: ____________________
 
-**1. Purpose.** Partner intends to participate in Custos's design partner program for its agent verification, spend-policy, and transaction risk-scoring products.
+Partner intends to provide current-flow requirements, technical integration
+feedback, and compliance/security review. Custos intends to provide testnet
+contracts, SDK/API integration support, policy/revocation demonstrations, and an
+exportable evidence package.
 
-**2. Partner intends to (choose applicable):**
-- [ ] Deploy Custos spend-policy controls for at least ____ agent(s) with a real budget in a staging or production environment
-- [ ] Gate live agent/API traffic through the Custos risk check via merchant middleware
-- [ ] Provide feedback on the Know-Your-Agent (KYA) credential specification
-- [ ] Share anonymized abuse/fraud outcome data to improve scoring (under separate data agreement)
+## Boundaries
 
-**3. Custos intends to provide:**
-- Private beta access before public launch
-- Hands-on integration support (target: integrated in under one day)
-- Founding-partner pricing: free during beta; thereafter ____% discount locked for 24 months
-- Input rights on product roadmap and KYA spec review
+The evaluation uses test assets unless separate audited production terms are
+executed. Custos is not acting as custodian, broker, transfer agent, or venue.
+No customer, production, volume, or regulatory-approval claim may be made without
+Partner's written permission.
 
-**4. Timeline.** Beta participation targeted for ____________, for approximately 90 days.
+## Commercial discussion
 
-**5. No exclusivity, no payment obligation, no commitment to purchase.** Either party may end participation at any time with notice.
+If the evaluation succeeds, the parties may discuss an annual platform contract,
+usage pricing, provider/reporting integrations, and a customer-operated production
+deployment subject to audit, security, legal, and procurement approval.
 
-**6. Confidentiality (binding).** Each party will keep the other's non-public information confidential for 2 years. Partner may not be named publicly without written consent; Custos may describe aggregated, anonymized results.
+## Non-binding status and confidentiality
+
+Except for any separately reviewed confidentiality clause, this letter creates
+no obligation to purchase, deploy, pay, continue, or grant exclusivity. Either
+party may stop the evaluation at any time.
 
 Custos: ____________________  Partner: ____________________
-
----
-
-## Usage notes
-
-- Send only after a discovery interview where real pain surfaced — never cold.
-- The checkboxes are the point: an operator checking box 1 with a real budget number is traction; a bare signature is not.
-- Track: company, contact, boxes checked, budget/traffic size, date, status in `research/loi-tracker.md`.

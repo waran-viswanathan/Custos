@@ -2,7 +2,7 @@
   "name": "custos",
   "private": true,
   "version": "0.1.0",
-  "description": "Custos — the trust layer for AI agent payments. Verify, bound, score.",
+  "description": "Archived pre-pivot Custos KYA/x402 payment prototype; not the current product",
   "type": "module",
   "workspaces": [
     "packages/*",

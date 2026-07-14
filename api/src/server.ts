@@ -169,7 +169,14 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
     }
     if (!db.agent.delete) return reply.code(501).send({ error: 'erasure is not supported by this database adapter' });
     await db.agent.delete({ where: { id: agent.id } });
-    await db.auditEvent.create({ data: { agentId: null, type: 'SUBJECT_ERASED', payload: { wallet }, chainTxHash: null } });
+    await db.auditEvent.create({
+      data: {
+        agentId: null,
+        type: 'SUBJECT_ERASED',
+        payload: { onChainRecordsRemain: true },
+        chainTxHash: null,
+      },
+    });
     return reply.code(204).send();
   });
 
@@ -192,12 +199,21 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   app.get('/v1/stats', async () => {
     const since = new Date(Date.now() - 7 * 24 * 3600 * 1000);
     const authoritative = { path: ['authoritative'], equals: true };
-    const [verifiedAgents, totalAgents, checksRun, permitted7d, blocked7d] = await Promise.all([
+    const [verifiedAgents, totalAgents, checksRun, permitted7d, transferDenials7d, actionDenials7d] = await Promise.all([
       db.agent.count({ where: { status: 'VERIFIED' } }), db.agent.count(), db.verificationCheck.count(),
       db.auditEvent.count({ where: { type: 'CHAIN_TRANSFER_CHECKED', createdAt: { gte: since }, AND: [{ payload: authoritative }, { payload: { path: ['allowed'], equals: true } }] } }),
-      db.auditEvent.count({ where: { type: 'CHAIN_TRANSFER_CHECKED', createdAt: { gte: since }, AND: [{ payload: authoritative }, { payload: { path: ['allowed'], equals: false } }] } }),
+      db.auditEvent.count({ where: { type: 'CHAIN_TRANSFER_CHECKED', createdAt: { gte: since }, payload: { path: ['allowed'], equals: false } } }),
+      db.auditEvent.count({ where: { type: { in: ['CHAIN_ACTION_AUTHORIZATION_DENIED', 'CHAIN_MARKET_ACTION_DENIED'] }, createdAt: { gte: since } } }),
     ]);
-    return { verifiedAgents, totalAgents, checksRun, transfersPermitted7d: permitted7d, transfersBlocked7d: blocked7d };
+    return {
+      verifiedAgents,
+      totalAgents,
+      checksRun,
+      transfersPermitted7d: permitted7d,
+      transfersBlocked7d: transferDenials7d,
+      transferDenialsObserved7d: transferDenials7d,
+      actionDenialsObserved7d: actionDenials7d,
+    };
   });
 
   return app;

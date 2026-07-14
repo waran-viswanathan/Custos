@@ -10,6 +10,7 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 coverage/
+.custos-backups/
 
 contracts/broadcast/
 contracts/cache/

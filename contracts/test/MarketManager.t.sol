@@ -8,6 +8,7 @@ import {CustosRegistry} from "../src/CustosRegistry.sol";
 import {CustosGate} from "../src/CustosGate.sol";
 import {CustosActionAuthorizer} from "../src/CustosActionAuthorizer.sol";
 import {CustosAgentMandate} from "../src/CustosAgentMandate.sol";
+import {CustosOperatorBinding} from "../src/CustosOperatorBinding.sol";
 import {CustosMarketManager} from "../src/markets/CustosMarketManager.sol";
 import {MockTBill} from "../src/MockTBill.sol";
 import {MockEAS} from "../src/MockEAS.sol";
@@ -32,6 +33,7 @@ contract MarketManagerTest is Test {
     CustosMarketManager internal manager;
     CustosActionAuthorizer internal authorizer;
     CustosAgentMandate internal mandates;
+    CustosOperatorBinding internal bindings;
     MockTBill internal tbill;
     TestUSD internal usd;
 
@@ -41,6 +43,8 @@ contract MarketManagerTest is Test {
     uint256 internal issuerKey;
     address internal agent;
     uint256 internal agentKey;
+    address internal liquidityAgent;
+    uint256 internal liquidityAgentKey;
     address internal unverified;
     uint256 internal unverifiedKey;
     bytes32 internal schemaUID;
@@ -52,6 +56,7 @@ contract MarketManagerTest is Test {
     function setUp() public {
         (issuer, issuerKey) = makeAddrAndKey("issuer");
         (agent, agentKey) = makeAddrAndKey("agent");
+        (liquidityAgent, liquidityAgentKey) = makeAddrAndKey("liquidityAgent");
         (unverified, unverifiedKey) = makeAddrAndKey("unverified");
 
         eas = new MockEAS();
@@ -60,12 +65,14 @@ contract MarketManagerTest is Test {
         gate = new CustosGate(registry, admin);
         manager = new CustosMarketManager(gate, admin);
         authorizer = new CustosActionAuthorizer(gate, address(manager), admin);
-        mandates = new CustosAgentMandate(registry, admin);
+        bindings = new CustosOperatorBinding(registry, admin);
+        mandates = new CustosAgentMandate(registry, bindings, admin);
         tbill = new MockTBill(gate, issuer);
         usd = new TestUSD();
 
         vm.startPrank(admin);
         registry.grantRole(registry.ATTESTER_ROLE(), attester);
+        bindings.grantRole(bindings.BINDER_ROLE(), attester);
         gate.grantRole(gate.ISSUER_ROLE(), issuer);
         gate.grantRole(gate.VENUE_ROLE(), address(authorizer));
         gate.grantRole(gate.VENUE_ROLE(), address(manager));
@@ -78,19 +85,32 @@ contract MarketManagerTest is Test {
 
         _verify(issuer, true);
         _verify(agent, false);
+        _verify(liquidityAgent, true);
+        _bind(agent, agentKey);
+        _bind(liquidityAgent, liquidityAgentKey);
         _configurePolicies();
         _grantMandates();
 
-        vm.prank(issuer);
-        poolId = manager.createPool(address(tbill), address(usd), address(tbill), 30);
+        poolId = manager.getPoolId(
+            address(tbill) < address(usd) ? address(tbill) : address(usd),
+            address(tbill) < address(usd) ? address(usd) : address(tbill),
+            address(tbill),
+            30
+        );
+        CustosActionAuthorizer.ActionIntent memory poolIntent = _poolInitializeIntent(liquidityAgent);
+        bytes memory poolSignature = _sign(liquidityAgentKey, poolIntent);
+        vm.prank(liquidityAgent);
+        assertEq(
+            manager.createPool(address(tbill), address(usd), address(tbill), 30, poolIntent, poolSignature), poolId
+        );
 
         vm.prank(issuer);
-        tbill.mint(issuer, 2_000_000e6);
-        usd.mint(issuer, 2_000_000e6);
+        tbill.mint(liquidityAgent, 2_000_000e6);
+        usd.mint(liquidityAgent, 2_000_000e6);
         usd.mint(agent, 100_000e6);
         usd.mint(unverified, 100_000e6);
 
-        vm.startPrank(issuer);
+        vm.startPrank(liquidityAgent);
         tbill.approve(address(manager), type(uint256).max);
         usd.approve(address(manager), type(uint256).max);
         vm.stopPrank();
@@ -100,6 +120,21 @@ contract MarketManagerTest is Test {
         usd.approve(address(manager), type(uint256).max);
 
         _seedPool();
+    }
+
+    function _bind(address agentWallet, uint256 walletKey) internal {
+        CustosOperatorBinding.BindingApproval memory approval = CustosOperatorBinding.BindingApproval({
+            principal: issuer,
+            agent: agentWallet,
+            authorityHash: keccak256(abi.encode("market-authority", issuer, agentWallet)),
+            nonce: bindings.nonces(agentWallet),
+            deadline: block.timestamp + 1 hours
+        });
+        bytes32 digest = bindings.hashApproval(approval);
+        (uint8 pv, bytes32 pr, bytes32 ps) = vm.sign(issuerKey, digest);
+        (uint8 av, bytes32 ar, bytes32 as_) = vm.sign(walletKey, digest);
+        vm.prank(attester);
+        bindings.bindAgent(approval, abi.encodePacked(pr, ps, pv), abi.encodePacked(ar, as_, av));
     }
 
     function _verify(address wallet, bool accredited) internal {
@@ -126,6 +161,7 @@ contract MarketManagerTest is Test {
         jurisdictions[0] = "US";
         bytes32 swapAction = gate.SWAP_ACTION();
         bytes32 liquidityAction = gate.LIQUIDITY_ENTRY_ACTION();
+        bytes32 poolAction = gate.POOL_INITIALIZE_ACTION();
 
         vm.startPrank(issuer);
         gate.setPolicy(address(tbill), CustosGate.Policy(false, jurisdictions, 0, true));
@@ -135,6 +171,9 @@ contract MarketManagerTest is Test {
             swapAction,
             address(tbill),
             CustosGate.ActionPolicy(false, jurisdictions, 100_000e6, true)
+        );
+        gate.setActionPolicy(
+            address(authorizer), poolAction, address(tbill), CustosGate.ActionPolicy(true, jurisdictions, 1, true)
         );
         gate.setActionPolicy(
             address(authorizer),
@@ -147,27 +186,43 @@ contract MarketManagerTest is Test {
 
     function _grantMandates() internal {
         vm.startPrank(issuer);
-        mandates.grantMandate(
-            agent,
-            address(manager),
-            gate.SWAP_ACTION(),
-            address(tbill),
-            100_000e6,
-            1_000_000e6,
-            uint64(block.timestamp),
-            uint64(block.timestamp + 30 days)
-        );
-        mandates.grantMandate(
-            issuer,
-            address(manager),
-            gate.LIQUIDITY_ENTRY_ACTION(),
-            address(tbill),
-            2_000_000e6,
-            3_000_000e6,
-            uint64(block.timestamp),
-            uint64(block.timestamp + 30 days)
-        );
+        _grantMandate(agent, gate.SWAP_ACTION(), 100_000e6, 1_000_000e6);
+        _grantMandate(liquidityAgent, gate.LIQUIDITY_ENTRY_ACTION(), 2_000_000e6, 3_000_000e6);
+        _grantMandate(liquidityAgent, gate.SWAP_ACTION(), 100_000e6, 1_000_000e6);
+        _grantMandate(liquidityAgent, gate.POOL_INITIALIZE_ACTION(), 1, 10);
         vm.stopPrank();
+    }
+
+    function _grantMandate(address agentWallet, bytes32 action, uint256 maxPerAction, uint256 maxTotal) internal {
+        mandates.grantMandate(
+            CustosAgentMandate.MandateGrant({
+                agent: agentWallet,
+                venue: address(manager),
+                action: action,
+                asset: address(tbill),
+                maxPerAction: maxPerAction,
+                maxTotal: maxTotal,
+                validAfter: uint64(block.timestamp),
+                validUntil: uint64(block.timestamp + 30 days)
+            })
+        );
+    }
+
+    function _poolInitializeIntent(address wallet) internal view returns (CustosActionAuthorizer.ActionIntent memory) {
+        (address token0, address token1) =
+            address(tbill) < address(usd) ? (address(tbill), address(usd)) : (address(usd), address(tbill));
+        return CustosActionAuthorizer.ActionIntent({
+            agent: wallet,
+            venue: address(manager),
+            executor: address(manager),
+            action: gate.POOL_INITIALIZE_ACTION(),
+            asset: address(tbill),
+            amount: 1,
+            recipient: address(manager),
+            nonce: authorizer.nonces(wallet),
+            deadline: block.timestamp + 1 hours,
+            contextHash: manager.poolInitializeContext(token0, token1, address(tbill), 30)
+        });
     }
 
     function _orderedAmounts(uint256 tbillAmount, uint256 usdAmount) internal view returns (uint256, uint256) {
@@ -236,9 +291,10 @@ contract MarketManagerTest is Test {
 
     function _seedPool() internal {
         (uint256 amount0, uint256 amount1) = _orderedAmounts(INITIAL, INITIAL);
-        CustosActionAuthorizer.ActionIntent memory intent = _liquidityIntent(issuer, amount0, amount1, 0, INITIAL);
-        bytes memory signature = _sign(issuerKey, intent);
-        vm.prank(issuer);
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _liquidityIntent(liquidityAgent, amount0, amount1, 0, INITIAL);
+        bytes memory signature = _sign(liquidityAgentKey, intent);
+        vm.prank(liquidityAgent);
         uint256 shares = manager.addLiquidity(poolId, amount0, amount1, 0, intent, signature);
         assertGt(shares, 0);
     }
@@ -291,9 +347,9 @@ contract MarketManagerTest is Test {
                     (_swapParams(address(usd), amountIn, amountOut, unverified), intent, signature)
                 )
             );
-        assertFalse(success);
-        assertEq(_selector(result), CustosMarketManager.ComplianceDenied.selector);
-        assertEq(authorizer.nonces(unverified), 0);
+        assertTrue(success);
+        assertEq(abi.decode(result, (uint256)), 0);
+        assertEq(authorizer.nonces(unverified), 1);
         _assertSolvent();
     }
 
@@ -314,8 +370,8 @@ contract MarketManagerTest is Test {
                     (_swapParams(address(usd), amountIn, 0, agent), intent, signature)
                 )
             );
-        assertFalse(success);
-        assertEq(_selector(result), CustosMarketManager.ComplianceDenied.selector);
+        assertTrue(success);
+        assertEq(abi.decode(result, (uint256)), 0);
     }
 
     function test_IntentCannotBeReusedWithChangedSwapParameters() public {
@@ -339,21 +395,58 @@ contract MarketManagerTest is Test {
 
     function test_AuthenticatedAccreditedProviderAddsLiquidity() public {
         (uint256 amount0, uint256 amount1) = _orderedAmounts(10_000e6, 10_000e6);
-        CustosActionAuthorizer.ActionIntent memory intent = _liquidityIntent(issuer, amount0, amount1, 1, 10_000e6);
-        bytes memory signature = _sign(issuerKey, intent);
-        uint256 beforeShares = manager.liquidityOf(poolId, issuer);
-        vm.prank(issuer);
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _liquidityIntent(liquidityAgent, amount0, amount1, 1, 10_000e6);
+        bytes memory signature = _sign(liquidityAgentKey, intent);
+        uint256 beforeShares = manager.liquidityOf(poolId, liquidityAgent);
+        vm.prank(liquidityAgent);
         uint256 shares = manager.addLiquidity(poolId, amount0, amount1, 1, intent, signature);
-        assertEq(manager.liquidityOf(poolId, issuer), beforeShares + shares);
+        assertEq(manager.liquidityOf(poolId, liquidityAgent), beforeShares + shares);
         _assertSolvent();
     }
 
-    function test_LiquidityPositionIsInternalAndCanExitToCompliantRecipient() public {
-        uint256 shares = manager.liquidityOf(poolId, issuer) / 10;
-        vm.prank(attester);
-        registry.revokeAgent(issuer, "issuer rotation");
+    function test_UnbalancedLiquidityOnlyCollectsProportionalAmounts() public {
+        (uint256 amount0, uint256 amount1) = _orderedAmounts(20_000e6, 10_000e6);
+        uint256 balance0Before = IERC20(manager.getPool(poolId).token0).balanceOf(liquidityAgent);
+        uint256 balance1Before = IERC20(manager.getPool(poolId).token1).balanceOf(liquidityAgent);
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _liquidityIntent(liquidityAgent, amount0, amount1, 1, 20_000e6);
+        bytes memory signature = _sign(liquidityAgentKey, intent);
 
-        vm.prank(issuer);
+        vm.prank(liquidityAgent);
+        manager.addLiquidity(poolId, amount0, amount1, 1, intent, signature);
+
+        CustosMarketManager.Pool memory pool = manager.getPool(poolId);
+        uint256 spent0 = balance0Before - IERC20(pool.token0).balanceOf(liquidityAgent);
+        uint256 spent1 = balance1Before - IERC20(pool.token1).balanceOf(liquidityAgent);
+        assertEq(spent0, 10_000e6);
+        assertEq(spent1, 10_000e6);
+        _assertSolvent();
+    }
+
+    function test_SignedOutputCeilingSurvivesAdversePoolMovement() public {
+        uint256 amountIn = 5_000e6;
+        uint256 ceiling = manager.quoteExactInput(poolId, address(usd), amountIn);
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _swapIntent(agent, address(usd), amountIn, 0, ceiling, agent);
+        bytes memory signature = _sign(agentKey, intent);
+
+        _swap(liquidityAgent, liquidityAgentKey, 20_000e6);
+        uint256 movedQuote = manager.quoteExactInput(poolId, address(usd), amountIn);
+        assertLt(movedQuote, ceiling);
+
+        vm.prank(agent);
+        uint256 actual = manager.swapExactInput(_swapParams(address(usd), amountIn, 0, agent), intent, signature);
+        assertEq(actual, movedQuote);
+        assertGt(actual, 0);
+    }
+
+    function test_LiquidityPositionIsInternalAndCanExitToCompliantRecipient() public {
+        uint256 shares = manager.liquidityOf(poolId, liquidityAgent) / 10;
+        vm.prank(attester);
+        registry.revokeAgent(liquidityAgent, "agent rotation");
+
+        vm.prank(liquidityAgent);
         (uint256 amount0, uint256 amount1) = manager.removeLiquidity(poolId, shares, 0, 0, agent);
         assertGt(amount0, 0);
         assertGt(amount1, 0);
@@ -362,14 +455,40 @@ contract MarketManagerTest is Test {
     }
 
     function test_ExitToUnverifiedRecipientFailsAndRollsBack() public {
-        uint256 shares = manager.liquidityOf(poolId, issuer) / 10;
-        uint256 beforeShares = manager.liquidityOf(poolId, issuer);
-        vm.prank(issuer);
+        uint256 shares = manager.liquidityOf(poolId, liquidityAgent) / 10;
+        uint256 beforeShares = manager.liquidityOf(poolId, liquidityAgent);
+        vm.prank(liquidityAgent);
         (bool success,) = address(manager)
             .call(abi.encodeCall(CustosMarketManager.removeLiquidity, (poolId, shares, 0, 0, unverified)));
         assertFalse(success);
-        assertEq(manager.liquidityOf(poolId, issuer), beforeShares);
+        assertEq(manager.liquidityOf(poolId, liquidityAgent), beforeShares);
         _assertSolvent();
+    }
+
+    function test_VenueRoleRevocationCannotBrickExit() public {
+        uint256 shares = manager.liquidityOf(poolId, liquidityAgent) / 50;
+        bytes32 venueRole = gate.VENUE_ROLE();
+        vm.prank(admin);
+        gate.revokeRole(venueRole, address(manager));
+
+        vm.prank(liquidityAgent);
+        manager.removeLiquidity(poolId, shares, 0, 0, agent);
+        assertGt(tbill.balanceOf(agent), 0);
+    }
+
+    function test_InactivePolicyCanExitToApprovedRedemptionEscrow() public {
+        address escrow = makeAddr("redemptionEscrow");
+        bytes2[] memory jurisdictions = new bytes2[](1);
+        jurisdictions[0] = "US";
+        vm.startPrank(issuer);
+        gate.setRedemptionEscrow(address(tbill), escrow, true);
+        gate.setPolicy(address(tbill), CustosGate.Policy(false, jurisdictions, 0, false));
+        vm.stopPrank();
+
+        uint256 shares = manager.liquidityOf(poolId, liquidityAgent) / 50;
+        vm.prank(liquidityAgent);
+        manager.removeLiquidity(poolId, shares, 0, 0, escrow);
+        assertGt(tbill.balanceOf(escrow), 0);
     }
 
     function test_SwapFeesIncreaseConstantProduct() public {
@@ -378,6 +497,37 @@ contract MarketManagerTest is Test {
         _swap(agent, agentKey, 50_000e6);
         CustosMarketManager.Pool memory afterPool = manager.getPool(poolId);
         assertGt(uint256(afterPool.reserve0) * afterPool.reserve1, kBefore);
+    }
+
+    function testFuzz_SwapPreservesSolvencyAndNonDecreasingConstantProduct(uint96 rawAmountIn) public {
+        uint256 amountIn = bound(uint256(rawAmountIn), 1e6, 50_000e6);
+        CustosMarketManager.Pool memory beforePool = manager.getPool(poolId);
+        uint256 kBefore = uint256(beforePool.reserve0) * beforePool.reserve1;
+
+        _swap(agent, agentKey, amountIn);
+
+        CustosMarketManager.Pool memory afterPool = manager.getPool(poolId);
+        assertGe(uint256(afterPool.reserve0) * afterPool.reserve1, kBefore);
+        _assertSolvent();
+    }
+
+    function testFuzz_UnbalancedLiquidityNeverCollectsMoreThanAuthorized(uint96 raw0, uint96 raw1) public {
+        uint256 desired0 = bound(uint256(raw0), 1e6, 50_000e6);
+        uint256 desired1 = bound(uint256(raw1), 1e6, 50_000e6);
+        CustosMarketManager.Pool memory beforePool = manager.getPool(poolId);
+        uint256 balance0Before = IERC20(beforePool.token0).balanceOf(liquidityAgent);
+        uint256 balance1Before = IERC20(beforePool.token1).balanceOf(liquidityAgent);
+        uint256 policyCeiling = beforePool.policyAsset == beforePool.token0 ? desired0 : desired1;
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _liquidityIntent(liquidityAgent, desired0, desired1, 0, policyCeiling);
+        bytes memory signature = _sign(liquidityAgentKey, intent);
+
+        vm.prank(liquidityAgent);
+        manager.addLiquidity(poolId, desired0, desired1, 0, intent, signature);
+
+        assertLe(balance0Before - IERC20(beforePool.token0).balanceOf(liquidityAgent), desired0);
+        assertLe(balance1Before - IERC20(beforePool.token1).balanceOf(liquidityAgent), desired1);
+        _assertSolvent();
     }
 
     function test_PausedPoolBlocksNewRiskButAllowsExit() public {
@@ -397,8 +547,8 @@ contract MarketManagerTest is Test {
         assertFalse(swapSuccess);
         assertEq(_selector(result), CustosMarketManager.PoolNotActive.selector);
 
-        uint256 shares = manager.liquidityOf(poolId, issuer) / 20;
-        vm.prank(issuer);
+        uint256 shares = manager.liquidityOf(poolId, liquidityAgent) / 20;
+        vm.prank(liquidityAgent);
         manager.removeLiquidity(poolId, shares, 0, 0, agent);
         _assertSolvent();
     }
@@ -408,13 +558,14 @@ contract MarketManagerTest is Test {
         gate.setSettlement(address(tbill), address(manager), false);
 
         (uint256 amount0, uint256 amount1) = _orderedAmounts(1_000e6, 1_000e6);
-        CustosActionAuthorizer.ActionIntent memory intent = _liquidityIntent(issuer, amount0, amount1, 0, 1_000e6);
-        bytes memory signature = _sign(issuerKey, intent);
-        vm.prank(issuer);
+        CustosActionAuthorizer.ActionIntent memory intent =
+            _liquidityIntent(liquidityAgent, amount0, amount1, 0, 1_000e6);
+        bytes memory signature = _sign(liquidityAgentKey, intent);
+        vm.prank(liquidityAgent);
         (bool success,) = address(manager)
             .call(abi.encodeCall(CustosMarketManager.addLiquidity, (poolId, amount0, amount1, 0, intent, signature)));
         assertFalse(success);
-        assertEq(authorizer.nonces(issuer), intent.nonce);
+        assertEq(authorizer.nonces(liquidityAgent), intent.nonce);
         _assertSolvent();
     }
 }

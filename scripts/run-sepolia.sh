@@ -3,7 +3,8 @@
 # Prereqs: contracts deployed (scripts/deploy-sepolia.sh), local postgres+redis.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set -a; source .env; set +a
+# shellcheck disable=SC1091
+source .env
 
 if [ ! -f contracts/deployments/84532.json ]; then
   echo "✗ no Base Sepolia deployment — run scripts/deploy-sepolia.sh first"; exit 1

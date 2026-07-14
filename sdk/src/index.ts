@@ -1,5 +1,5 @@
 import { createPublicClient, encodeAbiParameters, http, getAddress, keccak256, stringToHex, type Address, type Chain, type Hex, type PublicClient } from 'viem';
-import { custosGateAbi, custosRegistryAbi } from './abis.js';
+import { custosGateAbi, custosPrivateCredentialAbi, custosRegistryAbi } from './abis.js';
 export {
   custosRegistryAbi,
   custosGateAbi,
@@ -8,10 +8,12 @@ export {
   mockUsdAbi,
   custosActionAuthorizerAbi,
   custosAgentMandateAbi,
+  custosOperatorBindingAbi,
   custosMarketManagerAbi,
+  custosPrivateCredentialAbi,
 } from './abis.js';
 
-export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address; experimental?: boolean; settlementToken?: Address; mandates?: Address; actionAuthorizer?: Address; marketManager?: Address }
+export interface Deployments { version: number; chainId: number; deploymentBlock: number; eas: Address; schemaUID: Hex; registry: Address; gate: Address; tbill: Address; admin: Address; attester: Address; issuer: Address; experimental?: boolean; deployer?: Address; settlementToken?: Address; operatorBinding?: Address; mandates?: Address; actionAuthorizer?: Address; marketManager?: Address }
 export type AgentStatus = 'PENDING' | 'IN_REVIEW' | 'VERIFIED' | 'REJECTED' | 'REVOKED';
 export interface AgentStatusResponse { wallet: Address; status: AgentStatus; jurisdiction: string; erc8004TokenId: string | null; attestationUID: string | null; checks: Array<{ type: string; provider: string; status: string; completedAt: string | null }> }
 export interface RegistrationDetails {
@@ -22,7 +24,7 @@ export interface RegistrationDetails {
 }
 export interface RegisterInput extends RegistrationDetails { nonce: string; signature: Hex; domain: string }
 export interface RegistrationChallenge { wallet: Address; nonce: string; domain: string; expiresAt: string }
-export interface CustosConfig { apiUrl: string; registryAddress: Address; gateAddress: Address; rpcUrl?: string; chain?: Chain }
+export interface CustosConfig { apiUrl: string; registryAddress: Address; gateAddress: Address; privateCredentialAddress?: Address; rpcUrl?: string; chain?: Chain }
 
 export const CustosActions = {
   SWAP: keccak256(stringToHex('SWAP')),
@@ -56,6 +58,25 @@ export interface AgentMandateGrant {
   validUntil: bigint;
 }
 
+export interface BindingApproval {
+  principal: Address;
+  agent: Address;
+  authorityHash: Hex;
+  nonce: bigint;
+  deadline: bigint;
+}
+
+export interface PrivatePresentation {
+  agent: Address;
+  verifier: Address;
+  credentialCommitment: Hex;
+  policyScope: Hex;
+  nullifier: Hex;
+  validUntil: bigint;
+  nonce: bigint;
+  deadline: bigint;
+}
+
 export function mandateScopeKey(grant: Pick<AgentMandateGrant, 'agent' | 'venue' | 'action' | 'asset'>): Hex {
   return keccak256(encodeAbiParameters(
     [{ type: 'address' }, { type: 'address' }, { type: 'bytes32' }, { type: 'address' }],
@@ -85,6 +106,91 @@ export function actionIntentTypedData(chainId: number, authorizer: Address, mess
     primaryType: 'ActionIntent' as const,
     message,
   };
+}
+
+export const custosBindingApprovalTypes = {
+  BindingApproval: [
+    { name: 'principal', type: 'address' },
+    { name: 'agent', type: 'address' },
+    { name: 'authorityHash', type: 'bytes32' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+  ],
+} as const;
+
+export function bindingApprovalTypedData(chainId: number, bindingContract: Address, message: BindingApproval) {
+  return {
+    domain: {
+      name: 'Custos Operator Binding',
+      version: '1',
+      chainId,
+      verifyingContract: getAddress(bindingContract),
+    },
+    types: custosBindingApprovalTypes,
+    primaryType: 'BindingApproval' as const,
+    message,
+  };
+}
+
+export const custosPrivatePresentationTypes = {
+  PrivatePresentation: [
+    { name: 'agent', type: 'address' },
+    { name: 'verifier', type: 'address' },
+    { name: 'credentialCommitment', type: 'bytes32' },
+    { name: 'policyScope', type: 'bytes32' },
+    { name: 'nullifier', type: 'bytes32' },
+    { name: 'validUntil', type: 'uint64' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+  ],
+} as const;
+
+export function privatePresentationTypedData(
+  chainId: number,
+  credentialContract: Address,
+  message: PrivatePresentation,
+) {
+  return {
+    domain: {
+      name: 'Custos Private Credential',
+      version: '1',
+      chainId,
+      verifyingContract: getAddress(credentialContract),
+    },
+    types: custosPrivatePresentationTypes,
+    primaryType: 'PrivatePresentation' as const,
+    message,
+  };
+}
+
+/** A reusable scope for one issuer's eligibility rule across multiple assets. */
+export function privateCredentialPolicyScope(issuer: Address, policyName: string): Hex {
+  return keccak256(encodeAbiParameters(
+    [{ type: 'address' }, { type: 'string' }],
+    [getAddress(issuer), policyName],
+  ));
+}
+
+/** Must match CustosPrivateCredential.publicInputsHash. */
+export function privateCredentialPublicInputsHash(presentation: PrivatePresentation): Hex {
+  return keccak256(encodeAbiParameters(
+    [
+      { type: 'address' },
+      { type: 'address' },
+      { type: 'bytes32' },
+      { type: 'bytes32' },
+      { type: 'bytes32' },
+      { type: 'uint64' },
+    ],
+    [
+      getAddress(presentation.agent),
+      getAddress(presentation.verifier),
+      presentation.credentialCommitment,
+      presentation.policyScope,
+      presentation.nullifier,
+      presentation.validUntil,
+    ],
+  ));
 }
 
 export function registrationMessage(input: RegistrationDetails, challenge: Pick<RegistrationChallenge, 'nonce' | 'domain'>): string {
@@ -156,5 +262,16 @@ export class Custos {
   }
   async isVerified(agent: Address): Promise<boolean> {
     return this.client.readContract({ address: this.config.registryAddress, abi: custosRegistryAbi, functionName: 'isVerified', args: [agent] });
+  }
+  async isPrivateCredentialEligible(agent: Address, policyScope: Hex): Promise<boolean> {
+    if (!this.config.privateCredentialAddress) {
+      throw new Error('privateCredentialAddress is required for private credential checks');
+    }
+    return this.client.readContract({
+      address: this.config.privateCredentialAddress,
+      abi: custosPrivateCredentialAbi,
+      functionName: 'isEligible',
+      args: [getAddress(agent), policyScope],
+    });
   }
 }

@@ -3,9 +3,8 @@ set -euo pipefail
 set +x
 
 cd "$(dirname "$0")/.."
-set -a
+# shellcheck disable=SC1091
 source .env
-set +a
 
 required=(
   ATTESTER_PRIVATE_KEY
@@ -22,6 +21,7 @@ for name in "${required[@]}"; do
     exit 1
   fi
 done
+export "${required[@]}"
 
 export DEPLOYMENTS_FILE="$PWD/contracts/deployments/pilot-84532.json"
 export CONFIGURATION_EVIDENCE_FILE="$PWD/contracts/deployments/pilot-84532-configuration.json"

@@ -38,6 +38,14 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         address recipient;
     }
 
+    struct DepositCalculation {
+        uint256 shares;
+        uint256 amount0;
+        uint256 amount1;
+        uint256 nextTotalShares;
+        uint256 policyAmount;
+    }
+
     CustosGate public immutable gate;
     CustosActionAuthorizer public authorizer;
     mapping(bytes32 => Pool) private _pools;
@@ -67,6 +75,8 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOut
     );
+    event MarketActionDenied(address indexed agent, bytes32 indexed action, bytes32 indexed contextHash);
+    event ExitAuditFallback(address indexed owner, bytes32 indexed poolId, bytes32 contextHash);
 
     error InvalidAddress();
     error InvalidPool();
@@ -97,11 +107,14 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         emit AuthorizerConfigured(address(_authorizer));
     }
 
-    function createPool(address tokenA, address tokenB, address policyAsset, uint16 feeBps)
-        external
-        onlyRole(MARKET_ADMIN_ROLE)
-        returns (bytes32 poolId)
-    {
+    function createPool(
+        address tokenA,
+        address tokenB,
+        address policyAsset,
+        uint16 feeBps,
+        CustosActionAuthorizer.ActionIntent calldata intent,
+        bytes calldata signature
+    ) external nonReentrant returns (bytes32 poolId) {
         if (
             tokenA == address(0) || tokenB == address(0) || tokenA == tokenB || tokenA.code.length == 0
                 || tokenB.code.length == 0
@@ -112,6 +125,13 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         poolId = getPoolId(token0, token1, policyAsset, feeBps);
         if (_pools[poolId].token0 != address(0)) revert PoolExists();
+
+        bytes32 expectedContext = poolInitializeContext(token0, token1, policyAsset, feeBps);
+        _validateIntent(intent, gate.POOL_INITIALIZE_ACTION(), policyAsset, 1, address(this), expectedContext);
+        if (!authorizer.authorizeWithAmount(intent, signature, 1)) {
+            emit MarketActionDenied(msg.sender, gate.POOL_INITIALIZE_ACTION(), expectedContext);
+            return bytes32(0);
+        }
 
         _pools[poolId] = Pool({
             token0: token0,
@@ -145,34 +165,24 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         _requireUint128(amount0);
         _requireUint128(amount1);
 
-        uint256 policyAmount = pool.policyAsset == pool.token0 ? amount0 : amount1;
+        DepositCalculation memory deposit = _calculateDeposit(pool, amount0, amount1, minShares);
+        shares = deposit.shares;
         bytes32 expectedContext = liquidityContext(poolId, amount0, amount1, minShares);
         _validateIntent(
-            intent, gate.LIQUIDITY_ENTRY_ACTION(), pool.policyAsset, policyAmount, msg.sender, expectedContext
+            intent, gate.LIQUIDITY_ENTRY_ACTION(), pool.policyAsset, deposit.policyAmount, msg.sender, expectedContext
         );
-        if (!authorizer.authorize(intent, signature)) revert ComplianceDenied();
-
-        if (pool.totalShares == 0) {
-            uint256 root = Math.sqrt(amount0 * amount1);
-            if (root <= MINIMUM_LIQUIDITY) revert InsufficientLiquidity();
-            shares = root - MINIMUM_LIQUIDITY;
-            pool.totalShares = root;
-        } else {
-            shares = Math.min(
-                Math.mulDiv(amount0, pool.totalShares, pool.reserve0),
-                Math.mulDiv(amount1, pool.totalShares, pool.reserve1)
-            );
-            if (shares == 0) revert InsufficientLiquidity();
-            pool.totalShares += shares;
+        if (!authorizer.authorizeWithAmount(intent, signature, deposit.policyAmount)) {
+            emit MarketActionDenied(msg.sender, gate.LIQUIDITY_ENTRY_ACTION(), expectedContext);
+            return 0;
         }
-        if (shares < minShares) revert SlippageExceeded();
 
-        _collectExact(pool.token0, msg.sender, amount0);
-        _collectExact(pool.token1, msg.sender, amount1);
-        pool.reserve0 = _addReserve(pool.reserve0, amount0);
-        pool.reserve1 = _addReserve(pool.reserve1, amount1);
+        pool.totalShares = deposit.nextTotalShares;
+        _collectExact(pool.token0, msg.sender, deposit.amount0);
+        _collectExact(pool.token1, msg.sender, deposit.amount1);
+        pool.reserve0 = _addReserve(pool.reserve0, deposit.amount0);
+        pool.reserve1 = _addReserve(pool.reserve1, deposit.amount1);
         liquidityOf[poolId][msg.sender] += shares;
-        emit LiquidityAdded(poolId, msg.sender, amount0, amount1, shares);
+        emit LiquidityAdded(poolId, msg.sender, deposit.amount0, deposit.amount1, shares);
     }
 
     /// @notice LP positions are internal and non-transferable. A revoked owner
@@ -193,8 +203,12 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
 
         uint256 policyAmount = pool.policyAsset == pool.token0 ? amount0 : amount1;
         bytes32 contextHash = liquidityExitContext(poolId, shares, min0, min1, recipient);
-        if (!gate.logLiquidityExit(msg.sender, address(this), pool.policyAsset, policyAmount, contextHash)) {
-            revert ComplianceDenied();
+        try gate.logLiquidityExit(msg.sender, address(this), pool.policyAsset, policyAmount, contextHash) returns (
+            bool logged
+        ) {
+            if (!logged) emit ExitAuditFallback(msg.sender, poolId, contextHash);
+        } catch {
+            emit ExitAuditFallback(msg.sender, poolId, contextHash);
         }
 
         liquidityOf[poolId][msg.sender] -= shares;
@@ -225,7 +239,10 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         uint256 policyAmount = params.tokenIn == pool.policyAsset ? params.amountIn : amountOut;
         bytes32 expectedContext = swapContext(params.poolId, params.tokenIn, params.amountIn, params.minOut);
         _validateIntent(intent, gate.SWAP_ACTION(), pool.policyAsset, policyAmount, params.recipient, expectedContext);
-        if (!authorizer.authorize(intent, signature)) revert ComplianceDenied();
+        if (!authorizer.authorizeWithAmount(intent, signature, policyAmount)) {
+            emit MarketActionDenied(msg.sender, gate.SWAP_ACTION(), expectedContext);
+            return 0;
+        }
 
         _collectExact(params.tokenIn, msg.sender, params.amountIn);
         if (zeroForOne) {
@@ -288,6 +305,14 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         return keccak256(abi.encode("CUSTOS_LIQUIDITY_EXIT_V1", poolId, shares, min0, min1, recipient));
     }
 
+    function poolInitializeContext(address token0, address token1, address policyAsset, uint16 feeBps)
+        public
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encode("CUSTOS_POOL_INITIALIZE_V1", token0, token1, policyAsset, feeBps));
+    }
+
     function _validateIntent(
         CustosActionAuthorizer.ActionIntent calldata intent,
         bytes32 action,
@@ -299,7 +324,7 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         if (
             address(authorizer) == address(0) || intent.agent != msg.sender || intent.venue != address(this)
                 || intent.executor != address(this) || intent.action != action || intent.asset != policyAsset
-                || intent.amount != policyAmount || intent.recipient != recipient || intent.contextHash != contextHash
+                || intent.amount < policyAmount || intent.recipient != recipient || intent.contextHash != contextHash
         ) revert InvalidIntent();
     }
 
@@ -312,6 +337,33 @@ contract CustosMarketManager is AccessControl, ReentrancyGuard {
         uint256 amountInWithFee = amountIn * (10_000 - feeBps);
         amountOut = Math.mulDiv(amountInWithFee, reserveOut, reserveIn * 10_000 + amountInWithFee);
         if (amountOut == 0 || amountOut > reserveOut) revert InsufficientLiquidity();
+    }
+
+    function _calculateDeposit(Pool storage pool, uint256 desired0, uint256 desired1, uint256 minShares)
+        private
+        view
+        returns (DepositCalculation memory deposit)
+    {
+        if (pool.totalShares == 0) {
+            uint256 root = Math.sqrt(desired0 * desired1);
+            if (root <= MINIMUM_LIQUIDITY) revert InsufficientLiquidity();
+            deposit.shares = root - MINIMUM_LIQUIDITY;
+            deposit.amount0 = desired0;
+            deposit.amount1 = desired1;
+            deposit.nextTotalShares = root;
+        } else {
+            deposit.shares = Math.min(
+                Math.mulDiv(desired0, pool.totalShares, pool.reserve0),
+                Math.mulDiv(desired1, pool.totalShares, pool.reserve1)
+            );
+            if (deposit.shares == 0) revert InsufficientLiquidity();
+            deposit.amount0 = Math.mulDiv(deposit.shares, pool.reserve0, pool.totalShares, Math.Rounding.Ceil);
+            deposit.amount1 = Math.mulDiv(deposit.shares, pool.reserve1, pool.totalShares, Math.Rounding.Ceil);
+            if (deposit.amount0 > desired0 || deposit.amount1 > desired1) revert InvalidAmount();
+            deposit.nextTotalShares = pool.totalShares + deposit.shares;
+        }
+        if (deposit.shares < minShares) revert SlippageExceeded();
+        deposit.policyAmount = pool.policyAsset == pool.token0 ? deposit.amount0 : deposit.amount1;
     }
 
     function _collectExact(address token, address from, uint256 amount) private {

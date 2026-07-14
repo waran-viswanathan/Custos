@@ -8,9 +8,8 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-set -a
+# shellcheck disable=SC1091
 source .env
-set +a
 
 required=(
   SEPOLIA_DEPLOYER_PRIVATE_KEY
@@ -27,8 +26,11 @@ for name in "${required[@]}"; do
 done
 
 manifest="contracts/deployments/pilot-84532.json"
-deployer_expected=$(jq -r '[.transactions[] | select(.transactionType == "CREATE")][0].transaction.from' \
-  contracts/broadcast/DeployPilot.s.sol/84532/run-latest.json)
+deployer_expected=$(jq -r '.deployer // empty' "$manifest")
+if [ -z "$deployer_expected" ]; then
+  echo "FAIL: deployment manifest does not contain the deployer address; v4 evidence is required"
+  exit 1
+fi
 admin_expected=$(jq -r '.admin' "$manifest")
 attester_expected=$(jq -r '.attester' "$manifest")
 issuer_expected=$(jq -r '.issuer' "$manifest")
@@ -41,7 +43,7 @@ check_signer() {
   label="$1"
   private_key="$2"
   expected="$3"
-  if ! derived=$(cast wallet address "$private_key" 2>/dev/null); then
+  if ! derived=$(PRIVATE_KEY="$private_key" node demo-agent/key-address.mjs PRIVATE_KEY 2>/dev/null); then
     echo "FAIL: $label private key is malformed"
     exit 1
   fi

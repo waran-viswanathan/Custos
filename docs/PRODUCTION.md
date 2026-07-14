@@ -30,8 +30,9 @@ cannot be provisioned in source control.
   path authenticates the wallet's EIP-712 or ERC-1271 intent rather than
   trusting an address supplied by a router.
 - Configure the authorizer's mandate registry, grant `CONSUMER_ROLE` only to
-  reviewed authorizers, and verify each production agent has a principal-issued
-  venue/action/asset mandate with conservative caps and expiry.
+  reviewed authorizers, and verify each production agent has an active dual-signed
+  operator binding plus a binding-pinned, principal-issued venue/action/asset
+  mandate with conservative caps and expiry.
 - Approve settlement contracts per restricted token only after bytecode review.
   Confirm the settlement cannot create ungoverned pools or bypass action policy,
   and that inactive token policy still blocks inbound custody.
@@ -60,5 +61,6 @@ verification checks; audit history is retained without the PII-bearing relation.
    including that the deployer no longer has admin rights when a separate
    `ADMIN_ADDRESS` is configured.
 5. Run a signed-registration lifecycle on the target environment.
-6. Confirm the indexer starts at the deployment block and only authoritative
-   transfer checks affect compliance statistics.
+6. Confirm the indexer starts at the deployment block, validates canonical block
+   hashes, indexes binding/mandate/intent/market events, and separates successful
+   authoritative settlement from observed denials in statistics.

@@ -1,7 +1,7 @@
 {
   "name": "@custos/score",
   "version": "0.1.0",
-  "description": "Custos Score v0 — rules + velocity risk scoring for agent transactions",
+  "description": "Archived risk-scoring experiment from the superseded Custos payment prototype",
   "type": "module",
   "main": "src/index.js",
   "exports": {

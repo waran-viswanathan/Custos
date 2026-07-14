@@ -1,6 +1,8 @@
 # @custos/sdk
 
-TypeScript SDK for Custos — compliance credentials for AI agents transacting in tokenized RWAs.
+TypeScript SDK for the Custos regulated-asset settlement gate. It supports
+operator-backed autonomous-wallet verification, typed binding and action
+signatures, issuer-policy reads, and generated contract ABIs.
 
 ## Quickstart
 
@@ -32,3 +34,10 @@ if (!allowed) throw new Error(`blocked: ${reason}`);
 ```
 
 Also exported: `custosRegistryAbi`, `custosGateAbi`, `mockTBillAbi`, `mockEasAbi` (typed `as const` for viem), and the `Deployments` interface matching `contracts/deployments/*.json`.
+
+Experimental private-credential integrations can use
+`custosPrivateCredentialAbi`, `privatePresentationTypedData`,
+`privateCredentialPublicInputsHash`, and `privateCredentialPolicyScope`. These
+helpers match the contract boundary described in
+[`docs/PRIVATE_CREDENTIALS.md`](../docs/PRIVATE_CREDENTIALS.md); they do not
+provide a ZK circuit, credential issuer, or proving service.

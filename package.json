@@ -2,7 +2,7 @@
   "name": "custos",
   "private": true,
   "version": "0.2.0",
-  "description": "Custos — compliance credential layer for AI agents transacting in tokenized RWAs",
+  "description": "Custos — the regulated-asset settlement gate for autonomous wallets",
   "scripts": {
     "dev": "concurrently -n api,worker,dash \"pnpm --filter @custos/api dev\" \"pnpm --filter @custos/api worker\" \"pnpm --filter @custos/dashboard dev\"",
     "build": "pnpm -r build",
@@ -16,5 +16,10 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@9.15.9",
+  "pnpm": {
+    "overrides": {
+      "postcss": "8.5.16"
+    }
+  }
 }

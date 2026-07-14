@@ -15,12 +15,13 @@ import {
   custosAgentMandateAbi,
   custosGateAbi,
   custosMarketManagerAbi,
+  custosOperatorBindingAbi,
   custosRegistryAbi,
   mandateScopeKey,
   type Deployments,
 } from '@custos/sdk';
 
-type PilotDeployments = Deployments & Required<Pick<Deployments, 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
+type PilotDeployments = Deployments & Required<Pick<Deployments, 'operatorBinding' | 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
 
 const required = (name: string): string => {
   const value = process.env[name];
@@ -34,6 +35,7 @@ const configuration = JSON.parse(readFileSync(required('CONFIGURATION_EVIDENCE_F
   actors: { principal: Address; agent: Address; exitRecipient: Address };
   credentials: Record<string, { address: Address; attestationUID: Hex }>;
   transactions: Record<string, Hex>;
+  operatorBinding: { bindingId: Hex; principal: Address; agent: Address };
 };
 assert.equal(manifest.chainId, 84532, 'manifest is not for Base Sepolia');
 
@@ -78,6 +80,16 @@ for (const [label, address] of Object.entries(actors)) {
   assert.equal(record.jurisdictionCode.toLowerCase(), toHex('US', { size: 2 }).toLowerCase());
   pass(`${label} credential active and matched`);
 }
+
+const [boundPrincipal, bindingId] = await client.readContract({
+  address: manifest.operatorBinding,
+  abi: custosOperatorBindingAbi,
+  functionName: 'getActiveBinding',
+  args: [actors.agent],
+});
+assert.equal(boundPrincipal.toLowerCase(), actors.principal.toLowerCase());
+assert.equal(bindingId.toLowerCase(), configuration.operatorBinding.bindingId.toLowerCase());
+pass('operator binding active and matched');
 
 const transferPolicy = await client.readContract({
   address: manifest.gate,
@@ -142,6 +154,7 @@ pass('pool reserves and agent liquidity matched');
 for (const mandate of [
   { label: 'swap', action: CustosActions.SWAP, maxPerAction: 5_000n * 10n ** 6n, maxTotal: 20_000n * 10n ** 6n, spent: 0n },
   { label: 'liquidity', action: CustosActions.LIQUIDITY_ENTRY, maxPerAction: seedAmount, maxTotal: seedAmount, spent: seedAmount },
+  { label: 'pool initialization', action: CustosActions.POOL_INITIALIZE, maxPerAction: 1n, maxTotal: 1n, spent: 1n },
 ] as const) {
   const scope = mandateScopeKey({
     agent: actors.agent,
@@ -164,6 +177,7 @@ for (const mandate of [
   });
   assert.equal(record.principal.toLowerCase(), actors.principal.toLowerCase());
   assert.equal(record.agent.toLowerCase(), actors.agent.toLowerCase());
+  assert.equal(record.bindingId.toLowerCase(), bindingId.toLowerCase());
   assert.equal(record.venue.toLowerCase(), manifest.marketManager.toLowerCase());
   assert.equal(record.active, true);
   assert.equal(record.maxPerAction, mandate.maxPerAction);

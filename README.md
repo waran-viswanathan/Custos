@@ -1,13 +1,22 @@
 # Custos
 
-Custos is compliance and delegated-authority infrastructure for AI agents transacting in tokenized real-world assets. It verifies the entity behind an agent (KYB + sanctions screening), issues a revocable on-chain attestation via EAS on Base, records what the operator has authorized, authenticates the wallet's exact action, and enforces issuer policy before execution. Agents get portable credentials and narrowly scoped mandates; issuers get cryptographically enforced policies, revocation, and a complete audit trail.
+Custos is the regulated-asset settlement gate for autonomous wallets. It proves
+the verified legal operator behind an agent, records the authority delegated to
+it, authenticates its exact signed action, and enforces issuer policy before
+value moves. Issuers get fail-closed settlement controls, immediate revocation,
+and a reconstructable onchain/offchain evidence trail without putting PII onchain.
+
+The canonical product definition and boundaries live in
+[docs/PRODUCT.md](docs/PRODUCT.md).
 
 ## Architecture
 
 ```text
 operator ──signed registration──▶ API/worker ──KYB + sanctions──▶ EAS + CustosRegistry
    │                                                                        │
-   └──principal mandate──▶ CustosAgentMandate ◀──credential status──────────┘
+   ├──dual-signed approval──▶ CustosOperatorBinding ◀──credential status────┘
+   │                                  │
+   └──principal mandate────────▶ CustosAgentMandate
                                   ▲
                                   │ scope, caps, expiry, revocation
 agent wallet ──EIP-712/ERC-1271 intent──▶ CustosActionAuthorizer
@@ -21,10 +30,11 @@ issuer policy ──────────────────────
                                                indexer + Postgres audit trail
 ```
 
-Each layer answers a separate question: who the agent is, what authority its
+Each layer answers a separate question: who the agent is, which verified
+principal and agent mutually approved their relationship, what authority that
 principal delegated, whether the wallet approved this exact action, and whether
-the issuer permits it. Credential revocation, mandate revocation, signature
-failure, or missing policy blocks new risk at transaction time.
+the issuer permits it. Binding or credential revocation, mandate revocation,
+signature failure, or missing policy blocks new risk at transaction time.
 
 No PII ever goes on-chain: the attestation carries only `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`.
 
@@ -84,25 +94,44 @@ Then configure your policy (jurisdictions, accreditation, transfer caps, kill sw
 
 ### Authenticated wallet actions
 
-Custos can evaluate swaps, liquidity entry, pool initialization, vault operations, and custom agent actions without trusting a router-supplied wallet address. The wallet signs a single-use EIP-712 intent binding the venue, approved executor, action, asset, amount, recipient, context, nonce, and deadline. `CustosActionAuthorizer` verifies that intent before `CustosGate` applies the exact authorizer/action/asset policy.
+Custos currently evaluates swaps, liquidity entry, pool initialization, and
+custom integrated agent actions without trusting a router-supplied wallet
+address. Vault actions are a roadmap extension, not an implemented product. The
+wallet signs a single-use EIP-712 intent binding the venue, approved executor,
+action, asset, amount ceiling, recipient, context, nonce, and deadline.
+`CustosActionAuthorizer` verifies that intent before `CustosGate` applies the
+exact authorizer/action/asset policy.
 
 `CustosAgentMandate` adds the principal-to-agent authority layer: an operator can restrict an agent to an exact venue, action, and asset with transaction and cumulative caps, validity dates, revocation, and emergency freeze. Custos remains the operator-verification, credential, mandate, policy, revocation, and audit infrastructure.
+
+`CustosOperatorBinding` prevents self-grants and scope squatting: a distinct,
+verified principal and agent must both sign the same EIP-712 approval before an
+attester activates the relationship. Every mandate is pinned to that binding,
+so revocation or rebinding invalidates the old authority automatically.
+
+The contracts also contain an **experimental reusable private-credential
+boundary**. An issuer can opt a policy into a ZK-derived eligibility scope so an
+agent proves that its operator meets the rule without publishing the underlying
+KYB attributes. The current repository includes the fail-closed contracts, SDK
+helpers, and a mock verifier for tests—not a production circuit or audited ZK
+verifier. See [reusable private credentials](docs/PRIVATE_CREDENTIALS.md).
 
 The repository also contains an **experimental, testnet-only** Custos singleton market manager used to prove the complete flow and benchmark it against external venues. It is not audited or approved for production assets, and Custos is not presented as a generalized DEX. See [the market foundation](docs/MARKETS_FOUNDATION.md), [pilot runbook](docs/PILOT_RUNBOOK.md), and [market POC boundary](docs/MARKET_MANAGER_POC.md).
 
 ## Current proof status
 
-- Local and CI evidence: 43 contract tests, 21 API tests, and 7 SDK tests, plus
-  the complete lifecycle smoke test.
-- Public-chain evidence: the canonical experimental v3 stack was freshly
-  deployed at Base Sepolia block 44039414 with seven Sourcify-verified
+- Local v4 evidence: 76 contract tests (including 512 randomized market cases),
+  29 API tests, and 10 SDK tests: 115 automated tests total. The hardened v4
+  changes require their first remote CI run and public deployment.
+- Public-chain evidence: the earlier experimental v3 stack was deployed at
+  Base Sepolia block 44039414 with seven Sourcify-verified
   contracts, 29 passing wiring/role checks, 21 successful configuration
   transactions, 13 passing configuration checks, 34 passing adversarial replay
   assertions, 78 exported audit logs, and retained manifest-matched role keys.
   The block-44038124 deployment is archived as historical evidence.
-- Next release gate: record and publish the 60–90 second demonstration from the
-  completed v3 evidence package. Until then, Custos is pre-customer, unaudited, and not
-  production-ready.
+- Next release gate: deploy, verify, configure, and replay v4 on Base Sepolia,
+  then record the 60–90 second demonstration. Until then, Custos is pre-customer,
+  unaudited, and not production-ready.
 
 See the [human-readable Base Sepolia replay summary](contracts/deployments/pilot-84532-replay-summary.md)
 and its linked machine-readable evidence package.
@@ -111,12 +140,14 @@ and its linked machine-readable evidence package.
 
 | Path | Contents |
 |---|---|
-| `contracts/` | Foundry: registry, gate, scoped agent mandates, signed action authorizer, experimental market manager, test assets, deployment scripts, and tests |
+| `contracts/` | Foundry: registry, gate, scoped agent mandates, signed action authorizer, experimental private-credential boundary and market manager, test assets, deployment scripts, and tests |
 | `api/` | Fastify verification API, BullMQ pipeline (KYB → sanctions → attest), chain indexer, Prisma models |
 | `sdk/` | `@custos/sdk` — register, poll status, on-chain permission checks, typed ABIs |
 | `dashboard/` | Next.js issuer dashboard: agents, policies, audit trail, stats |
 | `demo-agent/` | The full-lifecycle demo script |
-| `docs/`, `gtm/`, `research/` | Business plan, validation research, go-to-market kit |
-| `legacy/` | Earlier x402/KYA prototype (superseded by this MVP) |
+| `docs/` | Canonical product, architecture, evidence, production gates, and company materials |
+| `gtm/`, `research/` | Accelerator-first commercial kit and clearly labeled research snapshots |
+| `spec/` | Superseded pre-pivot KYA draft retained for historical context only |
+| `legacy/` | Archived x402/KYA payment prototype; excluded from the current workspace and product |
 
 Security model and known MVP limitations: [SECURITY.md](SECURITY.md). Production release requirements: [docs/PRODUCTION.md](docs/PRODUCTION.md). Accelerator narrative: [docs/ACCELERATOR_BRIEF.md](docs/ACCELERATOR_BRIEF.md). Standards status: [docs/STANDARDS_COMPATIBILITY.md](docs/STANDARDS_COMPATIBILITY.md).

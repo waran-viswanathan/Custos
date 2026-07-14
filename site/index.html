@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#070708">
-  <title>Custos — the control plane for autonomous wallets</title>
+  <title>Custos — regulated-asset settlement for autonomous wallets</title>
   <meta name="description" content="Custos verifies who operates an AI agent, scopes its authority, authenticates every action, and enforces issuer policy before execution.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Custos — the control plane for autonomous wallets">
+  <meta property="og:title" content="Custos — regulated-asset settlement for autonomous wallets">
   <meta property="og:description" content="Verify the operator. Scope the mandate. Enforce every action.">
   <meta property="og:image" content="/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Custos — the control plane for autonomous wallets">
+  <meta property="og:image:alt" content="Custos — regulated-asset settlement for autonomous wallets">
   <meta name="twitter:card" content="summary_large_image">
   <script>document.documentElement.classList.add('js')</script>
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20260713-2">
+  <script src="app.js?v=20260713-2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -24,21 +24,20 @@
   <header class="site-header" id="top">
     <div class="nav-shell">
       <a class="brand" href="#top" aria-label="Custos home">
-        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span class="brand-mark custos-mark" aria-hidden="true"><i class="mark-frame"></i><i class="mark-gate"></i><i class="mark-pulse"></i></span>
         <span>custos</span>
       </a>
 
       <nav class="desktop-nav" aria-label="Primary navigation">
         <a href="#problem">Why Custos</a>
         <a href="#protocol">Protocol</a>
-        <a href="#console">Console</a>
+        <a href="#decision">Decision model</a>
         <a href="#markets">Actions</a>
         <a href="#evidence">Evidence</a>
       </nav>
 
       <div class="nav-actions">
-        <span class="status-pill"><i></i> Public pilot proven</span>
-        <button class="nav-cta wallet-connect" type="button" data-connect-wallet>Connect wallet <span>↗</span></button>
+        <span class="status-pill"><i></i> v3 public pilot proven</span>
         <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation">
           <span></span><span></span>
         </button>
@@ -48,10 +47,9 @@
     <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation">
       <a href="#problem">Why Custos</a>
       <a href="#protocol">Protocol</a>
-      <a href="#console">Console</a>
+      <a href="#decision">Decision model</a>
       <a href="#markets">Actions</a>
       <a href="#evidence">Evidence</a>
-      <button type="button" data-connect-wallet>Connect wallet ↗</button>
     </nav>
   </header>
 
@@ -65,34 +63,39 @@
       </div>
 
       <div class="hero-copy reveal">
-        <p class="eyebrow"><span>01</span> Compliance + delegated authority for autonomous wallets</p>
+        <p class="eyebrow"><span>01</span> Regulated-asset settlement for autonomous wallets</p>
         <h1>The machine can act.<br><em>Custos proves who stands behind it.</em></h1>
         <p class="hero-lede">AI agents are becoming holders of tokenized assets. Custos binds each agent to a verified operator, limits what it may do, and enforces issuer policy before value moves.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#console">Open Custos Console <span>↘</span></a>
+          <a class="button button-primary" href="#protocol">See how Custos works <span>↘</span></a>
           <a class="button button-secondary" href="#evidence">Review the evidence</a>
         </div>
         <p class="hero-note"><span></span> Pre-customer · testnet-only · unaudited</p>
       </div>
 
-      <div class="guardian-stage reveal" aria-label="Custos control plane illustration">
+      <div class="guardian-stage reveal" aria-label="Custos settlement control illustration">
         <div class="guardian-field" id="guardian-field">
           <div class="field-grid"></div>
           <div class="orbit orbit-one"></div>
           <div class="orbit orbit-two"></div>
           <div class="orbit orbit-three"></div>
+          <div class="enforcement-flow" aria-hidden="true">
+            <div class="flow-lane flow-inbound"><i></i><span>WALLET ACTION</span></div>
+            <div class="flow-lane flow-allow"><i></i><span>SETTLE</span></div>
+            <div class="flow-lane flow-block"><i></i><span>DENIED</span><b>×</b></div>
+          </div>
           <div class="signal signal-a"></div>
           <div class="signal signal-b"></div>
           <div class="core">
             <div class="core-halo"></div>
-            <div class="core-mark"><span></span></div>
+            <div class="core-mark custos-mark" aria-hidden="true"><i class="mark-frame"></i><i class="mark-gate"></i><i class="mark-pulse"></i></div>
             <small>CUSTOS</small>
             <strong>ALLOW</strong>
           </div>
           <div class="orbit-node node-operator"><i></i><span>OPERATOR</span><b>VERIFIED</b></div>
           <div class="orbit-node node-agent"><i></i><span>AGENT</span><b>BOUND</b></div>
           <div class="orbit-node node-mandate"><i></i><span>MANDATE</span><b>ACTIVE</b></div>
-          <div class="orbit-node node-policy"><i></i><span>POLICY</span><b>MATCHED</b></div>
+          <div class="orbit-node node-policy"><i></i><span>POLICY</span><b id="hero-policy-state">MATCHED</b></div>
           <div class="field-caption"><span>ACTION 0x71A4</span><span>BASE-COMPATIBLE EVM</span></div>
         </div>
       </div>
@@ -102,74 +105,22 @@
 
     <div class="evidence-ribbon" aria-label="Current evidence summary">
       <div class="ribbon-track">
-        <span>71 automated tests</span><i></i>
+        <span>115 automated tests</span><i></i>
         <span>signed wallet intents</span><i></i>
         <span>revocable credentials</span><i></i>
         <span>scoped agent mandates</span><i></i>
         <span>fail-closed enforcement</span><i></i>
-        <span>v3 deployed on Base Sepolia</span><i></i>
+        <span>v4 hardened locally</span><i></i>
+        <span>v3 public pilot proven</span><i></i>
         <span>34 replay assertions passed</span><i></i>
-        <span>71 automated tests</span><i></i>
+        <span>115 automated tests</span><i></i>
         <span>signed wallet intents</span><i></i>
       </div>
     </div>
 
-    <section class="wallet-console section-shell" id="console">
-      <div class="policy-contours console-contours" aria-hidden="true" data-contours>
-        <i></i><i></i><i></i><i></i><i></i><i></i>
-      </div>
-      <div class="wallet-intro reveal">
-        <p class="eyebrow"><span>LIVE</span> Custos Console preview</p>
-        <h2>Your wallet is the starting point.<br><em>Accountability is the product.</em></h2>
-        <p>Connect an operator or agent wallet to begin. Custos can prove control now; credential and mandate reads will activate when the source-verified pilot is wired into this console.</p>
-      </div>
-
-      <div class="wallet-workspace reveal" id="wallet-workspace">
-        <div class="wallet-workspace-bar">
-          <div><i></i><span>CUSTOS / WALLET CONTROL</span></div>
-          <b id="wallet-environment">BASE SEPOLIA · V3 PILOT PROVEN</b>
-        </div>
-
-        <div class="wallet-workspace-grid">
-          <div class="wallet-primary">
-            <div class="wallet-identity">
-              <div class="wallet-glyph" aria-hidden="true"><span></span></div>
-              <div>
-                <small>CONNECTED WALLET</small>
-                <strong id="wallet-address">No wallet connected</strong>
-                <span id="wallet-network">Connect to identify the account and network.</span>
-              </div>
-            </div>
-
-            <div class="wallet-controls">
-              <button class="button button-primary" type="button" data-connect-wallet id="console-connect">Connect wallet <span>↗</span></button>
-              <button class="button button-secondary" type="button" id="sign-proof" disabled>Sign control proof</button>
-            </div>
-            <p class="wallet-message" id="wallet-message" aria-live="polite">Connecting is free and does not send a transaction.</p>
-          </div>
-
-          <div class="wallet-status-grid">
-            <article class="wallet-status" id="status-control"><span>01</span><small>WALLET CONTROL</small><strong>NOT CONNECTED</strong><p>Connect, then sign a local proof message.</p></article>
-            <article class="wallet-status status-pending"><span>02</span><small>CUSTOS CREDENTIAL</small><strong>READ NOT WIRED</strong><p>Verified operator, jurisdiction, expiry, and revocation.</p></article>
-            <article class="wallet-status status-pending"><span>03</span><small>AGENT MANDATE</small><strong>READ NOT WIRED</strong><p>Venue, action, asset, caps, and validity window.</p></article>
-            <article class="wallet-status status-pending"><span>04</span><small>POLICY DECISION</small><strong>NOT REQUESTED</strong><p>Authoritative allow or block happens at execution.</p></article>
-          </div>
-        </div>
-
-        <div class="wallet-path">
-          <span>CONNECT</span><i></i><span>VERIFY OPERATOR</span><i></i><span>REGISTER AGENT</span><i></i><span>SET MANDATE</span><i></i><span>ENFORCE</span>
-        </div>
-      </div>
-
-      <div class="role-grid">
-        <article class="role-card reveal"><span>FOR OPERATORS</span><h3>Register and control agents.</h3><p>Complete KYB, bind an agent wallet, set its authority, then freeze or revoke it when needed.</p><a href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20operator%20pilot">Join operator pilot ↗</a></article>
-        <article class="role-card reveal"><span>FOR ISSUERS + VENUES</span><h3>Define and enforce policy.</h3><p>Configure eligibility, integrate the gate, preflight actions, and export authoritative evidence.</p><a href="#integration">See issuer integration ↓</a></article>
-      </div>
-    </section>
-
     <section class="problem section-shell" id="problem">
       <div class="section-intro reveal">
-        <p class="eyebrow"><span>02</span> The missing control plane</p>
+        <p class="eyebrow"><span>02</span> The missing settlement control</p>
         <h2>A wallet can prove an address.<br><em>It cannot prove accountability.</em></h2>
         <p>Compliance systems know how to verify people and companies. They do not know how to reason about autonomous software acting through a wallet.</p>
       </div>
@@ -184,7 +135,7 @@
         <article class="question-card reveal">
           <div class="card-top"><span>For operators</span><b>02</b></div>
           <h3>What exactly may it do?</h3>
-          <p>Delegate one venue, action, asset, recipient boundary, transaction cap, cumulative cap, and time window.</p>
+          <p>Delegate one venue, action, asset, transaction cap, cumulative cap, and time window; the agent's signed intent binds the recipient.</p>
           <div class="card-signal"><span></span> Delegated authority</div>
         </article>
         <article class="question-card reveal">
@@ -200,7 +151,7 @@
       <div class="section-shell protocol-layout">
         <div class="protocol-heading reveal">
           <p class="eyebrow"><span>03</span> The protocol</p>
-          <h2>Five checks.<br><em>One decision.</em></h2>
+          <h2>Six checks.<br><em>One decision.</em></h2>
           <p>Each layer answers a separate question and fails closed when its answer is missing, expired, revoked, or invalid.</p>
           <div class="protocol-line" aria-hidden="true"><span></span></div>
         </div>
@@ -219,15 +170,25 @@
           <article class="layer-card reveal">
             <div class="layer-number">02</div>
             <div class="layer-copy">
+              <p class="layer-contract">CustosOperatorBinding</p>
+              <h3>Who authorized this agent?</h3>
+              <p>Require distinct verified principal and agent signatures, attester approval, a bounded lifetime, and immediate revocation by either party.</p>
+            </div>
+            <div class="layer-tags"><span>Dual signature</span><span>Revocable</span></div>
+          </article>
+
+          <article class="layer-card reveal">
+            <div class="layer-number">03</div>
+            <div class="layer-copy">
               <p class="layer-contract">CustosAgentMandate</p>
               <h3>What authority does it hold?</h3>
-              <p>Scope authority by principal, venue, action, asset, per-action cap, cumulative cap, validity window, and recipient boundary.</p>
+              <p>Scope authority by principal, venue, action, asset, per-action cap, cumulative cap, and validity window.</p>
             </div>
             <div class="layer-tags"><span>Scope</span><span>Caps</span><span>Expiry</span></div>
           </article>
 
           <article class="layer-card reveal">
-            <div class="layer-number">03</div>
+            <div class="layer-number">04</div>
             <div class="layer-copy">
               <p class="layer-contract">CustosActionAuthorizer</p>
               <h3>Did the wallet approve this exact action?</h3>
@@ -237,7 +198,7 @@
           </article>
 
           <article class="layer-card reveal">
-            <div class="layer-number">04</div>
+            <div class="layer-number">05</div>
             <div class="layer-copy">
               <p class="layer-contract">CustosGate</p>
               <h3>Does issuer policy permit it?</h3>
@@ -247,7 +208,7 @@
           </article>
 
           <article class="layer-card layer-experimental reveal">
-            <div class="layer-number">05</div>
+            <div class="layer-number">06</div>
             <div class="layer-copy">
               <p class="layer-contract">Venue integration / reference manager</p>
               <h3>Execute only after approval.</h3>
@@ -265,7 +226,7 @@
           <p class="eyebrow"><span>04</span> Decision model</p>
           <h2>Policy meets intent<br><em>before settlement.</em></h2>
         </div>
-        <p>This interactive model mirrors the control sequence. It is illustrative; the current transaction proof runs locally and in CI.</p>
+        <p>This interactive model mirrors the control sequence. It is illustrative; v4 is proven locally, while the public-chain evidence remains the earlier v3 pilot.</p>
       </div>
 
       <div class="decision-console reveal" id="decision-console">
@@ -315,17 +276,17 @@
       </div>
       <div class="section-shell markets-layout">
         <div class="market-copy reveal">
-          <p class="eyebrow"><span>05</span> Portable enforcement</p>
-          <h2>Compliance travels with the agent.<br><em>Not the venue.</em></h2>
+          <p class="eyebrow"><span>05</span> Settlement control</p>
+          <h2>Policy follows the autonomous wallet.<br><em>Settlement stays issuer-controlled.</em></h2>
           <p>Custos is infrastructure first. Issuers and appropriately operated venues can gate the actions they already support. A native reference market exists only to prove and benchmark the complete flow.</p>
           <a class="text-link" href="#integration">See the integration <span>↘</span></a>
         </div>
 
         <div class="action-grid">
-          <article class="action-card reveal"><span>01</span><div class="action-icon">↔</div><h3>Swaps</h3><p>Authenticate the wallet and apply venue, asset, amount, recipient, and mandate policy.</p></article>
+          <article class="action-card reveal"><span>01</span><div class="action-icon">↔</div><h3>Swaps</h3><p>Authenticate the wallet, bind the signed recipient, and apply venue, asset, amount, and mandate policy.</p></article>
           <article class="action-card reveal"><span>02</span><div class="action-icon">＋</div><h3>Liquidity entry</h3><p>Require eligible providers, approved settlement, scoped authority, and capped amounts.</p></article>
           <article class="action-card reveal"><span>03</span><div class="action-icon">◫</div><h3>Pool initialization</h3><p>Restrict who can create markets for regulated assets and under which policy.</p></article>
-          <article class="action-card reveal"><span>04</span><div class="action-icon">□</div><h3>Vault actions</h3><p>Apply the same intent and policy boundary to deposits, withdrawals, and strategies.</p></article>
+          <article class="action-card reveal"><span>04</span><div class="action-icon">□</div><h3>Vault actions · roadmap</h3><p>The intent and policy boundary is designed to extend to deposits, withdrawals, and strategies; no vault implementation is claimed today.</p></article>
           <article class="action-card action-wide reveal"><span>05</span><div class="action-icon">⌁</div><h3>External venues</h3><p>Deploy an authorizer per integration so policy and evidence remain scoped to the exact execution boundary.</p><b>VENUE-NEUTRAL</b></article>
         </div>
       </div>
@@ -339,25 +300,25 @@
         <ul>
           <li><span>01</span> No PII enters the contract</li>
           <li><span>02</span> Revocation applies on the next transfer</li>
-          <li><span>03</span> Every authoritative decision emits evidence</li>
+          <li><span>03</span> Successful enforcement and observed denials enter the audit trail</li>
         </ul>
       </div>
 
       <div class="code-window reveal">
         <div class="code-top"><span>RestrictedAsset.sol</span><button type="button" id="copy-code">Copy code</button></div>
         <pre id="issuer-code"><code><span class="code-comment">// the issuer integration, in full</span>
-<span class="code-keyword">function</span> _update(
-    <span class="code-keyword">address</span> from,
-    <span class="code-keyword">address</span> to,
-    <span class="code-keyword">uint256</span> value
-) <span class="code-keyword">internal override</span> {
-    <span class="code-keyword">if</span> (from != <span class="code-keyword">address</span>(0) &amp;&amp; to != <span class="code-keyword">address</span>(0)) {
-        <span class="code-keyword">require</span>(
-            gate.checkAndLog(to, <span class="code-keyword">address</span>(<span class="code-keyword">this</span>), value),
+<span class="code-keyword">function</span> <span class="code-function">_update</span>(
+    <span class="code-type">address</span> from,
+    <span class="code-type">address</span> to,
+    <span class="code-type">uint256</span> value
+) <span class="code-modifier">internal override</span> {
+    <span class="code-control">if</span> (from <span class="code-operator">!=</span> <span class="code-built-in">address</span>(<span class="code-number">0</span>) <span class="code-operator">&amp;&amp;</span> to <span class="code-operator">!=</span> <span class="code-built-in">address</span>(<span class="code-number">0</span>)) {
+        <span class="code-control">require</span>(
+            <span class="code-object">gate</span>.<span class="code-function">checkAndLog</span>(to, <span class="code-built-in">address</span>(<span class="code-built-in">this</span>), value),
             <span class="code-string">"CUSTOS_BLOCKED"</span>
         );
     }
-    <span class="code-keyword">super</span>._update(from, to, value);
+    <span class="code-built-in">super</span>.<span class="code-function">_update</span>(from, to, value);
 }</code></pre>
         <div class="code-foot"><span><i></i> FAIL CLOSED</span><span>SOLIDITY 0.8.24</span></div>
       </div>
@@ -368,19 +329,19 @@
         <div class="evidence-heading reveal">
           <p class="eyebrow"><span>07</span> Proof, not promises</p>
           <h2>The claims stop<br><em>where the evidence stops.</em></h2>
-          <p>The v3 architecture is reproducible locally and enforced in CI. The canonical stack at Base Sepolia block 44039414 has seven Sourcify-verified contracts, 29 passing wiring and role checks, 21 successful configuration transactions, 13 configuration checks, and 34 passing adversarial replay assertions.</p>
+          <p>The hardened v4 architecture passes 115 local tests and is pending its first public deployment and CI run. The earlier v3 stack at Base Sepolia block 44039414 remains valid historical evidence: seven Sourcify-verified contracts, 29 wiring checks, 21 configuration transactions, 13 configuration checks, and 34 replay assertions.</p>
         </div>
 
         <div class="metric-grid">
-          <article class="metric metric-large reveal"><span>CONTRACTS</span><strong>43</strong><p>Foundry tests across credentials, mandates, intents, policy, and market invariants.</p></article>
-          <article class="metric reveal"><span>API</span><strong>21</strong><p>Verification, registration, revocation, erasure, indexing, and audit.</p></article>
-          <article class="metric reveal"><span>SDK</span><strong>07</strong><p>Typed clients, action intents, and generated ABI coverage.</p></article>
+          <article class="metric metric-large reveal"><span>CONTRACTS</span><strong>76</strong><p>Foundry unit and fuzz tests across credentials, binding, mandates, intents, policy, and market invariants.</p></article>
+          <article class="metric reveal"><span>API</span><strong>29</strong><p>Verification, registration, revocation, erasure, deployment-scoped reorg recovery, and audit.</p></article>
+          <article class="metric reveal"><span>SDK</span><strong>10</strong><p>Typed clients, binding and action intents, and generated ABI coverage.</p></article>
           <article class="metric metric-ci reveal"><span>CI LIFECYCLE</span><strong><i></i> PASS</strong><p>Signed registration, policy, transfer, revocation, and blocked retry.</p></article>
         </div>
 
         <div class="proof-ledger reveal">
-          <div class="proof-row"><span>Current architecture</span><b>LOCAL + CI</b><em class="proof-green">REPRODUCIBLE</em></div>
-          <a class="proof-row" href="https://sepolia.basescan.org/address/0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f" target="_blank" rel="noreferrer"><span>Canonical v3 Base Sepolia pilot</span><b>7 VERIFIED · 34 REPLAY ASSERTIONS</b><em class="proof-green">PROVEN ↗</em></a>
+          <div class="proof-row"><span>Hardened v4 architecture</span><b>115 LOCAL TESTS</b><em>PUBLIC DEPLOYMENT PENDING</em></div>
+          <a class="proof-row" href="https://sepolia.basescan.org/address/0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f" target="_blank" rel="noreferrer"><span>Historical v3 Base Sepolia pilot</span><b>7 VERIFIED · 34 REPLAY ASSERTIONS</b><em class="proof-green">PROVEN ↗</em></a>
           <div class="proof-row"><span>Replay evidence package</span><b>19 SUCCESS · 14 REVERT · 78 LOGS</b><em class="proof-green">COMPLETE</em></div>
           <a class="proof-row" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer"><span>Historical v1 lifecycle</span><b>INTERFACE-INCOMPATIBLE</b><em>VIEW EVIDENCE ↗</em></a>
           <div class="proof-row"><span>Production status</span><b>PRE-CUSTOMER · UNAUDITED</b><em>NOT PRODUCTION-READY</em></div>
@@ -406,7 +367,7 @@
       <div class="final-copy reveal">
         <p class="eyebrow"><span>09</span> The verified-agent pilot</p>
         <h2>One company. One mandated agent.<br><em>One restricted asset.</em></h2>
-        <p>The public pilot replay is complete. The next milestone is a 60–90 second demonstration built from the verified evidence package.</p>
+        <p>The v3 public pilot replay is complete. The next technical milestone is deploying and replaying hardened v4 before recording the accelerator demonstration.</p>
         <div class="hero-actions">
           <a class="button button-primary" href="mailto:lalitheshnarayanan@gmail.com?subject=Custos%20accelerator%20brief">Request the accelerator brief <span>↗</span></a>
           <a class="button button-secondary" href="#evidence">Inspect current proof</a>
@@ -417,8 +378,8 @@
 
   <footer class="site-footer">
     <div class="footer-top">
-      <a class="brand footer-brand" href="#top"><span class="brand-mark" aria-hidden="true"><span></span></span><span>custos</span></a>
-      <p>Compliance and delegated-authority infrastructure<br>for autonomous wallets.</p>
+      <a class="brand footer-brand" href="#top"><span class="brand-mark custos-mark" aria-hidden="true"><i class="mark-frame"></i><i class="mark-gate"></i><i class="mark-pulse"></i></span><span>custos</span></a>
+      <p>The regulated-asset settlement gate<br>for autonomous wallets.</p>
       <div class="footer-links"><a href="#protocol">Protocol</a><a href="#markets">Actions</a><a href="#evidence">Evidence</a><a href="mailto:lalitheshnarayanan@gmail.com">Contact</a></div>
     </div>
     <div class="footer-bottom"><span>© <span id="year">2026</span> Custos</span><span>Testnet · Pre-customer · Unaudited</span><span>Who watches the watchmen?</span></div>

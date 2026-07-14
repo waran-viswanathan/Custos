@@ -2,8 +2,9 @@
 
 ## Status
 
-`CustosMarketManager` is experimental benchmark code. It is not audited,
-deployed, or approved for production assets. It exists to test whether a
+`CustosMarketManager` is experimental benchmark code. Hardened v4 is not
+deployed; an earlier v3 version was publicly replayed on Base Sepolia. No version
+is audited or approved for production assets. It exists to test whether a
 compliance-native singleton can be materially simpler or cheaper than attaching
 Custos to a general-purpose market engine.
 
@@ -13,6 +14,7 @@ The proof supports:
 
 - one singleton contract holding multiple approved pool records
 - issuer-administered pool creation and pause controls
+- signed, mandated, issuer-policy-checked pool initialization
 - constant-product, exact-input swaps with fixed LP fees
 - EIP-712/ERC-1271 wallet intents through `CustosActionAuthorizer`
 - verified-principal mandates with venue/action/asset scope, caps, and expiry
@@ -20,6 +22,7 @@ The proof supports:
 - exact-transfer reserve accounting; fee-on-transfer and rebasing tokens fail
 - internal, non-transferable LP balances
 - exit to a compliant recipient even when the LP owner has been revoked
+- issuer-approved redemption escrow when the ordinary restricted-asset policy is inactive
 - authoritative audit events for exits without making compliance able to trap funds
 
 It deliberately excludes concentrated liquidity, limit orders, flash loans,
@@ -41,8 +44,9 @@ function, preventing LP exposure from being handed to an unverified wallet.
 Removal is available while a pool is paused. A revoked LP owner can burn a
 position to a compliant issuer escrow or other eligible recipient, avoiding
 permanent lockup without returning the restricted asset to an ineligible wallet.
-The manager holds `VENUE_ROLE` so every exit passes through CustosGate's
-always-allowed liquidity-exit audit path.
+The manager normally holds `VENUE_ROLE` so exits pass through CustosGate's
+liquidity-exit audit path. If that audit role is removed, exit remains available
+and the manager emits an explicit fallback event rather than trapping value.
 
 ## Accounting invariants
 
@@ -53,8 +57,9 @@ For every pool and after every successful operation:
 2. an exact-input swap never returns more than the output reserve;
 3. a fee-charging swap does not decrease the pool's constant product;
 4. user LP balances cannot exceed total pool shares;
-5. failed compliance, settlement, slippage, or token checks roll back nonce,
-   reserves, LP shares, and token transfers atomically;
+5. a structurally valid compliance denial consumes the one-time intent nonce and
+   retains denial evidence without consuming mandate budget or moving economic
+   state; malformed, settlement, slippage, and token failures revert atomically;
 6. direct token donations do not change recorded reserves.
 
 The singleton aggregates balances across pools, so solvency review must also

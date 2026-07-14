@@ -1,5 +1,6 @@
 {
   "name": "@custos/api",
+  "description": "Verification, revocation, policy evidence, and indexing for Custos autonomous-wallet settlement controls",
   "version": "0.1.0",
   "private": true,
   "type": "module",

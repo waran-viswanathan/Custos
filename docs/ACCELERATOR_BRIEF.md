@@ -2,8 +2,7 @@
 
 ## One sentence
 
-Custos is compliance and delegated-authority infrastructure for AI agents that
-hold or transact tokenized assets.
+Custos is the regulated-asset settlement gate for autonomous wallets.
 
 ## Problem
 
@@ -43,15 +42,17 @@ The repository currently demonstrates:
 All production gates are fail-closed. PII remains offchain and Custos does not
 hold customer funds or keys.
 
-The evidence baseline is 43 contract tests, 21 API tests, and 7 SDK tests, plus
-application builds, ABI-freshness checks, a production dependency audit, and a
-complete lifecycle CI smoke test. The experimental v3 stack is deployed on Base
+The v4 evidence baseline is 76 contract tests, 29 API tests, and 10 SDK tests
+passing locally (115 total), plus application builds and ABI-freshness checks.
+The hardened binding, indexer, denial-audit, and market changes are pending their
+first remote CI run and public deployment. The experimental private-credential
+boundary is not deployed. The earlier experimental v3 stack is deployed on Base
 Sepolia at block 44039414 with seven Sourcify-verified contracts, 29 passing
 wiring/role checks, and new retained role keys that match the manifest. Policy
 configuration is complete and independently verified on-chain. The adversarial
 pilot replay passed 34 checkpointed assertions—19 successful transactions, 14
 intentional reverts, one observed mandate expiry—and exported 78 onchain audit
-logs. Recording is the next evidence milestone. The
+logs. Repeating deployment and replay with v4 is the next evidence milestone. The
 non-operable block-44038124 deployment and v1 are historical proof only.
 
 ## Initial wedge
