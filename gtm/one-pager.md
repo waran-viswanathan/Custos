@@ -1,29 +1,43 @@
-# Custos — one-pager
+# Custos — regulated-asset settlement for autonomous wallets
 
-**Custos is the compliance layer that lets tokenized-asset issuers safely serve AI agents: verify the entity behind an agent, attest it on-chain, and enforce your transfer policy cryptographically — with a kill switch.**
+Custos proves who stands behind an autonomous wallet, what authority it holds,
+and whether an issuer permits its exact action before a regulated asset moves.
 
-## The problem, in one sentence each
+## The gap
 
-- **If you issue tokenized RWAs:** AI agents are starting to hold and move treasuries, but your compliance stack verifies humans and companies — an agent wallet has no KYC file, no jurisdiction, no accountability, so today your only options are "block all agents" (losing the fastest-growing holder class) or "hope for the best."
-- **If you operate agents that touch real assets:** you can't prove to any issuer or counterparty that your agent is legitimate, whose authority it acts under, or that it can be shut off — so doors stay closed.
-- **The regulatory direction is one-way:** stablecoin and RWA rules (GENIUS Act rulemaking, MiCA) are converging on entity-level accountability for automated actors. Issuers who can't answer "who is behind this wallet?" will be the ones holding the risk.
+Tokenized-asset compliance verifies investors and entities. Autonomous software
+adds questions the ordinary allowlist cannot answer: did the verified company
+approve this agent, what may it do, did it sign this exact action, and has its
+authority been revoked?
 
-## What we built (working today — live demo, not slides)
+Without an atomic answer, issuers either reject agents or rely on offchain
+controls that can drift from settlement.
 
-1. **Verify** — the agent's operator goes through KYB + sanctions screening; passing yields a revocable on-chain attestation (EAS on Base) carrying only `verified / jurisdiction / accredited` — **no PII ever on-chain**.
-2. **Gate** — a contract your token calls at transfer time: allowed jurisdictions, accreditation requirements, per-transfer caps, active/inactive — enforced on-chain, per transfer, with machine-readable denial reasons. Integration is ~5 lines in your transfer hook.
-3. **Kill switch** — one API call revokes the agent everywhere, effective on the next transfer. Every decision (API-side and chain-side) lands on one audit trail your compliance team can export.
+## The Custos control chain
 
-The 60-second demo: an AI treasury agent tries to receive tokenized T-bills → **blocked**. Its operator passes KYB + sanctions → attested → same transfer **succeeds**. Compliance revokes → **blocked again**. Full lifecycle, live on chain.
+1. **Verify:** KYB and sanctions checks remain offchain; a minimal revocable
+   eligibility record is attested onchain.
+2. **Bind:** the verified principal and agent both sign the same relationship
+   approval; either may revoke it.
+3. **Mandate:** the principal limits venue, action, asset, per-action amount,
+   cumulative amount, and validity window.
+4. **Authorize:** the agent signs the exact executor, recipient, context, amount
+   ceiling, nonce, and deadline through EIP-712 or ERC-1271.
+5. **Enforce and evidence:** issuer policy runs at transfer or venue settlement;
+   revocation blocks the next action and the decision enters one audit trail.
 
-## Why us
+## Integration and buyer
 
-Issuer compliance stacks (transfer-agent allowlists, KYC providers) verify *people and companies*, not autonomous software acting on their behalf. Custos is the missing binding: **agent → operator → authority → revocation**, portable across issuers, ERC-8004-compatible, and non-custodial — we never touch funds or hold keys. One verification, accepted by every integrated issuer: the network effect compliance teams actually want.
+The first buyer is a tokenized-asset issuer, transfer agent, tokenization
+platform, or appropriately operated venue. Integrate `CustosGate` in a token
+hook or use a dedicated action authorizer at the settlement boundary. Custos is
+non-custodial infrastructure; customers retain their assets, keys, and venue.
 
-## What we're asking design partners for
+## Evidence boundary
 
-- 45 minutes on how you handle (or block) automated/agent-held positions today
-- If it resonates: run the gate on a test token with us on Base Sepolia — integration measured in minutes, we do the work
-- In return: founding-partner pricing locked for 24 months, and your policy requirements shape the product before it hardens
+Hardened v4 passes 115 local tests and awaits remote CI and public deployment.
+The historical v3 Base Sepolia pilot has source-verified contracts and a complete
+adversarial replay package. Custos is pre-customer, testnet-only, unaudited, and
+not production-ready.
 
-**Contact:** Lalithesh Narayanan — lalitheshnarayanan@gmail.com
+Contact: Lalithesh Narayanan — lalitheshnarayanan@gmail.com

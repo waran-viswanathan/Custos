@@ -7,12 +7,13 @@ The native benchmark case exists as
 the next implementation benchmark and must use the official v4 core/periphery
 contracts rather than a locally simplified imitation.
 
-CI run 64 measured the authenticated native exact-input swap at `364,848` gas
+Historical CI run 64 measured the pre-hardening authenticated native exact-input swap at `364,848` gas
 on head `ee5a598c33a5fe2718ff41d6a23ff61af5e4cc8c`. This includes the agent
 signature, operator mandate, issuer action policy, reserve update, settlement,
 restricted-token recipient enforcement, and audit events. It is a single
-baseline measurement, not an architecture decision; the matched v4 number is
-still required.
+archived baseline, not a v4 measurement or architecture decision. Operator
+binding and denial-audit changes make it unsuitable for current claims. A matched
+benchmark is deferred until a customer integration creates a real venue choice.
 
 Uniswap's permissioned-pool work and dependency revisions are moving. Pin exact
 commits and licenses in the benchmark PR so the result remains reproducible.
@@ -45,5 +46,5 @@ inheritance, routing access, and required settlement approvals.
 - Include the hook/router/position-manager gas required for the real user action.
 - Publish raw Foundry traces and snapshots with the source commit.
 
-The architecture decision is made with `MARKET_DECISION_SCORECARD.md`, not the
-lowest isolated swap gas number.
+If customer demand reopens the decision, use `MARKET_DECISION_SCORECARD.md`; do
+not let an isolated gas number pull Custos away from the settlement-gate product.

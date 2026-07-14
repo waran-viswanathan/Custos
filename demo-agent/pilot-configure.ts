@@ -6,6 +6,7 @@ import {
   encodeAbiParameters,
   getAddress,
   http,
+  keccak256,
   maxUint256,
   parseEventLogs,
   toHex,
@@ -17,10 +18,12 @@ import { privateKeyToAccount, type PrivateKeyAccount } from 'viem/accounts';
 import {
   CustosActions,
   actionIntentTypedData,
+  bindingApprovalTypedData,
   custosActionAuthorizerAbi,
   custosAgentMandateAbi,
   custosGateAbi,
   custosMarketManagerAbi,
+  custosOperatorBindingAbi,
   custosRegistryAbi,
   mandateScopeKey,
   mockEasAbi,
@@ -30,7 +33,7 @@ import {
   type Deployments,
 } from '@custos/sdk';
 
-type PilotDeployments = Deployments & Required<Pick<Deployments, 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
+type PilotDeployments = Deployments & Required<Pick<Deployments, 'operatorBinding' | 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
 
 const required = (name: string): string => {
   const value = process.env[name];
@@ -165,6 +168,52 @@ async function ensureCredential(spec: (typeof credentialSpecs)[number]) {
 
 for (const spec of credentialSpecs) await ensureCredential(spec);
 
+const [boundPrincipal, activeBindingId] = await publicClient.readContract({
+  address: deployments.operatorBinding,
+  abi: custosOperatorBindingAbi,
+  functionName: 'getActiveBinding',
+  args: [agent.address],
+});
+let operatorBindingId = activeBindingId;
+if (boundPrincipal === '0x0000000000000000000000000000000000000000') {
+  const bindingNonce = await publicClient.readContract({
+    address: deployments.operatorBinding,
+    abi: custosOperatorBindingAbi,
+    functionName: 'nonces',
+    args: [agent.address],
+  });
+  const bindingApproval = {
+    principal: principal.address,
+    agent: agent.address,
+    authorityHash: keccak256(encodeAbiParameters(
+      [{ type: 'string' }, { type: 'address' }, { type: 'address' }],
+      ['CUSTOS_PILOT_OPERATOR_AUTHORITY_V1', principal.address, agent.address],
+    )),
+    nonce: bindingNonce,
+    deadline: BigInt(Math.floor(Date.now() / 1000)) + 60n * 60n,
+  };
+  const typedData = bindingApprovalTypedData(84532, deployments.operatorBinding, bindingApproval);
+  const principalSignature = await principal.signTypedData(typedData);
+  const agentSignature = await agent.signTypedData(typedData);
+  const result = await send('binding.operator_agent', attester, {
+    address: deployments.operatorBinding,
+    abi: custosOperatorBindingAbi,
+    functionName: 'bindAgent',
+    args: [bindingApproval, principalSignature, agentSignature],
+  });
+  const event = parseEventLogs({
+    abi: custosOperatorBindingAbi,
+    eventName: 'OperatorBound',
+    logs: result.receipt.logs,
+  })[0];
+  if (!event) throw new Error('missing OperatorBound event');
+  operatorBindingId = event.args.bindingId;
+} else if (boundPrincipal.toLowerCase() !== principal.address.toLowerCase()) {
+  throw new Error(`agent is bound to unexpected principal ${boundPrincipal}`);
+} else {
+  console.log('SKIP: operator binding already active');
+}
+
 const allowedJurisdictions = [toHex('US', { size: 2 }), toHex('GB', { size: 2 })];
 const policy = { requireAccredited: false, allowedJurisdictions, maxTransferAmount: 5_000n * 10n ** 6n, active: true };
 await send('policy.transfer', issuer, {
@@ -210,16 +259,6 @@ try {
 } catch {
   poolExists = false;
 }
-if (!poolExists) {
-  await send('pool.create', issuer, {
-    address: deployments.marketManager,
-    abi: custosMarketManagerAbi,
-    functionName: 'createPool',
-    args: [deployments.tbill, deployments.settlementToken, deployments.tbill, feeBps],
-  });
-} else {
-  console.log('SKIP: pool already exists');
-}
 
 const seedAmount = 50_000n * 10n ** 6n;
 for (const [label, address, abi] of [
@@ -243,6 +282,7 @@ const now = BigInt(Math.floor(Date.now() / 1000));
 const mandates = [
   { label: 'swap', action: CustosActions.SWAP, maxPerAction: 5_000n * 10n ** 6n, maxTotal: 20_000n * 10n ** 6n },
   { label: 'liquidity', action: CustosActions.LIQUIDITY_ENTRY, maxPerAction: seedAmount, maxTotal: seedAmount },
+  { label: 'poolInitialize', action: CustosActions.POOL_INITIALIZE, maxPerAction: 1n, maxTotal: 1n },
 ];
 for (const mandate of mandates) {
   const scope = mandateScopeKey({ agent: agent.address, venue: deployments.marketManager, action: mandate.action, asset: deployments.tbill });
@@ -268,17 +308,52 @@ for (const mandate of mandates) {
     address: deployments.mandates,
     abi: custosAgentMandateAbi,
     functionName: 'grantMandate',
-    args: [
-      agent.address,
-      deployments.marketManager,
-      mandate.action,
-      deployments.tbill,
-      mandate.maxPerAction,
-      mandate.maxTotal,
-      now - 60n,
-      now + 7n * 24n * 60n * 60n,
-    ],
+    args: [{
+      agent: agent.address,
+      venue: deployments.marketManager,
+      action: mandate.action,
+      asset: deployments.tbill,
+      maxPerAction: mandate.maxPerAction,
+      maxTotal: mandate.maxTotal,
+      validAfter: now - 60n,
+      validUntil: now + 7n * 24n * 60n * 60n,
+    }],
   });
+}
+
+if (!poolExists) {
+  const contextHash = await publicClient.readContract({
+    address: deployments.marketManager,
+    abi: custosMarketManagerAbi,
+    functionName: 'poolInitializeContext',
+    args: [token0, token1, deployments.tbill, feeBps],
+  });
+  const intent: ActionIntent = {
+    agent: agent.address,
+    venue: deployments.marketManager,
+    executor: deployments.marketManager,
+    action: CustosActions.POOL_INITIALIZE,
+    asset: deployments.tbill,
+    amount: 1n,
+    recipient: deployments.marketManager,
+    nonce: await publicClient.readContract({
+      address: deployments.actionAuthorizer,
+      abi: custosActionAuthorizerAbi,
+      functionName: 'nonces',
+      args: [agent.address],
+    }),
+    deadline: now + 60n * 60n,
+    contextHash,
+  };
+  const signature = await agent.signTypedData(actionIntentTypedData(84532, deployments.actionAuthorizer, intent));
+  await send('pool.create', agent, {
+    address: deployments.marketManager,
+    abi: custosMarketManagerAbi,
+    functionName: 'createPool',
+    args: [deployments.tbill, deployments.settlementToken, deployments.tbill, feeBps, intent, signature],
+  });
+} else {
+  console.log('SKIP: pool already exists');
 }
 
 for (const [label, address, abi] of [
@@ -370,6 +445,12 @@ const evidence = {
     principal: principal.address,
     agent: agent.address,
     exitRecipient: getAddress(required('EXIT_RECIPIENT_ADDRESS')),
+  },
+  operatorBinding: {
+    address: deployments.operatorBinding,
+    bindingId: operatorBindingId,
+    principal: principal.address,
+    agent: agent.address,
   },
   credentials,
   policy: {

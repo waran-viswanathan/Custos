@@ -25,7 +25,7 @@ import {
   type Deployments,
 } from '@custos/sdk';
 
-type PilotDeployments = Deployments & Required<Pick<Deployments, 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
+type PilotDeployments = Deployments & Required<Pick<Deployments, 'operatorBinding' | 'mandates' | 'actionAuthorizer' | 'marketManager' | 'settlementToken'>>;
 type StepResult = { hash?: Hex; status?: 'success' | 'reverted'; details?: Record<string, string | number | boolean> };
 type ReplayEvidence = {
   chainId: number;
@@ -236,16 +236,16 @@ async function grantSwapMandate(maxPerAction: bigint, maxTotal: bigint, validUnt
     address: manifest.mandates,
     abi: custosAgentMandateAbi,
     functionName: 'grantMandate',
-    args: [
-      agent.address,
-      manifest.marketManager,
-      CustosActions.SWAP,
-      manifest.tbill,
+    args: [{
+      agent: agent.address,
+      venue: manifest.marketManager,
+      action: CustosActions.SWAP,
+      asset: manifest.tbill,
       maxPerAction,
       maxTotal,
-      now - 1n,
+      validAfter: now - 1n,
       validUntil,
-    ],
+    }],
   }, 'success');
   await eventually(
     'new swap mandate',
@@ -285,7 +285,7 @@ async function expectSwapDenied(signer: PrivateKeyAccount, amount: bigint) {
     functionName: 'getPool',
     args: [configuration.poolId],
   });
-  const result = await broadcast(signer, swapRequest(await swapCall(signer, amount)), 'reverted');
+  const result = await broadcast(signer, swapRequest(await swapCall(signer, amount)), 'success');
   const nonceAfter = await authorizerNonce(signer.address);
   const poolAfter = await publicClient.readContract({
     address: manifest.marketManager,
@@ -293,10 +293,17 @@ async function expectSwapDenied(signer: PrivateKeyAccount, amount: bigint) {
     functionName: 'getPool',
     args: [configuration.poolId],
   });
-  assert.equal(nonceAfter, nonceBefore, 'reverted action consumed the intent nonce');
-  assert.equal(poolAfter.reserve0, poolBefore.reserve0, 'reverted action changed reserve0');
-  assert.equal(poolAfter.reserve1, poolBefore.reserve1, 'reverted action changed reserve1');
-  return { ...result, details: { intentNonce: Number(nonceAfter), reservesUnchanged: true } };
+  assert.equal(nonceAfter, nonceBefore + 1n, 'recorded denial did not consume its single-use intent');
+  assert.equal(poolAfter.reserve0, poolBefore.reserve0, 'denied action changed reserve0');
+  assert.equal(poolAfter.reserve1, poolBefore.reserve1, 'denied action changed reserve1');
+  return { ...result, details: { decision: 'denied', intentNonce: Number(nonceAfter), reservesUnchanged: true } };
+}
+
+async function expectSwapStructurallyReverted(signer: PrivateKeyAccount, amount: bigint) {
+  const nonceBefore = await authorizerNonce(signer.address);
+  const result = await broadcast(signer, swapRequest(await swapCall(signer, amount)), 'reverted');
+  assert.equal(await authorizerNonce(signer.address), nonceBefore);
+  return { ...result, details: { decision: 'structural revert', intentNonceUnchanged: true } };
 }
 
 const one = 10n ** 6n;
@@ -471,7 +478,7 @@ await runStep('22.pause_pool', async () => {
   );
   return result;
 });
-await runStep('23.paused_swap_denied', async () => expectSwapDenied(agent, one));
+await runStep('23.paused_swap_denied', async () => expectSwapStructurallyReverted(agent, one));
 await runStep('24.paused_liquidity_entry_denied', async () => {
   const amount0 = one;
   const amount1 = one;
@@ -579,7 +586,14 @@ await runStep('28.revoked_lp_safe_exit', async () => {
 
 const finalBlock = await publicClient.getBlockNumber();
 const auditLogs = await publicClient.getLogs({
-  address: [manifest.registry, manifest.mandates, manifest.actionAuthorizer, manifest.gate, manifest.marketManager],
+  address: [
+    manifest.registry,
+    manifest.operatorBinding,
+    manifest.mandates,
+    manifest.actionAuthorizer,
+    manifest.gate,
+    manifest.marketManager,
+  ],
   fromBlock: BigInt(manifest.deploymentBlock),
   toBlock: finalBlock,
 });

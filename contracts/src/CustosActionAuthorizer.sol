@@ -41,8 +41,12 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
         address indexed executor,
         bytes32 action,
         address asset,
-        uint256 amount,
+        uint256 maxAmount,
+        uint256 authorizedAmount,
         address recipient
+    );
+    event ActionAuthorizationDenied(
+        bytes32 indexed digest, address indexed agent, bytes32 indexed action, string reason
     );
     event NonceInvalidated(address indexed agent, uint256 previousNonce, uint256 newNonce);
     event MandatesConfigured(address indexed mandates);
@@ -53,6 +57,7 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
     error IntentExpired();
     error InvalidNonce();
     error InvalidSignature();
+    error AuthorizedAmountExceedsIntent();
     error MandatesAlreadyConfigured();
 
     constructor(CustosGate _gate, address _venue, address admin) EIP712("Custos Action", "1") {
@@ -80,6 +85,24 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
         onlyRole(EXECUTOR_ROLE)
         returns (bool)
     {
+        return _authorize(intent, signature, intent.amount);
+    }
+
+    /// @notice Authorize an actual amount no greater than the wallet-signed
+    /// ceiling. Venues use this for price-dependent outputs and proportional deposits.
+    function authorizeWithAmount(ActionIntent calldata intent, bytes calldata signature, uint256 authorizedAmount)
+        external
+        onlyRole(EXECUTOR_ROLE)
+        returns (bool)
+    {
+        if (authorizedAmount > intent.amount) revert AuthorizedAmountExceedsIntent();
+        return _authorize(intent, signature, authorizedAmount);
+    }
+
+    function _authorize(ActionIntent calldata intent, bytes calldata signature, uint256 authorizedAmount)
+        private
+        returns (bool)
+    {
         if (intent.agent == address(0) || intent.action == bytes32(0)) revert InvalidIntent();
         if (intent.venue != venue || intent.executor != msg.sender) revert ExecutorMismatch();
         if (block.timestamp > intent.deadline) revert IntentExpired();
@@ -90,22 +113,36 @@ contract CustosActionAuthorizer is AccessControl, EIP712 {
 
         nonces[intent.agent] = intent.nonce + 1;
         emit IntentAuthorized(
-            digest, intent.agent, intent.executor, intent.action, intent.asset, intent.amount, intent.recipient
+            digest,
+            intent.agent,
+            intent.executor,
+            intent.action,
+            intent.asset,
+            intent.amount,
+            authorizedAmount,
+            intent.recipient
         );
 
         bool mandateRequired = address(mandates) != address(0);
         if (
             mandateRequired
-                && !mandates.isPermitted(intent.agent, intent.venue, intent.action, intent.asset, intent.amount)
-        ) return false;
+                && !mandates.isPermitted(intent.agent, intent.venue, intent.action, intent.asset, authorizedAmount)
+        ) {
+            emit ActionAuthorizationDenied(digest, intent.agent, intent.action, "MANDATE_DENIED");
+            return false;
+        }
 
         bytes32 enforcementContext = keccak256(abi.encode(intent.venue, intent.recipient, intent.contextHash));
         bool allowed = gate.checkActionAndLog(
-            intent.agent, intent.action, intent.executor, intent.asset, intent.amount, enforcementContext
+            intent.agent, intent.action, intent.executor, intent.asset, authorizedAmount, enforcementContext
         );
-        if (!allowed) return false;
+        if (!allowed) {
+            emit ActionAuthorizationDenied(digest, intent.agent, intent.action, "POLICY_DENIED");
+            return false;
+        }
         return
-            !mandateRequired || mandates.consume(intent.agent, intent.venue, intent.action, intent.asset, intent.amount);
+            !mandateRequired
+                || mandates.consume(intent.agent, intent.venue, intent.action, intent.asset, authorizedAmount);
     }
 
     function hashIntent(ActionIntent calldata intent) public view returns (bytes32) {

@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Custos — Issuer Dashboard',
-  description: 'Compliance credentials for AI agents in tokenized RWAs',
+  description: 'Operate autonomous-wallet verification, issuer policy, revocation, and settlement evidence',
 };
 
 const nav = [
@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <header className="mb-8 flex items-baseline justify-between border-b border-zinc-200 pb-4">
             <div>
               <span className="text-xl font-semibold tracking-tight">Custos</span>
-              <span className="ml-3 text-sm text-zinc-500">issuer dashboard</span>
+              <span className="ml-3 text-sm text-zinc-500">regulated-asset control console</span>
             </div>
             <nav className="flex gap-5 text-sm">
               {nav.map((n) => (

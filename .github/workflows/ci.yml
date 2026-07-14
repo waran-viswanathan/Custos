@@ -32,6 +32,8 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - uses: foundry-rs/foundry-toolchain@v1
       - run: pnpm install --frozen-lockfile
+      - run: bash -n scripts/*.sh scripts/lib/*.sh
+      - run: node --check site/app.js
       - run: pnpm --filter @custos/api prisma:generate
       - run: pnpm --filter @custos/api exec prisma validate
         env:
@@ -42,7 +44,7 @@ jobs:
       - run: pnpm --filter @custos/sdk test
       - run: pnpm --filter @custos/api build
       - run: pnpm --filter @custos/api test
-      - run: pnpm --filter @custos/demo-agent exec tsc --noEmit --skipLibCheck --module NodeNext --moduleResolution NodeNext --target ES2022 demo.ts
+      - run: pnpm --filter @custos/demo-agent build
       - run: pnpm --filter @custos/dashboard build
         env:
           DEPLOYMENTS_FILE: ${{ github.workspace }}/contracts/deployments/ci-placeholder.json

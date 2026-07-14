@@ -189,6 +189,34 @@ describe('API endpoints', () => {
 
     expect(res.statusCode).toBe(204);
     expect(agents.size).toBe(0);
-    expect(audits.at(-1)).toMatchObject({ agentId: null, type: 'SUBJECT_ERASED' });
+    expect(audits.at(-1)).toMatchObject({
+      agentId: null,
+      type: 'SUBJECT_ERASED',
+      payload: { onChainRecordsRemain: true },
+    });
+    expect(audits.at(-1)?.payload).not.toHaveProperty('wallet');
+  });
+
+  it('reports observed transfer and action denials instead of impossible reverted events', async () => {
+    const { deps } = makeServerDeps();
+    let agentCount = 0;
+    let auditCount = 0;
+    deps.db.agent.count = async () => (++agentCount === 1 ? 2 : 5);
+    deps.db.verificationCheck.count = async () => 11;
+    deps.db.auditEvent.count = async () => [7, 4, 3][auditCount++] ?? 0;
+    const app = buildServer(deps);
+
+    const response = await app.inject({ method: 'GET', url: '/v1/stats' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      verifiedAgents: 2,
+      totalAgents: 5,
+      checksRun: 11,
+      transfersPermitted7d: 7,
+      transfersBlocked7d: 4,
+      transferDenialsObserved7d: 4,
+      actionDenialsObserved7d: 3,
+    });
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "@custos/middleware-express",
   "version": "0.1.0",
-  "description": "Express middleware that gates x402-style paid endpoints on a Custos KYA check",
+  "description": "Archived x402/KYA middleware from the superseded Custos payment prototype",
   "type": "module",
   "main": "src/index.js",
   "exports": {

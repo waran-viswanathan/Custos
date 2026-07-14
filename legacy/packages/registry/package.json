@@ -1,7 +1,7 @@
 {
   "name": "@custos/registry",
   "version": "0.1.0",
-  "description": "KYA credential registry with revocation (in-memory reference; EAS-on-Base anchoring to follow)",
+  "description": "Archived in-memory registry from the superseded Custos KYA prototype",
   "type": "module",
   "main": "src/index.js",
   "exports": {

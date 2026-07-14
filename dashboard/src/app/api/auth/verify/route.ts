@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.json({ ok: true, address: wallet });
   res.cookies.set('custos_session', await createSessionValue(wallet), {
     httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     maxAge: 60 * 60 * 12,
   });

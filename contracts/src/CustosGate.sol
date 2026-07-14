@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {CustosRegistry} from "./CustosRegistry.sol";
+import {ICustosPrivateCredential} from "./interfaces/ICustosPrivateCredential.sol";
 
 /// @title CustosGate — compliance enforcement for transfers and venue actions.
 /// @notice Token hooks and approved action authorizers use authoritative paths;
@@ -32,9 +33,13 @@ contract CustosGate is AccessControl {
     }
 
     CustosRegistry public immutable registry;
+    ICustosPrivateCredential public privateCredentials;
     mapping(address => Policy) private _policies;
     mapping(bytes32 => ActionPolicy) private _actionPolicies;
+    mapping(address => bytes32) public privateTransferScopes;
+    mapping(bytes32 => bytes32) public privateActionScopes;
     mapping(address => mapping(address => bool)) public approvedSettlements;
+    mapping(address => mapping(address => bool)) public approvedRedemptionEscrows;
 
     event PolicySet(
         address indexed token,
@@ -74,6 +79,12 @@ contract CustosGate is AccessControl {
         string reason
     );
     event SettlementSet(address indexed token, address indexed settlement, bool approved);
+    event RedemptionEscrowSet(address indexed token, address indexed escrow, bool approved);
+    event PrivateCredentialsConfigured(address indexed registry);
+    event PrivateTransferScopeSet(address indexed token, bytes32 indexed policyScope);
+    event PrivateActionScopeSet(
+        address indexed venue, bytes32 indexed action, address indexed asset, bytes32 policyScope
+    );
 
     error InvalidToken();
     error InvalidJurisdiction();
@@ -83,6 +94,9 @@ contract CustosGate is AccessControl {
     error InvalidAction();
     error InvalidAgent();
     error UnauthorizedVenueCaller();
+    error InvalidPrivateCredentialRegistry();
+    error PrivateCredentialsNotConfigured();
+    error InvalidPolicyScope();
 
     constructor(CustosRegistry _registry, address admin) {
         registry = _registry;
@@ -93,6 +107,10 @@ contract CustosGate is AccessControl {
         if (token == address(0)) revert InvalidToken();
         _validateJurisdictions(p.allowedJurisdictions);
         _policies[token] = p;
+        if (privateTransferScopes[token] != bytes32(0)) {
+            delete privateTransferScopes[token];
+            emit PrivateTransferScopeSet(token, bytes32(0));
+        }
         emit PolicySet(token, p.requireAccredited, p.allowedJurisdictions, p.maxTransferAmount, p.active);
     }
 
@@ -103,8 +121,49 @@ contract CustosGate is AccessControl {
         if (venue == address(0)) revert InvalidVenue();
         if (action == bytes32(0) || action == LIQUIDITY_EXIT_ACTION) revert InvalidAction();
         _validateJurisdictions(p.allowedJurisdictions);
-        _actionPolicies[actionPolicyKey(venue, action, asset)] = p;
+        bytes32 key = actionPolicyKey(venue, action, asset);
+        _actionPolicies[key] = p;
+        if (privateActionScopes[key] != bytes32(0)) {
+            delete privateActionScopes[key];
+            emit PrivateActionScopeSet(venue, action, asset, bytes32(0));
+        }
         emit ActionPolicySet(venue, action, asset, p.requireAccredited, p.allowedJurisdictions, p.maxAmount, p.active);
+    }
+
+    /// @notice Configure the optional privacy credential registry. Setting the
+    /// zero address disables private credentials and makes configured scopes
+    /// fail closed until a registry is restored.
+    function setPrivateCredentials(ICustosPrivateCredential credentials) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (address(credentials) != address(0) && address(credentials).code.length == 0) {
+            revert InvalidPrivateCredentialRegistry();
+        }
+        privateCredentials = credentials;
+        emit PrivateCredentialsConfigured(address(credentials));
+    }
+
+    /// @notice Opt a transfer policy into a reviewed private predicate scope.
+    /// Updating the underlying public policy automatically clears this scope.
+    function setPrivateTransferScope(address token, bytes32 policyScope) external onlyRole(ISSUER_ROLE) {
+        if (address(privateCredentials) == address(0)) revert PrivateCredentialsNotConfigured();
+        if (token == address(0)) revert InvalidToken();
+        if (policyScope == bytes32(0) || !_policies[token].active) revert InvalidPolicyScope();
+        privateTransferScopes[token] = policyScope;
+        emit PrivateTransferScopeSet(token, policyScope);
+    }
+
+    /// @notice Opt an action policy into a reviewed private predicate scope.
+    /// The proof scope must encode predicates equivalent to the issuer policy.
+    function setPrivateActionScope(address venue, bytes32 action, address asset, bytes32 policyScope)
+        external
+        onlyRole(ISSUER_ROLE)
+    {
+        if (address(privateCredentials) == address(0)) revert PrivateCredentialsNotConfigured();
+        if (venue == address(0)) revert InvalidVenue();
+        if (action == bytes32(0) || action == LIQUIDITY_EXIT_ACTION) revert InvalidAction();
+        bytes32 key = actionPolicyKey(venue, action, asset);
+        if (policyScope == bytes32(0) || !_actionPolicies[key].active) revert InvalidPolicyScope();
+        privateActionScopes[key] = policyScope;
+        emit PrivateActionScopeSet(venue, action, asset, policyScope);
     }
 
     function getPolicy(address token) external view returns (Policy memory) {
@@ -120,6 +179,16 @@ contract CustosGate is AccessControl {
         emit SettlementSet(token, settlement, approved);
     }
 
+    /// @notice Approve an issuer-controlled redemption destination that remains
+    /// reachable even while normal transfers are paused. This prevents a policy
+    /// emergency from trapping assets inside a venue.
+    function setRedemptionEscrow(address token, address escrow, bool approved) external onlyRole(ISSUER_ROLE) {
+        if (token == address(0)) revert InvalidToken();
+        if (escrow == address(0)) revert InvalidAgent();
+        approvedRedemptionEscrows[token][escrow] = approved;
+        emit RedemptionEscrowSet(token, escrow, approved);
+    }
+
     function getActionPolicy(address venue, bytes32 action, address asset) external view returns (ActionPolicy memory) {
         return _actionPolicies[actionPolicyKey(venue, action, asset)];
     }
@@ -130,8 +199,11 @@ contract CustosGate is AccessControl {
 
     function isPermitted(address agent, address token, uint256 amount) public view returns (bool, string memory) {
         Policy storage p = _policies[token];
+        if (approvedRedemptionEscrows[token][agent]) return (true, "REDEMPTION_ESCROW");
         if (!p.active) return (false, "POLICY_NOT_ACTIVE");
         if (approvedSettlements[token][agent]) return (true, "");
+        bytes32 privateScope = privateTransferScopes[token];
+        if (privateScope != bytes32(0)) return _evaluatePrivate(agent, privateScope, p.maxTransferAmount, amount);
         return _evaluate(agent, p.active, p.requireAccredited, p.allowedJurisdictions, p.maxTransferAmount, amount);
     }
 
@@ -140,7 +212,11 @@ contract CustosGate is AccessControl {
         view
         returns (bool, string memory)
     {
-        ActionPolicy storage p = _actionPolicies[actionPolicyKey(venue, action, asset)];
+        bytes32 key = actionPolicyKey(venue, action, asset);
+        ActionPolicy storage p = _actionPolicies[key];
+        if (!p.active) return (false, "POLICY_NOT_ACTIVE");
+        bytes32 privateScope = privateActionScopes[key];
+        if (privateScope != bytes32(0)) return _evaluatePrivate(agent, privateScope, p.maxAmount, amount);
         return _evaluate(agent, p.active, p.requireAccredited, p.allowedJurisdictions, p.maxAmount, amount);
     }
 
@@ -250,6 +326,25 @@ contract CustosGate is AccessControl {
             if (!found) return (false, "JURISDICTION_BLOCKED");
         }
 
+        if (maxAmount != 0 && amount > maxAmount) return (false, "AMOUNT_EXCEEDS_CAP");
+        return (true, "");
+    }
+
+    function _evaluatePrivate(address agent, bytes32 policyScope, uint256 maxAmount, uint256 amount)
+        private
+        view
+        returns (bool, string memory)
+    {
+        ICustosPrivateCredential credentials = privateCredentials;
+        if (address(credentials) == address(0)) return (false, "PRIVATE_CREDENTIALS_UNAVAILABLE");
+
+        bool eligible;
+        try credentials.isEligible(agent, policyScope) returns (bool result) {
+            eligible = result;
+        } catch {
+            return (false, "PRIVATE_CREDENTIALS_UNAVAILABLE");
+        }
+        if (!eligible) return (false, "PRIVATE_CREDENTIAL_INVALID");
         if (maxAmount != 0 && amount > maxAmount) return (false, "AMOUNT_EXCEEDS_CAP");
         return (true, "");
     }

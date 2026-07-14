@@ -6,6 +6,7 @@ import {CustosRegistry} from "../src/CustosRegistry.sol";
 import {CustosGate} from "../src/CustosGate.sol";
 import {CustosActionAuthorizer} from "../src/CustosActionAuthorizer.sol";
 import {CustosAgentMandate} from "../src/CustosAgentMandate.sol";
+import {CustosOperatorBinding} from "../src/CustosOperatorBinding.sol";
 import {MockEAS} from "../src/MockEAS.sol";
 import {IEAS, AttestationRequest, AttestationRequestData} from "../src/vendor/eas/IEAS.sol";
 
@@ -15,11 +16,13 @@ contract AgentMandateTest is Test {
     CustosGate internal gate;
     CustosActionAuthorizer internal authorizer;
     CustosAgentMandate internal mandates;
+    CustosOperatorBinding internal bindings;
 
     address internal admin = makeAddr("admin");
     address internal attester = makeAddr("attester");
     address internal issuer = makeAddr("issuer");
-    address internal principal = makeAddr("principal");
+    address internal principal;
+    uint256 internal principalKey;
     address internal executor = makeAddr("executor");
     address internal venue = makeAddr("venue");
     address internal asset = makeAddr("asset");
@@ -33,15 +36,18 @@ contract AgentMandateTest is Test {
 
     function setUp() public {
         (agent, agentKey) = makeAddrAndKey("agent");
+        (principal, principalKey) = makeAddrAndKey("principal");
         eas = new MockEAS();
         schemaUID = eas.register(SCHEMA, address(0), true);
         registry = new CustosRegistry(IEAS(address(eas)), schemaUID, admin);
         gate = new CustosGate(registry, admin);
         authorizer = new CustosActionAuthorizer(gate, venue, admin);
-        mandates = new CustosAgentMandate(registry, admin);
+        bindings = new CustosOperatorBinding(registry, admin);
+        mandates = new CustosAgentMandate(registry, bindings, admin);
 
         vm.startPrank(admin);
         registry.grantRole(registry.ATTESTER_ROLE(), attester);
+        bindings.grantRole(bindings.BINDER_ROLE(), attester);
         gate.grantRole(gate.ISSUER_ROLE(), issuer);
         gate.grantRole(gate.VENUE_ROLE(), address(authorizer));
         authorizer.grantRole(authorizer.EXECUTOR_ROLE(), executor);
@@ -51,8 +57,24 @@ contract AgentMandateTest is Test {
 
         _verify(principal, 10);
         _verify(agent, 11);
+        _bind(principal, principalKey, agent, agentKey);
         _setPolicy();
         mandateId = _grant(500, 700, uint64(block.timestamp), uint64(block.timestamp + 1 days));
+    }
+
+    function _bind(address operator, uint256 operatorKey, address agentWallet, uint256 walletKey) internal {
+        CustosOperatorBinding.BindingApproval memory approval = CustosOperatorBinding.BindingApproval({
+            principal: operator,
+            agent: agentWallet,
+            authorityHash: keccak256(abi.encode("authority", operator, agentWallet)),
+            nonce: bindings.nonces(agentWallet),
+            deadline: block.timestamp + 1 hours
+        });
+        bytes32 digest = bindings.hashApproval(approval);
+        (uint8 pv, bytes32 pr, bytes32 ps) = vm.sign(operatorKey, digest);
+        (uint8 av, bytes32 ar, bytes32 as_) = vm.sign(walletKey, digest);
+        vm.prank(attester);
+        bindings.bindAgent(approval, abi.encodePacked(pr, ps, pv), abi.encodePacked(ar, as_, av));
     }
 
     function _verify(address wallet, uint256 tokenId) internal {
@@ -90,7 +112,18 @@ contract AgentMandateTest is Test {
     {
         bytes32 action = gate.SWAP_ACTION();
         vm.prank(principal);
-        return mandates.grantMandate(agent, venue, action, asset, maxPerAction, maxTotal, validAfter, validUntil);
+        return mandates.grantMandate(
+            CustosAgentMandate.MandateGrant({
+                agent: agent,
+                venue: venue,
+                action: action,
+                asset: asset,
+                maxPerAction: maxPerAction,
+                maxTotal: maxTotal,
+                validAfter: validAfter,
+                validUntil: validUntil
+            })
+        );
     }
 
     function _intent(uint256 amount) internal view returns (CustosActionAuthorizer.ActionIntent memory) {
@@ -151,6 +184,62 @@ contract AgentMandateTest is Test {
         assertFalse(_authorize(100));
     }
 
+    function test_AgentCanRevokeMandateImmediately() public {
+        vm.prank(agent);
+        mandates.revokeMandate(mandateId);
+        assertFalse(_authorize(100));
+    }
+
+    function test_VerifiedThirdPartyCannotSquatAgentScope() public {
+        (address attacker, uint256 attackerKey) = makeAddrAndKey("attacker");
+        _verify(attacker, 12);
+        bytes32 action = gate.SWAP_ACTION();
+        vm.prank(attacker);
+        vm.expectRevert(CustosAgentMandate.InvalidMandate.selector);
+        mandates.grantMandate(
+            CustosAgentMandate.MandateGrant({
+                agent: agent,
+                venue: venue,
+                action: action,
+                asset: asset,
+                maxPerAction: 1,
+                maxTotal: 1,
+                validAfter: uint64(block.timestamp),
+                validUntil: uint64(block.timestamp + 100 days)
+            })
+        );
+        attackerKey;
+    }
+
+    function test_AgentCannotSelfGrantMandate() public {
+        bytes32 action = gate.SWAP_ACTION();
+        vm.prank(agent);
+        vm.expectRevert(CustosAgentMandate.InvalidMandate.selector);
+        mandates.grantMandate(
+            CustosAgentMandate.MandateGrant({
+                agent: agent,
+                venue: venue,
+                action: action,
+                asset: asset,
+                maxPerAction: 1_000,
+                maxTotal: 0,
+                validAfter: uint64(block.timestamp),
+                validUntil: uint64(block.timestamp + 1 days)
+            })
+        );
+    }
+
+    function test_BindingRevocationInvalidatesAndAllowsReplacement() public {
+        vm.prank(agent);
+        bindings.revokeBinding(agent);
+        assertFalse(_authorize(100));
+
+        _bind(principal, principalKey, agent, agentKey);
+        bytes32 replacement = _grant(100, 1_000, uint64(block.timestamp), uint64(block.timestamp + 1 days));
+        assertNotEq(replacement, mandateId);
+        assertTrue(_authorize(100));
+    }
+
     function test_PrincipalRevocationFailsClosed() public {
         vm.prank(attester);
         registry.revokeAgent(principal, "operator compliance hold");
@@ -177,7 +266,16 @@ contract AgentMandateTest is Test {
         vm.prank(principal);
         vm.expectRevert(CustosAgentMandate.ActiveMandateExists.selector);
         mandates.grantMandate(
-            agent, venue, action, asset, 100, 1_000, uint64(block.timestamp), uint64(block.timestamp + 1 days)
+            CustosAgentMandate.MandateGrant({
+                agent: agent,
+                venue: venue,
+                action: action,
+                asset: asset,
+                maxPerAction: 100,
+                maxTotal: 1_000,
+                validAfter: uint64(block.timestamp),
+                validUntil: uint64(block.timestamp + 1 days)
+            })
         );
     }
 }

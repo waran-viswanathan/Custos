@@ -5,8 +5,7 @@ program, but do not change facts without updating `docs/STATUS.md`.
 
 ## Company in one sentence
 
-Custos is compliance and delegated-authority infrastructure for AI agents that
-hold or transact tokenized assets.
+Custos is the regulated-asset settlement gate for autonomous wallets.
 
 ## Problem
 
@@ -17,18 +16,19 @@ next transaction.
 
 ## Product
 
-Custos binds an agent wallet to a KYB-verified operator, issues a revocable
-onchain credential, records a venue/action/asset-specific operator mandate,
-authenticates the exact wallet-signed action, and enforces issuer policy
-atomically before settlement. Revocation is a transaction-time kill switch.
+Custos proves the KYB-verified legal operator behind an agent, requires a
+dual-signed operator binding, records a venue/action/asset-specific mandate,
+authenticates the exact wallet-signed action, and enforces issuer policy before
+regulated-asset settlement. Revocation is a transaction-time kill switch.
 
 ## Demonstrated progress
 
-- Five-layer contract architecture: Registry, Mandate, Action Authorizer, Gate,
-  and an experimental reference market manager.
-- 71 automated tests plus application builds, dependency audit, and complete CI
-  lifecycle smoke test.
-- Canonical Base Sepolia v3 deployment at block 44039414.
+- Six-layer v4 contract architecture: Registry, Operator Binding, Mandate,
+  Action Authorizer, Gate, and an experimental reference market manager.
+- 115 automated tests passing locally (76 contract, 29 API, 10 SDK), plus
+  application builds. Hardened v4 is pending its first remote CI run.
+- Historical Base Sepolia v3 deployment at block 44039414; v4 public deployment
+  and replay are the next evidence milestone.
 - Seven Sourcify-verified contracts and 29 wiring/role/ownership checks.
 - Independently checked configuration with restricted-asset policy, scoped
   mandates, a singleton test pool, and initial liquidity.
@@ -96,4 +96,3 @@ into issuer pilots. Do not imply a cofounder or employees unless that changes.
 - [ ] Accelerator-specific “why this program” paragraph.
 - [ ] Exact fundraising amount and use-of-funds answer.
 - [ ] Submission date, cohort, and application owner recorded.
-

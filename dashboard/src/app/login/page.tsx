@@ -38,7 +38,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto mt-24 max-w-sm rounded-lg border border-zinc-200 bg-white p-8 text-center">
-      <h1 className="text-lg font-semibold">Custos issuer dashboard</h1>
+      <h1 className="text-lg font-semibold">Custos issuer control console</h1>
       <p className="mt-2 text-sm text-zinc-500">
         Sign in with the wallet that holds <code className="font-mono text-xs">ISSUER_ROLE</code> on CustosGate.
       </p>

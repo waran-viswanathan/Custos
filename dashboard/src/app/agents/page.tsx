@@ -28,7 +28,12 @@ export default async function AgentsPage() {
   const { items } = await apiGet<{ items: AgentRow[] }>('/v1/agents?pageSize=100');
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+    <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">Autonomous wallets</h1>
+        <p className="mt-1 text-sm text-zinc-500">KYB-backed operator eligibility and revocation status for wallets governed by Custos.</p>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
       <table className="w-full text-sm">
         <thead className="border-b border-zinc-200 text-left text-xs uppercase tracking-wide text-zinc-500">
           <tr>
@@ -72,6 +77,7 @@ export default async function AgentsPage() {
           )}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

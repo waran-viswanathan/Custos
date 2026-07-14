@@ -1,8 +1,9 @@
-# Native market decision scorecard
+# Reference-venue decision scorecard
 
-The custom market proof is not evidence that Custos should become a generalized
-DEX. Use this scorecard after the native and Uniswap v4 paths execute the same
-scenario.
+This is a deferred evaluation tool, not the active roadmap. The custom market
+proof is not evidence that Custos should become a generalized DEX. Use the
+scorecard only when a real issuer or venue integration requires a native-versus-
+external settlement decision.
 
 ## Weighted decision
 

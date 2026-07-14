@@ -55,6 +55,31 @@ if (guardianField && !reduceMotion && window.matchMedia('(pointer: fine)').match
   });
 }
 
+if (guardianField) {
+  const heroVerdict = guardianField.querySelector('.core strong');
+  const heroPolicyState = document.getElementById('hero-policy-state');
+  let nextVerdict = 'allow';
+
+  function runEnforcementCycle() {
+    guardianField.dataset.phase = 'request';
+    delete guardianField.dataset.verdict;
+    if (heroVerdict) heroVerdict.textContent = 'CHECK';
+    if (heroPolicyState) heroPolicyState.textContent = 'EVALUATING';
+
+    window.setTimeout(() => {
+      guardianField.dataset.phase = 'verdict';
+      guardianField.dataset.verdict = nextVerdict;
+      const allowed = nextVerdict === 'allow';
+      if (heroVerdict) heroVerdict.textContent = allowed ? 'ALLOW' : 'BLOCK';
+      if (heroPolicyState) heroPolicyState.textContent = allowed ? 'MATCHED' : 'DENIED';
+      nextVerdict = allowed ? 'block' : 'allow';
+    }, reduceMotion ? 0 : 1350);
+  }
+
+  runEnforcementCycle();
+  if (!reduceMotion) window.setInterval(runEnforcementCycle, 3900);
+}
+
 const contourFields = document.querySelectorAll('[data-contours]');
 if (contourFields.length && !reduceMotion && window.matchMedia('(pointer: fine)').matches) {
   window.addEventListener('pointermove', (event) => {
@@ -68,126 +93,6 @@ if (contourFields.length && !reduceMotion && window.matchMedia('(pointer: fine)'
   }, { passive: true });
 }
 
-const walletWorkspace = document.getElementById('wallet-workspace');
-const walletAddress = document.getElementById('wallet-address');
-const walletNetwork = document.getElementById('wallet-network');
-const walletEnvironment = document.getElementById('wallet-environment');
-const walletMessage = document.getElementById('wallet-message');
-const signProofButton = document.getElementById('sign-proof');
-const controlStatus = document.getElementById('status-control');
-const connectButtons = document.querySelectorAll('[data-connect-wallet]');
-const provider = window.ethereum;
-let activeAccount = '';
-
-const chainNames = {
-  '0x1': 'Ethereum',
-  '0x2105': 'Base',
-  '0x14a34': 'Base Sepolia'
-};
-
-function shortAddress(address) {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`;
-}
-
-function setWalletMessage(message, state = '') {
-  if (!walletMessage) return;
-  walletMessage.textContent = message;
-  walletMessage.classList.remove('error', 'success');
-  if (state) walletMessage.classList.add(state);
-}
-
-function resetControlProof() {
-  controlStatus?.classList.remove('signed');
-  const status = controlStatus?.querySelector('strong');
-  const detail = controlStatus?.querySelector('p');
-  if (status) status.textContent = activeAccount ? 'CONNECTED' : 'NOT CONNECTED';
-  if (detail) detail.textContent = activeAccount ? 'Sign a local proof message to demonstrate wallet control.' : 'Connect, then sign a local proof message.';
-}
-
-async function renderWallet(account, chainId) {
-  activeAccount = account || '';
-  const chainName = chainNames[chainId] || `Chain ${Number.parseInt(chainId || '0', 16) || 'unknown'}`;
-  const isPilotChain = chainId === '0x14a34';
-
-  if (!activeAccount) {
-    if (walletAddress) walletAddress.textContent = 'No wallet connected';
-    if (walletNetwork) walletNetwork.textContent = 'Connect to identify the account and network.';
-    if (walletEnvironment) walletEnvironment.textContent = 'BASE SEPOLIA · V3 PILOT PROVEN';
-    signProofButton?.setAttribute('disabled', '');
-    connectButtons.forEach((button) => { button.firstChild.textContent = 'Connect wallet '; });
-    controlStatus?.classList.remove('connected');
-    resetControlProof();
-    return;
-  }
-
-  if (walletAddress) walletAddress.textContent = activeAccount;
-  if (walletNetwork) walletNetwork.textContent = `${chainName} · ${shortAddress(activeAccount)}`;
-  if (walletEnvironment) walletEnvironment.textContent = isPilotChain ? 'BASE SEPOLIA · WALLET READY · V3 PROVEN' : `${chainName.toUpperCase()} · PILOT USES BASE SEPOLIA`;
-  signProofButton?.removeAttribute('disabled');
-  connectButtons.forEach((button) => { button.firstChild.textContent = `${shortAddress(activeAccount)} `; });
-  controlStatus?.classList.add('connected');
-  resetControlProof();
-  setWalletMessage(isPilotChain
-    ? 'Wallet connected. No transaction was sent. Sign the proof to demonstrate control.'
-    : `Wallet connected on ${chainName}. The fresh Custos pilot will use Base Sepolia.`, 'success');
-}
-
-async function syncWallet(accounts) {
-  if (!provider) return;
-  const chainId = await provider.request({ method: 'eth_chainId' });
-  await renderWallet(accounts?.[0] || '', chainId);
-}
-
-async function connectWallet() {
-  walletWorkspace?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-  if (!provider) {
-    setWalletMessage('No browser wallet was detected. Install or enable a wallet such as MetaMask, Coinbase Wallet, or Rabby, then try again.', 'error');
-    return;
-  }
-
-  setWalletMessage('Waiting for wallet approval…');
-  try {
-    const accounts = await provider.request({ method: 'eth_requestAccounts' });
-    await syncWallet(accounts);
-  } catch (error) {
-    setWalletMessage(error?.code === 4001 ? 'Connection cancelled. Nothing changed.' : 'The wallet could not connect. Please try again.', 'error');
-  }
-}
-
-connectButtons.forEach((button) => button.addEventListener('click', connectWallet));
-
-signProofButton?.addEventListener('click', async () => {
-  if (!provider || !activeAccount) return;
-  const message = [
-    'Custos wallet control proof',
-    'Purpose: local console demonstration only',
-    `Wallet: ${activeAccount}`,
-    `Origin: ${window.location.origin}`,
-    `Issued: ${new Date().toISOString()}`,
-    'This is not a transaction and does not register a Custos credential.'
-  ].join('\n');
-  const hexMessage = `0x${Array.from(new TextEncoder().encode(message), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
-
-  setWalletMessage('Review the control-proof message in your wallet. This sends no transaction.');
-  try {
-    await provider.request({ method: 'personal_sign', params: [hexMessage, activeAccount] });
-    controlStatus?.classList.add('signed');
-    const status = controlStatus?.querySelector('strong');
-    const detail = controlStatus?.querySelector('p');
-    if (status) status.textContent = 'CONTROL PROVED';
-    if (detail) detail.textContent = 'Signature completed locally. Registration still requires a server-issued, single-use challenge.';
-    setWalletMessage('Control proof signed. The signature was not stored or submitted.', 'success');
-  } catch (error) {
-    setWalletMessage(error?.code === 4001 ? 'Signature cancelled. Nothing changed.' : 'The proof could not be signed. Please try again.', 'error');
-  }
-});
-
-if (provider) {
-  provider.request({ method: 'eth_accounts' }).then(syncWallet).catch(() => {});
-  provider.on?.('accountsChanged', syncWallet);
-  provider.on?.('chainChanged', async (chainId) => renderWallet(activeAccount, chainId));
-}
-
 const decisionConsole = document.getElementById('decision-console');
 const killButton = document.getElementById('kill-button');
 const consoleState = document.getElementById('console-state');
@@ -196,6 +101,9 @@ const decisionReason = document.getElementById('decision-reason');
 
 killButton?.addEventListener('click', () => {
   const revoked = decisionConsole?.classList.toggle('revoked');
+  decisionConsole?.classList.remove('system-event');
+  window.requestAnimationFrame(() => decisionConsole?.classList.add('system-event'));
+  window.setTimeout(() => decisionConsole?.classList.remove('system-event'), 700);
   if (!consoleState || !decisionWord || !decisionReason) return;
 
   consoleState.textContent = revoked ? 'AGENT REVOKED' : 'AGENT VERIFIED';
@@ -223,3 +131,100 @@ copyButton?.addEventListener('click', async () => {
 
 const year = document.getElementById('year');
 if (year) year.textContent = String(new Date().getFullYear());
+
+// Motion system: spatial feedback, live checkpoints, and lightweight game-like state.
+if (!reduceMotion) {
+  const progress = document.createElement('div');
+  progress.className = 'system-progress';
+  progress.setAttribute('aria-hidden', 'true');
+  document.body.append(progress);
+
+  function syncProgress() {
+    const distance = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = distance > 0 ? Math.min(1, window.scrollY / distance) : 0;
+    progress.style.transform = `scaleX(${ratio})`;
+  }
+  syncProgress();
+  window.addEventListener('scroll', syncProgress, { passive: true });
+
+  const motionCards = document.querySelectorAll('.question-card, .role-card, .wallet-status, .layer-card, .action-card, .metric, .proof-row, .principle');
+  motionCards.forEach((card) => card.classList.add('motion-card'));
+
+  const protocolLayers = [...document.querySelectorAll('.layer-card')];
+  let activeLayer = 0;
+  function advanceLayer() {
+    protocolLayers.forEach((layer, index) => layer.classList.toggle('system-active', index === activeLayer));
+    activeLayer = (activeLayer + 1) % protocolLayers.length;
+  }
+  if (protocolLayers.length) {
+    advanceLayer();
+    window.setInterval(advanceLayer, 1650);
+  }
+
+  const metrics = document.querySelectorAll('.metric strong');
+  const metricObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const metric = entry.target;
+      const raw = metric.textContent.trim();
+      if (!/^\d+$/.test(raw)) {
+        observer.unobserve(metric);
+        return;
+      }
+      const target = Number(raw);
+      const pad = raw.length;
+      const duration = 950;
+      const started = performance.now();
+      metric.closest('.metric')?.classList.add('counting');
+      function tick(now) {
+        const progressValue = Math.min(1, (now - started) / duration);
+        const eased = 1 - Math.pow(1 - progressValue, 3);
+        metric.textContent = String(Math.round(target * eased)).padStart(pad, '0');
+        if (progressValue < 1) {
+          window.requestAnimationFrame(tick);
+        } else {
+          metric.closest('.metric')?.classList.remove('counting');
+        }
+      }
+      window.requestAnimationFrame(tick);
+      observer.unobserve(metric);
+    });
+  }, { threshold: 0.55 });
+  metrics.forEach((metric) => metricObserver.observe(metric));
+
+  const checkpoints = [
+    ['.hero', 'TOP'],
+    ['#console', 'WALLET'],
+    ['#protocol', 'STACK'],
+    ['#decision', 'GATE'],
+    ['#markets', 'ACTIONS'],
+    ['#integration', 'CODE'],
+    ['#evidence', 'PROOF'],
+    ['#pilot', 'PILOT']
+  ].map(([selector, label]) => ({ element: document.querySelector(selector), label })).filter(({ element }) => element);
+
+  if (checkpoints.length) {
+    const rail = document.createElement('aside');
+    rail.className = 'system-rail';
+    rail.setAttribute('aria-label', 'Page checkpoints');
+    checkpoints.forEach(({ element, label }, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.index = String(index + 1).padStart(2, '0');
+      button.setAttribute('aria-label', label);
+      button.addEventListener('click', () => element.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      rail.append(button);
+    });
+    document.body.append(rail);
+    const railButtons = [...rail.querySelectorAll('button')];
+    const checkpointObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const index = checkpoints.findIndex(({ element }) => element === entry.target);
+        railButtons.forEach((button, buttonIndex) => button.classList.toggle('active', buttonIndex === index));
+      });
+    }, { rootMargin: '-35% 0px -55% 0px', threshold: 0 });
+    checkpoints.forEach(({ element }) => checkpointObserver.observe(element));
+    railButtons[0]?.classList.add('active');
+  }
+}

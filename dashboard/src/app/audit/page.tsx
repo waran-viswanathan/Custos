@@ -21,8 +21,24 @@ const EVENT_TYPES = [
   'AGENT_REGISTERED_ONCHAIN',
   'AGENT_REVOKED',
   'CHAIN_TRANSFER_CHECKED',
+  'CHAIN_ACTION_CHECKED',
   'CHAIN_AGENT_REGISTERED',
   'CHAIN_AGENT_REVOKED',
+  'CHAIN_OPERATOR_BOUND',
+  'CHAIN_OPERATOR_BINDING_REVOKED',
+  'CHAIN_MANDATE_GRANTED',
+  'CHAIN_MANDATE_CONSUMED',
+  'CHAIN_MANDATE_REVOKED',
+  'CHAIN_AGENT_EMERGENCY_FREEZE_SET',
+  'CHAIN_INTENT_AUTHORIZED',
+  'CHAIN_ACTION_AUTHORIZATION_DENIED',
+  'CHAIN_INTENT_NONCE_INVALIDATED',
+  'CHAIN_POOL_CREATED',
+  'CHAIN_LIQUIDITY_ADDED',
+  'CHAIN_LIQUIDITY_REMOVED',
+  'CHAIN_MARKET_SWAP',
+  'CHAIN_MARKET_ACTION_DENIED',
+  'CHAIN_EXIT_AUDIT_FALLBACK',
 ];
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +60,10 @@ export default async function AuditPage({
 
   return (
     <div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold">Settlement evidence</h1>
+        <p className="mt-1 text-sm text-zinc-500">Verification, operator binding, mandates, signed intent decisions, issuer policy, execution, and revocation.</p>
+      </div>
       <form method="get" className="mb-4 flex gap-3 text-sm">
         <input
           name="agent"

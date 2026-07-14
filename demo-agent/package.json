@@ -1,5 +1,6 @@
 {
   "name": "@custos/demo-agent",
+  "description": "Reproducible Custos autonomous-wallet settlement and revocation demonstrations",
   "version": "0.1.0",
   "private": true,
   "type": "module",

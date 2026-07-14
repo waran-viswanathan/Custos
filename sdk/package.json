@@ -1,7 +1,7 @@
 {
   "name": "@custos/sdk",
   "version": "0.2.0",
-  "description": "TypeScript SDK for Custos",
+  "description": "TypeScript SDK for Custos regulated-asset settlement controls",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

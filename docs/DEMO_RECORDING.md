@@ -1,12 +1,17 @@
 # Custos public demo recording
 
+> **Hold:** the links and narration below document the historical v3 replay.
+> Do not record or describe it as the current architecture. Replace this shot
+> list with v4 addresses and transactions after v4 is deployed, verified,
+> configured, and replayed on Base Sepolia.
+
 Target length: **75–90 seconds**. Record at 1080p with the browser at 100–110%
 zoom. This is a narrated evidence walkthrough, not a fresh transaction run.
 
 ## Tabs to open before recording
 
 1. Custos website, hero section.
-2. [Canonical v3 manifest](https://github.com/lalithesh-star/Custos/blob/main/contracts/deployments/pilot-84532.json).
+2. Historical v3 manifest/evidence archive (replace with the v4 manifest before recording).
 3. [Unverified wallet denied](https://sepolia.basescan.org/tx/0x490bdf5c2227544e4035ec6a5fac466c6e77507e815c0d3f5fc0aeb710990f02).
 4. [In-limit mandated swap](https://sepolia.basescan.org/tx/0x156745bc0313671425f8446a962a81bdeb84e6da836a85c0823de817dc054928).
 5. [Emergency freeze denial](https://sepolia.basescan.org/tx/0x099bd3e60a45caad5c4b3ce5aeba6c31e595c3fbecd0e35962dca8eecda4c088).
@@ -21,9 +26,9 @@ to, and block are visible. Close personal tabs and disable notifications.
 
 | Time | Screen | Narration |
 |---|---|---|
-| 0–10s | Website hero | “AI agents can control wallets, but regulated-asset systems verify people and companies—not autonomous software. Custos is the compliance and delegated-authority layer for those wallets.” |
+| 0–10s | Website hero | “AI agents can control wallets, but regulated-asset systems verify people and companies—not autonomous software. Custos is the regulated-asset settlement gate for those wallets.” |
 | 10–20s | Website protocol layers | “It binds an agent to a verified operator, records exactly what that operator authorized, authenticates the wallet’s signed action, and enforces issuer policy before settlement.” |
-| 20–29s | Canonical manifest | “This is the canonical v3 deployment on Base Sepolia: separate operational roles, seven source-verified contracts, and a versioned public manifest.” |
+| 20–29s | v4 manifest | “This is the hardened v4 deployment on Base Sepolia: separate operational roles, source-verified contracts, and a versioned public manifest.” |
 | 29–39s | Unverified denial | “First, an unverified wallet attempts a swap. The transaction reverts before reserves, balances, mandate spend, or its intent nonce can change.” |
 | 39–49s | Successful swap | “After verification and a principal-issued mandate with venue, asset, transaction, cumulative, and expiry limits, the same action succeeds.” |
 | 49–59s | Emergency-freeze denial | “The Custos emergency freeze blocks the next action atomically. The principal can also revoke its mandate, and the issuer can revoke the credential.” |
@@ -52,7 +57,6 @@ to, and block are visible. Close personal tabs and disable notifications.
 > Custos binds an autonomous wallet to a verified operator, authenticates its
 > exact signed action, enforces issuer and operator policy before settlement,
 > and supports immediate revocation without trapping an existing LP position.
-> This 2026-07-12 demonstration uses test assets on Base Sepolia. Custos is
+> This demonstration uses test assets on Base Sepolia. Custos is
 > pre-customer, unaudited, and not production-ready. Full evidence:
 > https://github.com/lalithesh-star/Custos/blob/main/contracts/deployments/pilot-84532-replay-summary.md
-

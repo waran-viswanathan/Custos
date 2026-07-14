@@ -6,6 +6,7 @@ import {CustosRegistry} from "../src/CustosRegistry.sol";
 import {CustosGate} from "../src/CustosGate.sol";
 import {CustosActionAuthorizer} from "../src/CustosActionAuthorizer.sol";
 import {CustosAgentMandate} from "../src/CustosAgentMandate.sol";
+import {CustosOperatorBinding} from "../src/CustosOperatorBinding.sol";
 import {CustosMarketManager} from "../src/markets/CustosMarketManager.sol";
 import {MockTBill} from "../src/MockTBill.sol";
 import {MockUSD} from "../src/MockUSD.sol";
@@ -15,6 +16,7 @@ import {IEAS, ISchemaRegistry} from "../src/vendor/eas/IEAS.sol";
 /// @notice Deploys the experimental verified-agent market pilot. Testnet only.
 contract DeployPilot is Script {
     string internal constant SCHEMA = "bool verified,bytes2 jurisdiction,bool accredited,uint256 erc8004TokenId";
+    uint256 internal constant ANVIL_DEV_KEY = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     struct Config {
         uint256 privateKey;
@@ -29,6 +31,7 @@ contract DeployPilot is Script {
         bytes32 schemaUID;
         address registry;
         address gate;
+        address operatorBinding;
         address mandates;
         address authorizer;
         address manager;
@@ -37,24 +40,49 @@ contract DeployPilot is Script {
     }
 
     error UnsupportedChain();
+    error MissingProductionConfig();
 
     function run() external {
         if (block.chainid != 31337 && block.chainid != 84532) revert UnsupportedChain();
+        if (
+            block.chainid != 31337
+                && (!vm.envExists("DEPLOYER_PRIVATE_KEY")
+                    || !vm.envExists("ADMIN_ADDRESS")
+                    || !vm.envExists("ATTESTER_ADDRESS")
+                    || !vm.envExists("ISSUER_ADDRESS"))
+        ) revert MissingProductionConfig();
         Config memory config;
-        config.privateKey = vm.envOr(
-            "DEPLOYER_PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80)
-        );
+        config.privateKey = vm.envOr("DEPLOYER_PRIVATE_KEY", ANVIL_DEV_KEY);
         config.deployer = vm.addr(config.privateKey);
         config.admin = vm.envOr("ADMIN_ADDRESS", config.deployer);
         config.attester = vm.envOr("ATTESTER_ADDRESS", config.deployer);
         config.issuer = vm.envOr("ISSUER_ADDRESS", config.deployer);
+        if (
+            block.chainid != 31337
+                && (config.privateKey == ANVIL_DEV_KEY
+                    || config.admin == address(0)
+                    || config.attester == address(0)
+                    || config.issuer == address(0)
+                    || config.admin == config.deployer
+                    || config.attester == config.deployer
+                    || config.issuer == config.deployer
+                    || config.admin == config.attester
+                    || config.admin == config.issuer
+                    || config.attester == config.issuer)
+        ) revert MissingProductionConfig();
 
         vm.startBroadcast(config.privateKey);
         PilotManifest memory manifest;
         (manifest.eas, manifest.schemaUID) = _easAndSchema();
         manifest.registry = address(new CustosRegistry(IEAS(manifest.eas), manifest.schemaUID, config.deployer));
         manifest.gate = address(new CustosGate(CustosRegistry(manifest.registry), config.deployer));
-        manifest.mandates = address(new CustosAgentMandate(CustosRegistry(manifest.registry), config.deployer));
+        manifest.operatorBinding =
+            address(new CustosOperatorBinding(CustosRegistry(manifest.registry), config.deployer));
+        manifest.mandates = address(
+            new CustosAgentMandate(
+                CustosRegistry(manifest.registry), CustosOperatorBinding(manifest.operatorBinding), config.deployer
+            )
+        );
         manifest.manager = address(new CustosMarketManager(CustosGate(manifest.gate), config.deployer));
         manifest.authorizer =
             address(new CustosActionAuthorizer(CustosGate(manifest.gate), manifest.manager, config.deployer));
@@ -70,10 +98,12 @@ contract DeployPilot is Script {
     function _configure(PilotManifest memory manifest, Config memory config) private {
         CustosRegistry registry = CustosRegistry(manifest.registry);
         CustosGate gate = CustosGate(manifest.gate);
+        CustosOperatorBinding operatorBinding = CustosOperatorBinding(manifest.operatorBinding);
         CustosAgentMandate mandates = CustosAgentMandate(manifest.mandates);
         CustosActionAuthorizer authorizer = CustosActionAuthorizer(manifest.authorizer);
         CustosMarketManager manager = CustosMarketManager(manifest.manager);
         registry.grantRole(registry.ATTESTER_ROLE(), config.attester);
+        operatorBinding.grantRole(operatorBinding.BINDER_ROLE(), config.attester);
         gate.grantRole(gate.ISSUER_ROLE(), config.issuer);
         gate.grantRole(gate.VENUE_ROLE(), manifest.authorizer);
         gate.grantRole(gate.VENUE_ROLE(), manifest.manager);
@@ -88,16 +118,19 @@ contract DeployPilot is Script {
         if (config.admin == config.deployer) return;
         CustosRegistry registry = CustosRegistry(manifest.registry);
         CustosGate gate = CustosGate(manifest.gate);
+        CustosOperatorBinding operatorBinding = CustosOperatorBinding(manifest.operatorBinding);
         CustosAgentMandate mandates = CustosAgentMandate(manifest.mandates);
         CustosActionAuthorizer authorizer = CustosActionAuthorizer(manifest.authorizer);
         CustosMarketManager manager = CustosMarketManager(manifest.manager);
         registry.grantRole(registry.DEFAULT_ADMIN_ROLE(), config.admin);
         gate.grantRole(gate.DEFAULT_ADMIN_ROLE(), config.admin);
+        operatorBinding.grantRole(operatorBinding.DEFAULT_ADMIN_ROLE(), config.admin);
         mandates.grantRole(mandates.DEFAULT_ADMIN_ROLE(), config.admin);
         authorizer.grantRole(authorizer.DEFAULT_ADMIN_ROLE(), config.admin);
         manager.grantRole(manager.DEFAULT_ADMIN_ROLE(), config.admin);
         registry.revokeRole(registry.DEFAULT_ADMIN_ROLE(), config.deployer);
         gate.revokeRole(gate.DEFAULT_ADMIN_ROLE(), config.deployer);
+        operatorBinding.revokeRole(operatorBinding.DEFAULT_ADMIN_ROLE(), config.deployer);
         mandates.revokeRole(mandates.DEFAULT_ADMIN_ROLE(), config.deployer);
         authorizer.revokeRole(authorizer.DEFAULT_ADMIN_ROLE(), config.deployer);
         manager.revokeRole(manager.DEFAULT_ADMIN_ROLE(), config.deployer);
@@ -129,7 +162,7 @@ contract DeployPilot is Script {
 
     function _writeManifest(PilotManifest memory manifest, Config memory config) private {
         string memory obj = "pilot";
-        vm.serializeUint(obj, "version", 3);
+        vm.serializeUint(obj, "version", 4);
         vm.serializeUint(obj, "chainId", block.chainid);
         vm.serializeUint(obj, "deploymentBlock", block.number);
         vm.serializeBool(obj, "experimental", true);
@@ -137,11 +170,13 @@ contract DeployPilot is Script {
         vm.serializeBytes32(obj, "schemaUID", manifest.schemaUID);
         vm.serializeAddress(obj, "registry", manifest.registry);
         vm.serializeAddress(obj, "gate", manifest.gate);
+        vm.serializeAddress(obj, "operatorBinding", manifest.operatorBinding);
         vm.serializeAddress(obj, "mandates", manifest.mandates);
         vm.serializeAddress(obj, "actionAuthorizer", manifest.authorizer);
         vm.serializeAddress(obj, "marketManager", manifest.manager);
         vm.serializeAddress(obj, "tbill", manifest.tbill);
         vm.serializeAddress(obj, "settlementToken", manifest.settlementToken);
+        vm.serializeAddress(obj, "deployer", config.deployer);
         vm.serializeAddress(obj, "admin", config.admin);
         vm.serializeAddress(obj, "attester", config.attester);
         string memory json = vm.serializeAddress(obj, "issuer", config.issuer);

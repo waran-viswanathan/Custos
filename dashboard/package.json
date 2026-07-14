@@ -1,5 +1,6 @@
 {
   "name": "@custos/dashboard",
+  "description": "Issuer operations dashboard for Custos credentials, policies, revocation, and audit evidence",
   "version": "0.1.0",
   "private": true,
   "scripts": {

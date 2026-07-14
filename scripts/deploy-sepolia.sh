@@ -2,7 +2,8 @@
 # Deploys the Custos stack to Base Sepolia using the real EAS predeploys.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-set -a; source .env; set +a
+# shellcheck disable=SC1091
+source .env
 
 required=(
   SEPOLIA_DEPLOYER_PRIVATE_KEY
@@ -17,7 +18,8 @@ for name in "${required[@]}"; do
   fi
 done
 
-DEPLOYER_ADDRESS=$(cast wallet address "$SEPOLIA_DEPLOYER_PRIVATE_KEY")
+export SEPOLIA_DEPLOYER_PRIVATE_KEY
+DEPLOYER_ADDRESS=$(node demo-agent/key-address.mjs SEPOLIA_DEPLOYER_PRIVATE_KEY)
 BALANCE=$(cast balance "$DEPLOYER_ADDRESS" --rpc-url https://sepolia.base.org)
 echo "▶ deployer: $DEPLOYER_ADDRESS  balance: $(cast to-unit "$BALANCE" ether) ETH"
 echo "▶ admin: $ADMIN_ADDRESS"

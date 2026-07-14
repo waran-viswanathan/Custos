@@ -5,6 +5,7 @@ production readiness.
 
 ## 01 — Company and strategy
 
+- `docs/PRODUCT.md` — canonical product definition, buyer, boundaries, and proof status.
 - `docs/company-summary.md` — current company narrative and evidence boundary.
 - `docs/ACCELERATOR_BRIEF.md` — business model, wedge, milestones, and claims.
 - `docs/ACCELERATOR_APPLICATION.md` — canonical application answers.
@@ -27,9 +28,13 @@ production readiness.
 - `contracts/test/` — contract invariant and enforcement tests.
 - `api/test/` and `sdk/test/` — application and SDK tests.
 
-## 04 — Public-chain evidence
+## 04 — Historical v3 public-chain evidence
 
-- `contracts/deployments/pilot-84532.json` — canonical deployment manifest.
+These files prove the earlier v3 pilot at Base Sepolia block 44039414. They are
+retained, reproducible evidence—not a claim that the hardened v4 contracts are
+currently deployed. V4 public deployment and replay are the next evidence gate.
+
+- `contracts/deployments/pilot-84532.json` — historical v3 deployment manifest.
 - `contracts/deployments/pilot-84532-verification.json` — Sourcify evidence.
 - `contracts/deployments/pilot-84532-wiring.json` — wiring and role checks.
 - `contracts/deployments/pilot-84532-configuration.json` — configuration transactions.
@@ -37,9 +42,9 @@ production readiness.
 - `contracts/deployments/pilot-84532-replay-summary.md` — reviewer-readable proof links.
 - `contracts/deployments/pilot-84532-replay.json` — complete replay and audit logs.
 
-## 05 — Reproducibility
+## 05 — Current v4 reproducibility
 
-- `scripts/deploy-pilot-sepolia.sh` — canonical pilot deployment.
+- `scripts/deploy-pilot-sepolia.sh` — current v4 pilot deployment path.
 - `scripts/verify-pilot-sepolia.sh` — source-verification evidence.
 - `scripts/check-pilot-sepolia.sh` — wiring, ownership, and role checks.
 - `scripts/configure-pilot-sepolia.sh` — credentials, policies, mandates, and pool.
@@ -64,4 +69,3 @@ production readiness.
 - [ ] Incident response, monitoring, backup, and disaster-recovery evidence.
 - [ ] Incorporation, cap table, IP assignment, and financing documents.
 - [ ] Customer contracts, LOIs, or pilot evidence—none are claimed today.
-

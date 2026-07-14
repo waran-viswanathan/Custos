@@ -1,12 +1,12 @@
 # Custos — company summary
 
-*As of 2026-07-12. Shareable with accelerator reviewers, advisors, and potential
+*As of 2026-07-13. Shareable with accelerator reviewers, advisors, and potential
 cofounders.*
 
 ## The company
 
-Custos is compliance and delegated-authority infrastructure for AI agents that
-hold or transact tokenized assets. Existing compliance systems identify people,
+Custos is the regulated-asset settlement gate for autonomous wallets. Existing
+compliance systems identify people,
 companies, and investor wallets; they do not prove who operates an autonomous
 wallet, what that software is authorized to do, or whether its authority can be
 stopped before the next transaction.
@@ -27,14 +27,17 @@ not required for the infrastructure business. No token is planned.
 1. **Verify and attest:** a legal-entity operator passes KYB and sanctions
    screening after the agent wallet proves control. A revocable EAS credential
    carries minimum eligibility attributes; no PII goes onchain.
-2. **Mandate:** the verified principal delegates a precise venue, action, asset,
-   transaction cap, cumulative cap, validity window, and recipient boundary.
-3. **Authorize:** the agent signs the exact action using EIP-712; ERC-1271 lets
+2. **Bind:** a distinct verified principal and agent both sign the same approval;
+   either can revoke the relationship and old mandates cannot survive rebinding.
+3. **Mandate:** the bound principal delegates a precise venue, action, asset,
+   transaction cap, cumulative cap, and validity window. The agent's exact
+   signed action separately binds the recipient.
+4. **Authorize:** the agent signs the exact action using EIP-712; ERC-1271 lets
    smart-account agents participate. Nonces and deadlines prevent replay.
-4. **Enforce:** issuer policy checks credentials, jurisdiction, accreditation,
+5. **Enforce:** issuer policy checks credentials, jurisdiction, accreditation,
    amount, venue, action, and asset before execution. Missing or invalid state
    fails closed; revocation blocks the next action.
-5. **Audit:** authoritative onchain decisions and offchain verification events
+6. **Audit:** authoritative onchain decisions and offchain verification events
    form one exportable audit record.
 
 The repository includes an experimental singleton market manager to prove swap,
@@ -43,18 +46,21 @@ testnet-only, and deliberately not positioned as a production DEX.
 
 ## Demonstrable evidence
 
-- 43 contract tests, 21 API tests, and 7 SDK tests: **71 automated tests**.
+- 76 contract tests, 29 API tests, and 10 SDK tests: **115 automated tests**
+  passing locally. The experimental private-credential boundary is not deployed
+  and its mock verifier is not production ZK infrastructure.
 - CI also builds the applications, checks generated ABIs, audits production
   dependencies, and runs the signed credential lifecycle smoke test.
-- The canonical experimental v3 stack was freshly deployed at Base Sepolia
+- The historical experimental v3 stack was deployed at Base Sepolia
   block 44039414 with seven Sourcify-verified contracts, 29 passing wiring/role
   checks, and new retained role keys matching the manifest. The block-44038124
   deployment is archived as historical evidence.
-- The current five-layer architecture is reproducible locally. Policy
-  configuration is independently verified. The public replay passed 34
+- The hardened six-layer v4 architecture is reproducible locally but has not
+  completed remote CI or public deployment. Historical v3 policy configuration
+  is independently verified, and its public replay passed 34
   checkpointed assertions with 19 successful transactions, 14 intentional
   reverts, one observed expiry, and 78 exported audit logs. Recording is the
-  next evidence milestone. V1 remains historical,
+  retained evidence; repeating this sequence for v4 is the next milestone. V1 remains historical,
   interface-incompatible proof.
 
 Custos is pre-customer, unaudited, and not production-ready. Those are release
@@ -86,10 +92,9 @@ does not claim customers, signed design partners, or commercial traction today.
 
 ## Immediate milestones
 
-1. Align every public surface with the current code and honest deployment state.
-2. Independently verify the deployed Base Sepolia pilot's administrator,
-   attester, issuer, principal, agent, and escrow roles.
-3. Record and publish a 60–90 second demonstration from the completed replay.
+1. Run hardened v4 through remote CI.
+2. Deploy, source-verify, configure, and replay v4 on Base Sepolia.
+3. Record and publish a 60–90 second demonstration from the v4 evidence.
 4. Complete and submit the accelerator application package.
 
 ## Open risks
