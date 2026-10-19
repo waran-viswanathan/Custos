@@ -91,9 +91,8 @@ adapter. Both remain subordinate to the settlement-gate product.
 
 ## Current proof boundary
 
-- Hardened v4: 115 automated tests pass locally (76 contract, 29 API, 10 SDK),
-  including 512 generated market cases. It has not yet completed remote CI or a
-  public deployment.
+- Hardened v4: 127 automated tests pass locally (76 contract, 36 API, 10 SDK, 5 dashboard),
+  including 512 generated market cases. The v4 baseline passed remote CI; a public deployment remains pending.
 - Historical v3: Base Sepolia block 44039414, seven Sourcify-verified contracts,
   29 wiring checks, 21 configuration transactions, 13 configuration checks, 34
   replay assertions, and 78 exported logs.

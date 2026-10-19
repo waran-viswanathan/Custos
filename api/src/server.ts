@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { env } from './env.js';
 import { registrationMessage } from './registration.js';
 import type { ChainService } from './chain.js';
+import type { EnqueueVerification } from './outbox.js';
 
 const ChallengeBody = z.object({ wallet: z.string().refine(isAddress, 'invalid EVM address') });
 const RegisterBody = z.object({
@@ -24,6 +25,9 @@ const AuditQuery = PageQuery.extend({ agent: z.string().optional(), type: z.stri
 
 export interface ServerDeps {
   db: {
+    $transaction<T>(fn: (tx: SubmissionDb) => Promise<T>): Promise<T>;
+    verificationTask: { create(args: any): Promise<{ id: string }>; update(args: any): Promise<unknown> };
+    dashboardChallenge: { create(args: any): Promise<unknown>; deleteMany(args: any): Promise<{ count: number }> };
     agent: {
       findUnique(args: any): Promise<any>;
       create(args: any): Promise<any>;
@@ -40,9 +44,12 @@ export interface ServerDeps {
     verificationCheck: { count(args?: any): Promise<number> };
     auditEvent: { create(args: any): Promise<any>; findMany(args: any): Promise<any[]>; count(args?: any): Promise<number> };
   };
-  enqueueVerification(agentId: string): Promise<void>;
+  enqueueVerification: EnqueueVerification;
   chain: Pick<ChainService, 'revokeAgent'>;
 }
+
+type SubmissionDb = Pick<ServerDeps['db'], 'agent' | 'auditEvent' | 'verificationTask' | 'registrationChallenge'>;
+class ConsumedChallengeError extends Error {}
 
 function requireAdmin(req: FastifyRequest, reply: FastifyReply): boolean {
   const supplied = Buffer.from(req.headers.authorization ?? '');
@@ -61,6 +68,29 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
   const { db } = deps;
   void app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
   app.get('/healthz', { config: { rateLimit: false } }, async () => ({ ok: true }));
+
+  // The dashboard server authenticates these calls; the browser never sees
+  // the bearer token. Cookie lifetime is not used as a security boundary.
+  app.post('/v1/dashboard/challenges', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const now = new Date();
+    await db.dashboardChallenge.deleteMany({ where: { expiresAt: { lte: now } } });
+    const nonce = crypto.randomUUID();
+    const expiresAt = new Date(now.getTime() + 300_000);
+    await db.dashboardChallenge.create({ data: { nonce, expiresAt } });
+    return { nonce, expiresAt };
+  });
+
+  app.post('/v1/dashboard/challenges/consume', async (req, reply) => {
+    if (!requireAdmin(req, reply)) return;
+    const parsed = z.object({ nonce: z.string().uuid() }).safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'invalid challenge' });
+    const consumed = await db.dashboardChallenge.deleteMany({
+      where: { nonce: parsed.data.nonce, expiresAt: { gt: new Date() } },
+    });
+    if (consumed.count !== 1) return reply.code(401).send({ error: 'login challenge expired or already consumed' });
+    return { ok: true };
+  });
 
   app.post('/v1/agents/challenge', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req, reply) => {
     const parsed = ChallengeBody.safeParse(req.body);
@@ -92,8 +122,6 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       message = registrationMessage({ ...body, wallet, erc8004TokenId: body.erc8004TokenId ?? null }, body.nonce, env.CUSTOS_REGISTRATION_DOMAIN);
       const valid = await verifyMessage({ address: wallet, message, signature: body.signature as Hex });
       if (!valid) return reply.code(401).send({ error: 'wallet signature does not authorize this operator binding' });
-      const consumed = await db.registrationChallenge.deleteMany({ where: { wallet, nonce: body.nonce } });
-      if (consumed.count !== 1) return reply.code(409).send({ error: 'registration challenge already consumed' });
       proofSignature = body.signature;
     }
 
@@ -110,6 +138,7 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       status: 'PENDING',
       statusReason: null,
       verificationStage: 'SUBMITTED',
+      accredited: false,
       attestationUID: null,
       attestTxHash: null,
       registerTxHash: null,
@@ -117,9 +146,30 @@ export function buildServer(deps: ServerDeps): FastifyInstance {
       operatorProofSignature: proofSignature,
       operatorProofVerifiedAt: new Date(),
     };
-    const agent = existing ? await db.agent.update({ where: { id: existing.id }, data }) : await db.agent.create({ data });
-    await db.auditEvent.create({ data: { agentId: agent.id, type: 'AGENT_SUBMITTED', payload: { wallet, jurisdiction: body.jurisdiction, walletProofVerified: requireProof }, chainTxHash: null } });
-    await deps.enqueueVerification(agent.id);
+    let submitted: { agent: any; task: { id: string } };
+    try {
+      submitted = await db.$transaction(async (tx) => {
+        if (requireProof) {
+          const consumed = await tx.registrationChallenge!.deleteMany({ where: { wallet, nonce: body.nonce, expiresAt: { gt: new Date() } } });
+          if (consumed.count !== 1) throw new ConsumedChallengeError();
+        }
+        const agent = existing ? await tx.agent.update({ where: { id: existing.id }, data }) : await tx.agent.create({ data });
+        await tx.auditEvent.create({ data: { agentId: agent.id, type: 'AGENT_SUBMITTED', payload: { wallet, jurisdiction: body.jurisdiction, walletProofVerified: requireProof }, chainTxHash: null } });
+        const task = await tx.verificationTask.create({ data: { agentId: agent.id } });
+        return { agent, task };
+      });
+    } catch (error) {
+      if (error instanceof ConsumedChallengeError) return reply.code(409).send({ error: 'registration challenge expired or already consumed' });
+      throw error;
+    }
+    const { agent, task } = submitted;
+    try {
+      await deps.enqueueVerification(agent.id, task.id);
+      await db.verificationTask.update({ where: { id: task.id }, data: { dispatchedAt: new Date() } });
+    } catch (error) {
+      // Registration is durable. The dispatcher retries after Redis recovers.
+      req.log.warn({ taskId: task.id }, 'verification queued in database; dispatch deferred');
+    }
     return reply.code(202).send({ id: agent.id, status: agent.status });
   });
 

@@ -42,10 +42,10 @@ The repository currently demonstrates:
 All production gates are fail-closed. PII remains offchain and Custos does not
 hold customer funds or keys.
 
-The v4 evidence baseline is 76 contract tests, 29 API tests, and 10 SDK tests
-passing locally (115 total), plus application builds and ABI-freshness checks.
+The v4 evidence baseline is 76 contract tests, 36 API tests, 10 SDK tests, and 5 dashboard tests
+passing locally (127 total), plus application builds and ABI-freshness checks.
 The hardened binding, indexer, denial-audit, and market changes are pending their
-first remote CI run and public deployment. The experimental private-credential
+first public deployment; its baseline has passed remote CI. The experimental private-credential
 boundary is not deployed. The earlier experimental v3 stack is deployed on Base
 Sepolia at block 44039414 with seven Sourcify-verified contracts, 29 passing
 wiring/role checks, and new retained role keys that match the manifest. Policy

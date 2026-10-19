@@ -4,10 +4,14 @@ Custos is the regulated-asset settlement gate for autonomous wallets. It proves
 the verified legal operator behind an agent, records the authority delegated to
 it, authenticates its exact signed action, and enforces issuer policy before
 value moves. Issuers get fail-closed settlement controls, immediate revocation,
-and a reconstructable onchain/offchain evidence trail without putting PII onchain.
+and a reconstructable onchain/offchain evidence trail without publishing identity documents onchain.
 
 The canonical product definition and boundaries live in
 [docs/PRODUCT.md](docs/PRODUCT.md).
+
+For a technical walkthrough, start with [the lifecycle demo](#quickstart),
+[the threat model](SECURITY.md), and [the current evidence ledger](docs/STATUS.md).
+The historical public replay is linked below; a recording of v4 is still pending.
 
 ## Architecture
 
@@ -36,12 +40,15 @@ principal delegated, whether the wallet approved this exact action, and whether
 the issuer permits it. Binding or credential revocation, mandate revocation,
 signature failure, or missing policy blocks new risk at transaction time.
 
-No PII ever goes on-chain: the attestation carries only `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`.
+The attestation schema carries `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`, alongside public wallet and attestation identifiers. Names, emails, and identity documents are excluded from that schema; wallet-linked eligibility and identifiers remain public.
 
 ## Quickstart
 
 ```bash
-# prerequisites: node 20+, pnpm 9, foundry, docker (or local postgres+redis)
+# prerequisites: node 22+, pnpm 9, foundry, docker (or local postgres+redis)
+git clone --recurse-submodules https://github.com/waran-viswanathan/Custos.git
+cd Custos
+# Existing checkout: git submodule update --init --recursive
 pnpm install
 docker compose up -d        # postgres + redis (+ anvil if you don't run it locally)
 pnpm demo                   # anvil → deploy → API + worker → full agent lifecycle demo
@@ -121,8 +128,8 @@ The repository also contains an **experimental, testnet-only** Custos singleton 
 ## Current proof status
 
 - Local v4 evidence: 76 contract tests (including 512 randomized market cases),
-  29 API tests, and 10 SDK tests: 115 automated tests total. The hardened v4
-  changes require their first remote CI run and public deployment.
+  36 API tests, 10 SDK tests, and 5 dashboard tests: 127 automated tests total. The hardened v4
+  baseline passed remote CI; a public v4 deployment is still pending.
 - Public-chain evidence: the earlier experimental v3 stack was deployed at
   Base Sepolia block 44039414 with seven Sourcify-verified
   contracts, 29 passing wiring/role checks, 21 successful configuration

@@ -23,6 +23,9 @@ export async function runVerificationPipeline(agentId: string, deps: PipelineDep
 
   let accredited = agent.accredited ?? false;
   if ((agent.verificationStage ?? 'SUBMITTED') === 'SUBMITTED') {
+    // A new application must earn its attributes again. Only a resumed
+    // CHECKS_PASSED/ATTESTED application may reuse the persisted decision.
+    accredited = false;
     await audit(db, agentId, 'VERIFICATION_STARTED', { wallet: agent.wallet });
     const input = { wallet: agent.wallet, ownerName: agent.ownerName, ownerEmail: agent.ownerEmail, ownerEntityType: agent.ownerEntityType, jurisdiction: agent.jurisdiction };
     for (const [type, provider] of [['KYB', kyb], ['SANCTIONS', sanctions]] as const) {
@@ -37,7 +40,7 @@ export async function runVerificationPipeline(agentId: string, deps: PipelineDep
         await audit(db, agentId, 'VERIFICATION_REJECTED', { reason: result.reason ?? `${type}_FAILED` });
         return;
       }
-      if (type === 'KYB' && result.raw['accredited'] === true) accredited = true;
+      if (type === 'KYB') accredited = result.raw['accredited'] === true;
     }
     await db.agent.update({ where: { id: agentId }, data: { verificationStage: 'CHECKS_PASSED', accredited } });
   }

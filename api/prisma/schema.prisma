@@ -55,6 +55,25 @@ model Agent {
 
   checks      VerificationCheck[]
   auditEvents AuditEvent[]
+  verificationTasks VerificationTask[]
+}
+
+// Committed with the application so a Redis outage cannot strand an applicant.
+model VerificationTask {
+  id           String   @id @default(cuid())
+  agentId      String
+  agent        Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  dispatchedAt DateTime?
+
+  @@index([dispatchedAt, createdAt])
+}
+
+model DashboardChallenge {
+  nonce     String   @id
+  expiresAt DateTime
+
+  @@index([expiresAt])
 }
 
 model RegistrationChallenge {

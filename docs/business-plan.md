@@ -114,7 +114,7 @@ approval.
 
 ## Evidence today
 
-- Hardened v4: 115 automated tests pass locally—76 contract, 29 API, and 10 SDK—
+- Hardened v4: 127 automated tests pass locally—76 contract, 36 API, 10 SDK, and 5 dashboard—
   including 512 generated market cases. Remote CI and public deployment remain.
 - Historical v3 public proof: Base Sepolia block 44039414, seven source-verified
   contracts, 29 wiring checks, 21 configuration transactions, 13 configuration

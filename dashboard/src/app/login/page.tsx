@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginMessage } from '@/lib/auth';
+import { loginMessage } from '@/lib/login-message';
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +17,9 @@ export default function LoginPage() {
       if (!eth) throw new Error('No injected wallet found.');
       const [address] = (await eth.request({ method: 'eth_requestAccounts' })) as string[];
       if (!address) throw new Error('no account');
-      const { nonce } = (await (await fetch('/api/auth/nonce')).json()) as { nonce: string };
+      const challenge = await fetch('/api/auth/nonce');
+      if (!challenge.ok) throw new Error('Sign-in is temporarily unavailable. Please try again.');
+      const { nonce } = (await challenge.json()) as { nonce: string };
       const signature = await eth.request({
         method: 'personal_sign',
         params: [loginMessage(address, nonce), address],

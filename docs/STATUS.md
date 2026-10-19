@@ -1,6 +1,6 @@
 # Custos — execution status
 
-*As of 2026-07-13. Canonical internal status; update this file whenever a public
+*As of 2026-10-19. Canonical internal status; update this file whenever a public
 claim, deployment, or go-to-market stage changes.*
 
 ## Current position
@@ -31,16 +31,19 @@ full public deployment and replay sequence.
 
 | Area | Current evidence | Status |
 |---|---|---|
-| Contracts | Registry, operator binding, mandate, action authorizer, gate, experimental private-credential boundary, and experimental market manager; 76 Foundry tests | Green locally; v4 pending first CI run |
-| API | Signed registration, resumable verification, revocation/erasure, deployment-scoped reorg-safe versioned indexer, audit and rate limits; 29 tests | Green locally; v4 pending first CI run |
-| SDK | Registration, binding, permission, action-intent, and private-credential helpers with generated typed ABIs; 10 tests | Green locally; v4 pending first CI run |
-| End-to-end | Signed local lifecycle smoke test | Green locally; v4 pending first CI run |
+| Contracts | Registry, operator binding, mandate, action authorizer, gate, experimental private-credential boundary, and experimental market manager; 76 Foundry tests | Green locally; v4 baseline passed remote CI |
+| API | Signed registration, resumable verification, revocation/erasure, deployment-scoped reorg-safe versioned indexer, audit and rate limits; 36 tests | Green locally; v4 baseline passed remote CI |
+| SDK | Registration, binding, permission, action-intent, and private-credential helpers with generated typed ABIs; 10 tests | Green locally; v4 baseline passed remote CI |
+| Dashboard | Replay/expiry boundaries, current-role authorization, and browser-safe login helpers; 5 unit tests plus a production browser smoke | Unit tests pass locally; browser smoke awaits CI |
+| End-to-end | Signed local lifecycle smoke test | Green locally; v4 baseline passed remote CI |
 | Public chain | Historical v3 at block 44039414; seven Sourcify-verified contracts; 29 wiring checks; 21 configuration transactions; 13 configuration checks; 34 replay assertions; 78 audit logs; retained keys | v3 replay passed; v4 deployment pending |
 | Security | Threat model and production release gates documented | Unaudited; testnet only |
 | Commercial | Target research and pilot materials exist | No customers or design partners claimed |
 
-Total automated tests: **115** (76 contract, 29 API, 10 SDK), excluding build,
-ABI-freshness, dependency-audit, and lifecycle-smoke checks.
+The v4 baseline at `f99478f` passed [remote CI](https://github.com/waran-viswanathan/Custos/actions/runs/29316238114). These baseline results do not attest to a public v4 deployment. The current suite adds application and dashboard regressions; the updated branch still needs its own complete CI run.
+
+Total automated tests: **127** (76 contract, 36 API, 10 SDK, 5 dashboard), excluding build,
+ABI-freshness, dependency-audit, production-browser, and lifecycle-smoke checks.
 
 ## What is built
 
@@ -89,7 +92,7 @@ production checklist support that chain.
   safety checklist.
 - [x] Resolve the adversarial review findings in local v4 and add regression,
   reorg, and fuzz coverage.
-- [ ] Run v4 through remote CI.
+- [x] Run the v4 baseline through remote CI (commit `f99478f`, run 29316238114).
 - [ ] Deploy, source-verify, configure, check, and adversarially replay v4 on
   Base Sepolia; retain the complete new evidence package.
 - [ ] Record a 60–90 second demonstration using the verified v4 deployment.
@@ -106,8 +109,8 @@ research assets, not the active execution plan.
 
 ## Claims allowed today
 
-- “115 automated tests pass locally: 76 contract, 29 API, and 10 SDK. Hardened
-  v4 is pending its first remote CI run and public deployment.”
+- “127 automated tests pass locally: 76 contract, 36 API, 10 SDK, and 5 dashboard. Hardened
+  v4 is pending its first public deployment; its baseline has passed remote CI.”
 - “The historical experimental v3 stack was deployed at Base Sepolia
   block 44039414 in 26 successful transactions, with seven Sourcify-verified
   contracts, 29 passing wiring checks, 21 successful configuration

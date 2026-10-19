@@ -1,6 +1,6 @@
 # Custos — company summary
 
-*As of 2026-07-13. Shareable with accelerator reviewers, advisors, and potential
+*As of 2026-10-19. Shareable with accelerator reviewers, advisors, and potential
 cofounders.*
 
 ## The company
@@ -26,7 +26,7 @@ not required for the infrastructure business. No token is planned.
 
 1. **Verify and attest:** a legal-entity operator passes KYB and sanctions
    screening after the agent wallet proves control. A revocable EAS credential
-   carries minimum eligibility attributes; no PII goes onchain.
+   carries public eligibility attributes and identifiers; identity documents remain with providers.
 2. **Bind:** a distinct verified principal and agent both sign the same approval;
    either can revoke the relationship and old mandates cannot survive rebinding.
 3. **Mandate:** the bound principal delegates a precise venue, action, asset,
@@ -46,7 +46,7 @@ testnet-only, and deliberately not positioned as a production DEX.
 
 ## Demonstrable evidence
 
-- 76 contract tests, 29 API tests, and 10 SDK tests: **115 automated tests**
+- 76 contract tests, 36 API tests, 10 SDK tests, and 5 dashboard tests: **127 automated tests**
   passing locally. The experimental private-credential boundary is not deployed
   and its mock verifier is not production ZK infrastructure.
 - CI also builds the applications, checks generated ABIs, audits production

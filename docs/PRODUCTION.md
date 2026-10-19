@@ -1,8 +1,7 @@
 # Production deployment gate
 
-The repository is secure-by-default when `NODE_ENV=production`, but production
-readiness also depends on infrastructure and regulated-provider contracts that
-cannot be provisioned in source control.
+Production mode rejects known development credentials and mock providers.
+Production readiness also requires the infrastructure and operational controls below.
 
 ## Required before serving applicants
 
@@ -15,7 +14,9 @@ cannot be provisioned in source control.
   secret manager. Production startup rejects the checked-in development values.
 - Set `INDEXER_START_BLOCK` to the deployment block and choose a confirmation
   depth appropriate for the target chain.
-- Run `prisma migrate deploy`; do not use `prisma db push` in production.
+- Run `prisma migrate deploy`; do not use `prisma db push` in production. Apply
+  `20261019150000_verification_outbox_dashboard_challenges` before this API release.
+  Monitor the oldest undispatched verification task and test Redis outage recovery.
 - Use managed PostgreSQL and Redis with encryption, backups, point-in-time
   recovery, private networking, and alerting.
 - Configure TLS, rate limiting at the edge, structured log collection, uptime
@@ -45,18 +46,24 @@ cannot be provisioned in source control.
 ## Data lifecycle
 
 Provider documents must remain with the verification provider. Custos stores a
-decision, reference ID, and minimum attributes only. The admin erasure endpoint
+decision, provider reference ID, and decision attributes; the application row also
+stores the submitted operator name and email. The admin erasure endpoint
 revokes an active credential before deleting the subject row and cascading
 verification checks; audit history is retained without the PII-bearing relation.
 
 ## Release procedure
 
 1. CI must pass the complete Foundry build and tests, generated-ABI freshness,
-   SDK and API tests, application builds, the local lifecycle smoke test, and
+   SDK, API, and dashboard tests, application builds, the production login browser
+   smoke, the local lifecycle smoke test, and
    the production dependency audit.
 2. Deploy fresh contracts for every incompatible interface version. Never
    promote a `*.legacy.json` manifest as an active deployment.
-3. Apply database migrations, deploy services, and verify health checks.
+3. Apply database migrations before deploying the updated API and dashboard:
+   `pnpm --filter @custos/api exec prisma migrate deploy`. The
+   `20261019150000_verification_outbox_dashboard_challenges` migration adds
+   durable verification tasks and single-use dashboard challenges. Deploy services,
+   verify health checks, and monitor the oldest undispatched verification task.
 4. Verify configured contract bytecode and role assignments independently,
    including that the deployer no longer has admin rights when a separate
    `ADMIN_ADDRESS` is configured.

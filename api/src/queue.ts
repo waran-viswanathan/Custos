@@ -15,8 +15,10 @@ export function queueName(): string {
   return `verification-${d.chainId}-${d.registry.toLowerCase()}`;
 }
 
-export function createRedis(): Redis {
-  return new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+export function createRedis(producer = false): Redis {
+  return new Redis(env.REDIS_URL, producer
+    ? { maxRetriesPerRequest: 1, enableOfflineQueue: false }
+    : { maxRetriesPerRequest: null });
 }
 
 export function createVerificationQueue(connection: Redis): Queue {
