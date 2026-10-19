@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { apiPost } from '@/lib/api';
+import { IssuerAuthorizationError } from '@/lib/issuer-auth';
 
 // Proxies the revoke to the Custos API so the admin bearer token stays server-side.
 export async function POST(req: NextRequest) {
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
     const result = await apiPost(`/v1/agents/${wallet}/revoke`, { reason });
     return NextResponse.json(result);
   } catch (err) {
+    if (err instanceof IssuerAuthorizationError) return NextResponse.json({ error: err.message }, { status: err.status });
     return NextResponse.json({ error: err instanceof Error ? err.message : 'revoke failed' }, { status: 502 });
   }
 }

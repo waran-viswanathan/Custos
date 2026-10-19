@@ -8,6 +8,21 @@ const kyb = new MockKybProvider(instant);
 const sanctions = new MockSanctionsProvider(new Set(['KP', 'IR', 'CU', 'SY']), instant);
 
 describe('verification pipeline', () => {
+  it.each([false, undefined])('does not inherit old accreditation on a fresh KYB decision (%s)', async (accredited) => {
+    const { db } = makeFakeDb([{ ...baseAgent, accredited: true }]);
+    const { chain, calls } = makeFakeChain();
+    const currentKyb = { name: 'current-kyb', check: async () => ({ passed: true, provider: 'current-kyb', raw: { accredited } }) };
+    await runVerificationPipeline('agent-1', { db, kyb: currentKyb, sanctions, chain });
+    expect(calls[0]).toMatchObject({ method: 'attest', accredited: false });
+  });
+
+  it('retains the decision when resuming the same application after chain failure', async () => {
+    const { db, checks } = makeFakeDb([{ ...baseAgent, status: 'IN_REVIEW', verificationStage: 'CHECKS_PASSED', accredited: true }]);
+    const { chain, calls } = makeFakeChain();
+    await runVerificationPipeline('agent-1', { db, kyb, sanctions, chain });
+    expect(checks).toHaveLength(0);
+    expect(calls[0]).toMatchObject({ method: 'attest', accredited: true });
+  });
   it('PENDING → IN_REVIEW → VERIFIED with attestation on the happy path', async () => {
     const { db, agentRows, checks, audits } = makeFakeDb([baseAgent]);
     const { chain, calls } = makeFakeChain();

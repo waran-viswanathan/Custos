@@ -2,16 +2,18 @@
   "name": "custos",
   "private": true,
   "version": "0.2.0",
-  "description": "Custos — the regulated-asset settlement gate for autonomous wallets",
+  "description": "Custos \u2014 the regulated-asset settlement gate for autonomous wallets",
   "scripts": {
     "dev": "concurrently -n api,worker,dash \"pnpm --filter @custos/api dev\" \"pnpm --filter @custos/api worker\" \"pnpm --filter @custos/dashboard dev\"",
     "build": "pnpm -r build",
     "test": "forge test --root contracts && pnpm -r --if-present test",
     "demo": "./scripts/demo.sh",
-    "dev:sepolia": "./scripts/run-sepolia.sh"
+    "dev:sepolia": "./scripts/run-sepolia.sh",
+    "test:browser": "playwright test --config dashboard/playwright.config.ts"
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "^9.0.0",
+    "@playwright/test": "1.62.1"
   },
   "engines": {
     "node": ">=20"

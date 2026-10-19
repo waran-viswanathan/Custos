@@ -105,7 +105,7 @@
 
     <div class="evidence-ribbon" aria-label="Current evidence summary">
       <div class="ribbon-track">
-        <span>115 automated tests</span><i></i>
+        <span>127 automated tests</span><i></i>
         <span>signed wallet intents</span><i></i>
         <span>revocable credentials</span><i></i>
         <span>scoped agent mandates</span><i></i>
@@ -113,7 +113,7 @@
         <span>v4 hardened locally</span><i></i>
         <span>v3 public pilot proven</span><i></i>
         <span>34 replay assertions passed</span><i></i>
-        <span>115 automated tests</span><i></i>
+        <span>127 automated tests</span><i></i>
         <span>signed wallet intents</span><i></i>
       </div>
     </div>
@@ -298,7 +298,7 @@
         <h2>Five lines between an<br><em>unknown wallet and a permitted holder.</em></h2>
         <p>Call the Custos gate inside the token transfer hook. A non-compliant transfer reverts before balances change.</p>
         <ul>
-          <li><span>01</span> No PII enters the contract</li>
+          <li><span>01</span> Identity documents stay with providers</li>
           <li><span>02</span> Revocation applies on the next transfer</li>
           <li><span>03</span> Successful enforcement and observed denials enter the audit trail</li>
         </ul>
@@ -329,7 +329,7 @@
         <div class="evidence-heading reveal">
           <p class="eyebrow"><span>07</span> Proof, not promises</p>
           <h2>The claims stop<br><em>where the evidence stops.</em></h2>
-          <p>The hardened v4 architecture passes 115 local tests and is pending its first public deployment and CI run. The earlier v3 stack at Base Sepolia block 44039414 remains valid historical evidence: seven Sourcify-verified contracts, 29 wiring checks, 21 configuration transactions, 13 configuration checks, and 34 replay assertions.</p>
+          <p>The hardened v4 architecture passes 127 local tests and is pending its first public deployment; its baseline passed remote CI. The earlier v3 stack at Base Sepolia block 44039414 remains valid historical evidence: seven Sourcify-verified contracts, 29 wiring checks, 21 configuration transactions, 13 configuration checks, and 34 replay assertions.</p>
         </div>
 
         <div class="metric-grid">
@@ -340,7 +340,7 @@
         </div>
 
         <div class="proof-ledger reveal">
-          <div class="proof-row"><span>Hardened v4 architecture</span><b>115 LOCAL TESTS</b><em>PUBLIC DEPLOYMENT PENDING</em></div>
+          <div class="proof-row"><span>Hardened v4 architecture</span><b>127 LOCAL TESTS</b><em>PUBLIC DEPLOYMENT PENDING</em></div>
           <a class="proof-row" href="https://sepolia.basescan.org/address/0x56C2f9Cc09D815a71bEA1b8d21559bb84CA75B4f" target="_blank" rel="noreferrer"><span>Historical v3 Base Sepolia pilot</span><b>7 VERIFIED · 34 REPLAY ASSERTIONS</b><em class="proof-green">PROVEN ↗</em></a>
           <div class="proof-row"><span>Replay evidence package</span><b>19 SUCCESS · 14 REVERT · 78 LOGS</b><em class="proof-green">COMPLETE</em></div>
           <a class="proof-row" href="https://sepolia.basescan.org/address/0x307D6709EFF49720f63C7ecD90cDc77Bbf818747" target="_blank" rel="noreferrer"><span>Historical v1 lifecycle</span><b>INTERFACE-INCOMPATIBLE</b><em>VIEW EVIDENCE ↗</em></a>
@@ -355,7 +355,7 @@
         <h2>Built for the moment<br><em>the demo becomes infrastructure.</em></h2>
       </div>
       <div class="principle-grid">
-        <article class="principle reveal"><span>01</span><h3>No PII on-chain. Ever.</h3><p>Only minimum eligibility attributes and identifiers enter attestations. Documents remain with the verification provider.</p></article>
+        <article class="principle reveal"><span>01</span><h3>Identity documents stay offchain.</h3><p>Only minimum eligibility attributes and identifiers enter attestations. Documents remain with the verification provider.</p></article>
         <article class="principle reveal"><span>02</span><h3>Fail closed by default.</h3><p>Unknown, missing, expired, revoked, or unreadable state denies the action. Provider failure never becomes permission.</p></article>
         <article class="principle reveal"><span>03</span><h3>Core infrastructure is non-custodial.</h3><p>The credential, mandate, authorizer, and gate never hold customer keys. Settlement remains an explicit venue boundary.</p></article>
         <article class="principle reveal"><span>04</span><h3>Exit cannot become confiscation.</h3><p>New risk can stop immediately while controlled exits route restricted proceeds to an eligible recipient or redemption path.</p></article>

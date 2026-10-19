@@ -44,11 +44,14 @@ jobs:
       - run: pnpm --filter @custos/sdk test
       - run: pnpm --filter @custos/api build
       - run: pnpm --filter @custos/api test
+      - run: pnpm --filter @custos/dashboard test
       - run: pnpm --filter @custos/demo-agent build
       - run: pnpm --filter @custos/dashboard build
         env:
           DEPLOYMENTS_FILE: ${{ github.workspace }}/contracts/deployments/ci-placeholder.json
           SESSION_SECRET: ci-only-session-secret-not-for-production
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:browser
 
   dependency-audit:
     runs-on: ubuntu-latest

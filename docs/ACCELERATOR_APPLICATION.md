@@ -25,8 +25,8 @@ regulated-asset settlement. Revocation is a transaction-time kill switch.
 
 - Six-layer v4 contract architecture: Registry, Operator Binding, Mandate,
   Action Authorizer, Gate, and an experimental reference market manager.
-- 115 automated tests passing locally (76 contract, 29 API, 10 SDK), plus
-  application builds. Hardened v4 is pending its first remote CI run.
+- 127 automated tests passing locally (76 contract, 36 API, 10 SDK, 5 dashboard), plus
+  application builds. The v4 baseline passed remote CI; current-branch results are linked from Actions.
 - Historical Base Sepolia v3 deployment at block 44039414; v4 public deployment
   and replay are the next evidence milestone.
 - Seven Sourcify-verified contracts and 29 wiring/role/ownership checks.

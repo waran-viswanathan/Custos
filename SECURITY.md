@@ -4,9 +4,11 @@
 
 The attester key signs EAS attestations and `CustosRegistry.registerAgent/revokeAgent` calls — it is the root of trust for the registry. In the current testnet implementation it is an environment variable (anvil key #0 by default). In production it must live in a KMS/HSM (e.g. AWS KMS with `viem` custom signing, or Nitro Enclaves), with: quorum-gated access for revocations, per-environment keys, rotation runbooks, and alerting on every signature. No engineer should be able to sign alone.
 
-## Why PII never goes on-chain
+## Data minimization and erasure boundaries
 
-The EAS attestation payload is limited to the registered schema: `bool verified, bytes2 jurisdiction, bool accredited, uint256 erc8004TokenId`. Names, emails, and KYB documents stay in Postgres (`VerificationCheck.rawResult`), are never returned by public API endpoints, and never leave the API boundary. This keeps GDPR erasure compatible with chain immutability: erasing a subject deletes DB rows and revokes the attestation; nothing personal remains on-chain.
+The EAS schema contains verification, jurisdiction, accreditation, and ERC-8004 identifiers. Wallet addresses, eligibility attributes, attestation identifiers, and protocol events remain public and linkable. The schema does not contain names, email addresses, or identity documents.
+
+Application names and emails live in the `Agent` table. Production verification documents remain with the provider; `VerificationCheck.rawResult` stores the provider reference and decision attributes. Erasure deletes application and verification rows and revokes the active credential. On-chain records and retained audit payloads are not erased. Use non-personal codes in public revocation reasons; do not describe this behavior as complete erasure of all identifying data.
 
 ## Agent/operator binding
 
@@ -144,3 +146,11 @@ Source hardening does not replace operational controls. Mainnet use requires a
 multisig administrator, KMS/HSM attester, separate issuer identity, real provider
 contracts, managed encrypted data stores, monitoring, backups, an external smart
 contract audit, and an application penetration test. See docs/PRODUCTION.md.
+
+## Application recovery and dashboard sessions
+
+Registration, its audit entry, and a verification outbox task commit in one database transaction. The API retries undispatched tasks every two seconds using the task ID as the BullMQ job ID. A Redis outage leaves a durable pending application; it does not require another registration. Monitor the oldest undispatched task and apply the outbox/challenge migration before deploying the new API.
+
+Fresh applications reset accreditation and obtain it from the current KYB result. Resuming the same application after a chain failure preserves the already completed checks.
+
+Dashboard challenges are stored in PostgreSQL for five minutes and atomically consumed after signature and role verification. A session authenticates the wallet for up to 12 hours; every privileged API read and write independently rechecks its current issuer/admin role. RPC or challenge-store failures deny access. The browser message formatter contains no session-signing code.

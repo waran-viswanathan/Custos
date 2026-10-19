@@ -2,16 +2,47 @@ import { describe, expect, it } from 'vitest';
 import { buildServer, type ServerDeps } from '../src/server.js';
 import { registrationMessage } from '../src/registration.js';
 import { privateKeyToAccount } from 'viem/accounts';
+import { dispatchPendingVerifications } from '../src/outbox.js';
 
 function makeServerDeps() {
   const agents = new Map<string, any>();
   const audits: any[] = [];
   const enqueued: string[] = [];
   const challenges = new Map<string, { wallet: string; nonce: string; expiresAt: Date }>();
+  const loginChallenges = new Map<string, { nonce: string; expiresAt: Date }>();
+  const tasks = new Map<string, any>();
   let seq = 0;
 
   const deps: ServerDeps = {
     db: {
+      async $transaction(fn) {
+        const before = { agents: structuredClone(agents), tasks: structuredClone(tasks), challenges: structuredClone(challenges), audits: structuredClone(audits) };
+        try { return await fn(deps.db); }
+        catch (error) {
+          for (const [target, saved] of [[agents, before.agents], [tasks, before.tasks], [challenges, before.challenges]] as const) {
+            target.clear(); for (const [key, value] of saved) target.set(key, value);
+          }
+          audits.splice(0, audits.length, ...before.audits);
+          throw error;
+        }
+      },
+      verificationTask: {
+        async create({ data }) { const task = { id: `task-${tasks.size + 1}`, dispatchedAt: null, ...data }; tasks.set(task.id, task); return task; },
+        async update({ where, data }) { const task = tasks.get(where.id); Object.assign(task, data); return task; },
+      },
+      dashboardChallenge: {
+        async create({ data }) { loginChallenges.set(data.nonce, data); return data; },
+        async deleteMany({ where }) {
+          let count = 0;
+          for (const [nonce, row] of loginChallenges) {
+            if (where.nonce && nonce !== where.nonce) continue;
+            if (where.expiresAt.gt && row.expiresAt <= where.expiresAt.gt) continue;
+            if (where.expiresAt.lte && row.expiresAt > where.expiresAt.lte) continue;
+            loginChallenges.delete(nonce); count++;
+          }
+          return { count };
+        },
+      },
       agent: {
         async findUnique(args: any) {
           if (args.where.wallet) {
@@ -70,7 +101,7 @@ function makeServerDeps() {
       },
     },
   };
-  return { deps, agents, audits, enqueued };
+  return { deps, agents, audits, enqueued, tasks, loginChallenges, challenges };
 }
 
 const validBody = {
@@ -82,6 +113,65 @@ const validBody = {
 };
 
 describe('API endpoints', () => {
+  it('accepts a durable application during a queue outage and dispatches after recovery', async () => {
+    const { deps, tasks, agents } = makeServerDeps();
+    deps.enqueueVerification = async () => { throw new Error('Redis unavailable'); };
+    const app = buildServer(deps);
+    const result = await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody });
+    expect(result.statusCode).toBe(202);
+    expect(agents.size).toBe(1);
+    const pending = [...tasks.values()][0];
+    expect(pending.dispatchedAt).toBeNull();
+    const jobs = new Map<string, string>();
+    const enqueue = async (agentId: string, taskId: string) => { jobs.set(taskId, agentId); };
+    const db = { verificationTask: { ...deps.db.verificationTask, findMany: async () => [...tasks.values()].filter(t => !t.dispatchedAt) } };
+    // Model a crash after the queue accepted the job, before the DB marker.
+    await enqueue(pending.agentId, pending.id);
+    await dispatchPendingVerifications(db, enqueue);
+    await dispatchPendingVerifications(db, enqueue);
+    expect(jobs.size).toBe(1);
+    expect(pending.dispatchedAt).toBeInstanceOf(Date);
+    await app.close();
+  });
+
+  it('rolls back the applicant and audit if its durable verification task cannot be stored', async () => {
+    const { deps, agents, audits, enqueued } = makeServerDeps();
+    deps.db.verificationTask.create = async () => { throw new Error('database unavailable'); };
+    const app = buildServer(deps);
+    const result = await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody });
+    expect(result.statusCode).toBe(500);
+    expect(agents.size).toBe(0);
+    expect(audits).toHaveLength(0);
+    expect(enqueued).toHaveLength(0);
+    await app.close();
+  });
+
+  it('clears prior accreditation when a rejected applicant resubmits', async () => {
+    const { deps, agents } = makeServerDeps();
+    const app = buildServer(deps);
+    await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody });
+    Object.assign([...agents.values()][0], { status: 'REJECTED', accredited: true });
+    expect((await app.inject({ method: 'POST', url: '/v1/agents', payload: validBody })).statusCode).toBe(202);
+    expect([...agents.values()][0].accredited).toBe(false);
+    await app.close();
+  });
+
+  it('consumes dashboard challenges exactly once and rejects expired or unissued nonces', async () => {
+    const { deps, loginChallenges } = makeServerDeps();
+    const app = buildServer(deps);
+    const headers = { authorization: 'Bearer dev-admin-token-change-me' };
+    expect((await app.inject({ method: 'POST', url: '/v1/dashboard/challenges' })).statusCode).toBe(401);
+    const create = () => app.inject({ method: 'POST', url: '/v1/dashboard/challenges', headers });
+    const consume = (nonce: string) => app.inject({ method: 'POST', url: '/v1/dashboard/challenges/consume', headers, payload: { nonce } });
+    const first = (await create()).json();
+    const attempts = await Promise.all([consume(first.nonce), consume(first.nonce)]);
+    expect(attempts.map(r => r.statusCode).sort()).toEqual([200, 401]);
+    const expired = (await create()).json();
+    loginChallenges.get(expired.nonce)!.expiresAt = new Date(Date.now() - 1);
+    expect((await consume(expired.nonce)).statusCode).toBe(401);
+    expect((await consume(crypto.randomUUID())).statusCode).toBe(401);
+    await app.close();
+  });
   it('cryptographically binds the submitted operator details to the agent wallet', async () => {
     const { deps, audits } = makeServerDeps();
     const app = buildServer(deps);
